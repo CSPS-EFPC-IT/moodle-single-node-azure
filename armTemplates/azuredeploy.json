@@ -1,0 +1,1485 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationFqdn": {
+            "type": "string",
+            "metadata": {
+                "description": "The fully qualified domain name for this moodle instance."
+            }
+        },
+        "armTemplateRepoBaseUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URL of the Azure Resource Manager template repository."
+            }
+        },
+        "corporateInternetGatewayIpAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "The IP Address of the Corporate Internet Gateway."
+            }
+        },
+        "databaseAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password to use in order to manage the database server."
+            }
+        },
+        "databaseAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The username to use in order to manage the database server."
+            }
+        },
+        "databaseMoodlePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Moodle application database account password."
+            }
+        },
+        "databaseMoodleUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The Moodle application database account username."
+            }
+        },
+        "environmentName": {
+            "type": "string",
+            "defaultValue": "dev",
+            "allowedValues": [
+                "dev",
+                "staging",
+                "prod"
+            ],
+            "metadata": {
+                "description": "The name of the provisioned environment. Used to build resource names."
+            }
+        },
+        "fileRepositoryUri": {
+            "type": "string",
+            "metadata": {
+                "description": "The public URI to raw version of the project repository files."
+            }
+        },
+        "gatewaySslCertificateUri": {
+            "type": "string",
+            "metadata": {
+                "description": "The URI of the SSL Certificate Secret used by the Application Gateway."
+            }
+        },
+        "gatewayUserAssignedIdentity": {
+            "type": "object",
+            "metadata": {
+                "description": "The User Identity assigned to the Application Gateway to get the SSL Certificat Secret."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The name of the Azure Location where resources will be created."
+            }
+        },
+        "moodleAdminEmail": {
+            "type": "string",
+            "metadata": {
+                "description": "The email address of the Moodle Administrator."
+            }
+        },
+        "moodleAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "The password the Moodle Administrator account."
+            }
+        },
+        "moodleAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The username of the Moodle Administrator account."
+            }
+        },
+        "moodleUpgradeKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Moodle upgrade key."
+            }
+        },
+        "projectShortName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 13,
+            "metadata": {
+                "description": "The short name of the project. This string will be used to name all resources required. It must only contain letters (a-z,A-Z), hyphens (-) and underscore (_) characters, and must not exceed 13 characters in lenght."
+            }
+        },
+        "resourceTags": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+                "description": "Additional tags to add to each resource created."
+            }
+        },
+        "smtpRelayFqdn": {
+            "type": "string",
+            "metadata": {
+                "description": "The fully qualified domain name of the email server to use."
+            }
+        },
+        "smtpRelayPrivateIp": {
+            "type": "string",
+            "metadata": {
+                "description": "The private IP address of the email server to use."
+            }
+        },
+        "virtualNetworkAddressBase": {
+            "type": "string",
+            "metadata": {
+                "description": "The virtual network IP address prefix. Format is '255.255.255'."
+            }
+        },
+        "webServerAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password to use to connect to the VMSS instances."
+            }
+        },
+        "webServerAdminUsername": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The username to use to connect to the VMSS instances."
+            }
+        }
+    },
+    "functions": [
+        {
+            "namespace": "custom",
+            "members": {
+                "cleanName": {
+                    "parameters": [
+                        {
+                            "name": "dirtyName",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "string",
+                        "value": "[replace(replace(replace(parameters('dirtyName'), '-', ''), '_', ''), ' ', '')]"
+                    }
+                }
+            }
+        }
+    ],
+    "variables": {
+        "applicationNetworkSecurityGroupName": "[concat(variables('resourceNamePrefix'), '-PAZ-APP-NSG')]",
+        "applicationSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.32/27')]",
+        "applicationSubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-APP-SN')]",
+        "bastionName": "[concat(variables('resourceNamePrefix'), '-BH')]",
+        "bastionPublicIpName": "[concat(variables('bastionName'), '-PublicIP')]",
+        "bastionSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.128/27')]",
+        "bastionSubnetName": "AzureBastionSubnet",
+        "dailyBackupPolicyDeploymentName": "dailyBackupPolicyDeployment",
+        "databaseApplicationDatabaseName": "[tolower(custom.cleanName(parameters('projectShortName')))]",
+        "databaseBackupRetentionDays": "35",
+        "databaseName": "[concat(variables('resourceNamePrefix'), '-DB')]",
+        "diagnosticBlobServicesName": "Default",
+        "diagnosticStorageAccountName": "[tolower(concat(custom.cleanName(parameters('projectShortName')), parameters('environmentName'), 'diagsa'))]",
+        "gatewayBackendAddressPoolName": "moodle-web-server",
+        "gatewayBackendHttpSettingsCollectionName": "[concat(parameters('projectShortName'), '-HTTP-Settings')]",
+        "gatewayFrontendIPConfigurationsName": "appGwPublicFrontendIp",
+        "gatewayFrontendPortHttpName": "HTTP-Port",
+        "gatewayFrontendPortHttpsName": "HTTPS-Port",
+        "gatewayGatewayIPConfigurationsName": "appGatewayIpConfig",
+        "gatewayHttpListenersHttpName": "HTTP-Listener",
+        "gatewayHttpListenersHttpsName": "HTTPS-Listener",
+        "gatewayName": "[concat(variables('resourceNamePrefix'), '-AG')]",
+        "gatewayNetworkSecurityGroupName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-NSG')]",
+        "gatewayPublicIpDomainNameLabel": "[tolower(concat(variables('resourceNamePrefix')))]",
+        "gatewayPublicIpName": "[concat(variables('gatewayName'), '-PublicIP')]",
+        "gatewayRedirectConfigurationsName": "HTTP-Redirect",
+        "gatewayRequestRoutingRuleHttpName": "HTTP-Rule",
+        "gatewayRequestRoutingRuleHttpsName": "HTTPS-Rule",
+        "gatewayRewriteRuleSetsName": "Custom-Rewrite-Rules",
+        "gatewaySslCertificateHttpsName": "HTTPS-Certificate",
+        "gatewaySubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/27')]",
+        "gatewaySubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-SN')]",
+        "recoveryServiceVaultDeploymentName": "recoveryServiceVaultDeployment",
+        "redisName": "[concat(variables('resourceNamePrefix'), '-Redis')]",
+        "redisNetworkSecurityGroupName": "[concat(variables('resourceNamePrefix'),'-PAZ-Redis-NSG')]",
+        "redisSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.96/27')]",
+        "redisSubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-Redis-SN')]",
+        "resourceNamePrefix": "[concat(parameters('projectShortName'), if(equals(parameters('environmentName'), 'prod'), '', concat('-', toupper(parameters('environmentName')))))]",
+        "storageAccountNamePrefix": "[tolower(concat(custom.cleanName(parameters('projectShortName')), if(equals(parameters('environmentName'), 'prod'), '', take(parameters('environmentName'),4))))]",
+        "virtualNetworkAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/24')]",
+        "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
+        "webServerComputerName": "webserver",
+        "webServerVirtualMachineDataDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-Data-Disk')]",
+        "webServerVirtualMachineName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-VM')]",
+        "webServerVirtualMachineNamePrefix": "[concat(variables('resourceNamePrefix'), '-WebServer')]",
+        "webServerVirtualMachineNetworkInterfaceCardName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-NIC')]",
+        "webServerVirtualMachineOsDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-OS-Disk')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('virtualNetworkName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('gatewayNetworkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('applicationNetworkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('redisNetworkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('virtualNetworkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('bastionSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('bastionSubnetAddressPrefix')]",
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('gatewaySubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('gatewaySubnetAddressPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('gatewayNetworkSecurityGroupName'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('applicationSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('applicationSubnetAddressPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('applicationNetworkSecurityGroupName'))]"
+                            },
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": [
+                                        "[parameters('location')]"
+                                    ]
+                                },
+                                {
+                                    "service": "Microsoft.Sql",
+                                    "locations": [
+                                        "[parameters('location')]"
+                                    ]
+                                }
+                            ],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('redisSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('redisNetworkSecurityGroupName'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('bastionPublicIpName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('bastionName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('bastionSubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('gatewayNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowPublicInternet_Any_80_443",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [
+                                "80",
+                                "443"
+                            ],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowGatewayManager_TCP_65200-65535",
+                        "properties": {
+                            "description": "https://docs.microsoft.com/en-us/azure/application-gateway/configuration-overview#network-security-groups-on-the-application-gateway-subnet",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "65200-65535",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_Any_Any",
+                        "properties": {
+                            "description": "https://docs.microsoft.com/en-us/azure/application-gateway/configuration-overview#network-security-groups-on-the-application-gateway-subnet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "DenyAllOtherTraffic",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 4096,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('gatewayPublicIpName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('gatewayPublicIpDomainNameLabel')]"
+                },
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/applicationGateways",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('gatewayName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIpName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": "[parameters('gatewayUserAssignedIdentity')]"
+            },
+            "properties": {
+                "sku": {
+                    "name": "Standard_v2",
+                    "tier": "Standard_v2"
+                },
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "[variables('gatewayGatewayIPConfigurationsName')]",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('gatewaySubnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('gatewayFrontendIPConfigurationsName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIpName'))]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "[variables('gatewayFrontendPortHttpName')]",
+                        "properties": {
+                            "port": 80
+                        }
+                    },
+                    {
+                        "name": "[variables('gatewayFrontendPortHttpsName')]",
+                        "properties": {
+                            "port": 443
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('gatewayBackendAddressPoolName')]",
+                        "properties": {
+                            "backendAddresses": []
+                        }
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "[variables('gatewayBackendHttpSettingsCollectionName')]",
+                        "properties": {
+                            "port": 80,
+                            "protocol": "Http",
+                            "cookieBasedAffinity": "Disabled",
+                            "pickHostNameFromBackendAddress": false,
+                            "requestTimeout": 60
+                        }
+                    }
+                ],
+                "sslCertificates": [
+                    {
+                        "name": "[variables('gatewaySslCertificateHttpsName')]",
+                        "properties": {
+                            "keyVaultSecretId": "[parameters('gatewaySslCertificateUri')]"
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "[variables('gatewayHttpListenersHttpsName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/frontendIPConfigurations/', variables('gatewayFrontendIPConfigurationsName'))]"
+                            },
+                            "frontendPort": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/frontendPorts/', variables('gatewayFrontendPortHttpsName'))]"
+                            },
+                            "protocol": "Https",
+                            "sslCertificate": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/sslCertificates/', variables('gatewaySslCertificateHttpsName'))]"
+                            },
+                            "hostNames": [],
+                            "requireServerNameIndication": false
+                        }
+                    },
+                    {
+                        "name": "[variables('gatewayHttpListenersHttpName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/frontendIPConfigurations/', variables('gatewayFrontendIPConfigurationsName'))]"
+                            },
+                            "frontendPort": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/frontendPorts/', variables('gatewayFrontendPortHttpName'))]"
+                            },
+                            "protocol": "Http",
+                            "hostNames": [],
+                            "requireServerNameIndication": false
+                        }
+                    }
+                ],
+                "urlPathMaps": [],
+                "requestRoutingRules": [
+                    {
+                        "name": "[variables('gatewayRequestRoutingRuleHttpsName')]",
+                        "properties": {
+                            "ruleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/httpListeners/', variables('gatewayHttpListenersHttpsName'))]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/backendAddressPools/', variables('gatewayBackendAddressPoolName'))]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/backendHttpSettingsCollection/', variables('gatewayBackendHttpSettingsCollectionName'))]"
+                            },
+                            "rewriteRuleSet": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/rewriteRuleSets/', variables('gatewayRewriteRuleSetsName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('gatewayRequestRoutingRuleHttpName')]",
+                        "properties": {
+                            "ruleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/httpListeners/', variables('gatewayHttpListenersHttpName'))]"
+                            },
+                            "redirectConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/redirectConfigurations/', variables('gatewayRedirectConfigurationsName'))]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [],
+                "rewriteRuleSets": [
+                    {
+                        "name": "[variables('gatewayRewriteRuleSetsName')]",
+                        "properties": {
+                            "rewriteRules": [
+                                {
+                                    "ruleSequence": 100,
+                                    "conditions": [],
+                                    "name": "StrictTransportSecurity",
+                                    "actionSet": {
+                                        "requestHeaderConfigurations": [],
+                                        "responseHeaderConfigurations": [
+                                            {
+                                                "headerName": "Strict-Transport-Security",
+                                                "headerValue": "max-age=63072000"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "redirectConfigurations": [
+                    {
+                        "name": "[variables('gatewayRedirectConfigurationsName')]",
+                        "properties": {
+                            "redirectType": "Permanent",
+                            "targetListener": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/httpListeners/', variables('gatewayHttpListenersHttpsName'))]"
+                            },
+                            "includePath": true,
+                            "includeQueryString": true,
+                            "requestRoutingRules": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/requestRoutingRules/', variables('gatewayRequestRoutingRuleHttpName'))]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "sslPolicy": {
+                    "policyType": "Custom",
+                    "minProtocolVersion": "TLSv1_2",
+                    "cipherSuites": [
+                        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+                        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+                        "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+                        "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+                        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+                        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+                        "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+                        "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+                        "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                        "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+                        "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+                        "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+                        "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+                        "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+                        "TLS_RSA_WITH_AES_256_CBC_SHA256",
+                        "TLS_RSA_WITH_AES_128_GCM_SHA256",
+                        "TLS_RSA_WITH_AES_128_CBC_SHA256"
+                    ]
+                },
+                "enableHttp2": false,
+                "autoscaleConfiguration": {
+                    "minCapacity": 1,
+                    "maxCapacity": 10
+                }
+            }
+        },
+
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('applicationNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "[concat('Allow', variables('gatewayName'), '_TCP_80')]",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "[variables('gatewaySubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [
+                                "80"
+                            ],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('bastionName'), '_TCP_22')]",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[variables('bastionSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('databaseName'), '_TCP_5432')]",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5432",
+                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "DenyAllOtherTraffic",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 4096,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[variables('recoveryServiceVaultDeploymentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks', variables('webServerVirtualMachineDataDiskName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('armTemplateRepoBaseUrl'), '/Recovery%20Services%20Vault/VaultDeploy.json')]"
+                },
+                "parameters": {
+                    "projectName": {
+                        "value": "[parameters('projectShortName')]"
+                    },
+                    "environmentName": {
+                        "value": "[parameters('environmentName')]"
+                    },
+                    "resourceTags": {
+                        "value": "[parameters('resourceTags')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[variables('dailyBackupPolicyDeploymentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('recoveryServiceVaultDeploymentName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('armTemplateRepoBaseUrl'), '/Recovery%20Services%20Vault/Azure%20File%20Share%20Backup/FileShareDailyPolicyDeploy.json')]"
+                },
+                "parameters": {
+                    "vaultName": {
+                        "value": "[reference(variables('recoveryServiceVaultDeploymentName')).outputs.vaultName.value]"
+                    },
+                    "dailyBackupsRetention": {
+                        "value": 90
+                    },
+                    "backupTime": {
+                        "value": "00:00"
+                    }
+                }
+            }
+        },
+
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers",
+            "apiVersion": "2017-12-01",
+            "name": "[variables('databaseName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "GP_Gen5_4",
+                "tier": "GeneralPurpose",
+                "family": "Gen5",
+                "capacity": 4
+            },
+            "properties": {
+                "storageProfile": {
+                    "storageMB": 102400,
+                    "backupRetentionDays": "[variables('databaseBackupRetentionDays')]",
+                    "geoRedundantBackup": "Disabled",
+                    "storageAutogrow": "Enabled"
+                },
+                "version": "10",
+                "sslEnforcement": "Enabled",
+                "minimalTlsVersion": "TLS1_2",
+                "createMode": "Default",
+                "administratorLogin": "[parameters('databaseAdminUsername')]",
+                "administratorLoginPassword": "[parameters('databaseAdminPassword')]"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/pg_qs.query_capture_mode')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "ALL",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/pgms_wait_sampling.query_capture_mode')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "ALL",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/databases",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/', variables('databaseApplicationDatabaseName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "charset": "UTF8",
+                "collation": "English_United States.1252"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/virtualNetworkRules",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/', variables('applicationSubnetName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]",
+                "ignoreMissingVnetServiceEndpoint": false
+            }
+        },
+
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('redisNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_6379-6380')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6379-6380",
+                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('applicationSubnetName'), '_TCP_6379-6380')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6379-6380",
+                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_TCP_6379-6380",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6379-6380",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_8443')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8443",
+                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_TCP_8500",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8500",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 300,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_UDP_8500",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "UDP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8500",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 310,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_10221-10231')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "10221-10231",
+                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 400,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_TCP_10221-10231",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "10221-10231",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 410,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('applicationSubnetName'), '_TCP_13000-13999')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "13000-13999",
+                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 500,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_TCP_13000-13999",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "13000-13999",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 510,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('applicationSubnetName'), '_TCP_15000-15999')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "15000-15999",
+                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 600,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_TCP_15000-15999",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "15000-15999",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 610,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_TCP_16001",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "16001",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 700,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancer_UDP_16001",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "UDP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "16001",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 710,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_20226')]",
+                        "properties": {
+                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "20226",
+                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "priority": 800,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "DenyAllOtherTraffic",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 4096,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Cache/Redis",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('redisName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "Premium",
+                    "family": "P",
+                    "capacity": 1
+                },
+                "enableNonSslPort": true,
+                "redisConfiguration": {
+                    "maxclients": "7500",
+                    "maxmemory-reserved": "200",
+                    "maxfragmentationmemory-reserved": "300",
+                    "maxmemory-delta": "200"
+                },
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('redisSubnetName'))]"
+            }
+        },
+
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('diagnosticStorageAccountName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]",
+                            "action": "Allow",
+                            "state": "Succeeded"
+                        }
+                    ],
+                    "ipRules": [
+                        {
+                            "value": "[parameters('corporateInternetGatewayIpAddress')]",
+                            "action": "Allow"
+                        }
+                    ],
+                    "defaultAction": "Deny"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(variables('diagnosticStorageAccountName'), '/', variables('diagnosticBlobServicesName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                }
+            }
+        },
+
+        // WebServer VM
+        {
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('webServerVirtualMachineDataDiskName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Premium_LRS",
+                "tier": "Premium"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": 256,
+                "diskIOPSReadWrite": 1100,
+                "diskMBpsReadWrite": 125,
+                "encryption": {
+                    "type": "EncryptionAtRestWithPlatformKey"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('webServerVirtualMachineNetworkInterfaceCardName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/applicationGateways', variables('gatewayName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "applicationGatewayBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('gatewayName')), '/backendAddressPools/', variables('gatewayBackendAddressPoolName'))]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('webServerVirtualMachineName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks', variables('webServerVirtualMachineDataDiskName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('webServerVirtualMachineNetworkInterfaceCardName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('diagnosticStorageAccountName'), variables('diagnosticBlobServicesName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS2_v2"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('webServerVirtualMachineOsDiskName')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "[variables('webServerVirtualMachineDataDiskName')]",
+                            "createOption": "Attach",
+                            "caching": "None",
+                            "writeAcceleratorEnabled": false,
+                            "managedDisk": {
+                                "id": "[resourceId('Microsoft.Compute/disks', concat(variables('webServerVirtualMachineDataDiskName')))]"
+                            },
+                            "toBeDetached": false
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('webServerComputerName')]",
+                    "adminUsername": "[parameters('webServerAdminUsername')]",
+                    "adminPassword": "[parameters('webServerAdminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('webServerVirtualMachineNetworkInterfaceCardName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnosticStorageAccountName')).primaryEndpoints['blob']]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('webServerVirtualMachineName'),'/installcustomscript')]",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
+                "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseName'),variables('databaseApplicationDatabaseName') )]",
+                "[resourceId('Microsoft.Cache/Redis', variables('redisName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('fileRepositoryUri'), '/scripts/install_moodle.sh')]"
+                    ]
+                },
+                "protectedSettings": {
+                    // "commandToExecute": "[concat(' sudo ./install_moodle.sh -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -fileShareName \"ToBeRemoved\" -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', parameters('applicationFqdn'), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -redisHostName ', reference(variables('redisName')).hostName, ' -redisName ', variables('redisName'), ' -redisPrimaryKey ', listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey, ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' -storageAccountEndPoint  \"ToBeRemoved\" -storageAccountKey \"ToBeRemoved\" -storageAccountName \"ToBeRemoved\" > /var/log/install_moodle.log 2>&1')]"
+                    "commandToExecute": "sudo la -al > ls.log"
+                }
+            }
+        }
+
+    ],
+    "outputs": {
+        "applicationNetworkSecurityGroupName": {
+            "type": "string",
+            "value": "[variables('applicationNetworkSecurityGroupName')]"
+        },
+        "applicationSubnetName": {
+            "type": "string",
+            "value": "[variables('applicationSubnetName')]"
+        },
+        "databaseApplicationDatabaseName": {
+            "type": "string",
+            "value": "[variables('databaseApplicationDatabaseName')]"
+        },
+        "databaseFqdn": {
+            "type": "string",
+            "value": "[reference(variables('databaseName')).fullyQualifiedDomainName]"
+        },
+        "databaseName": {
+            "type": "string",
+            "value": "[variables('databaseName')]"
+        },
+        "gatewayBackendAddressPoolName": {
+            "type": "string",
+            "value": "[variables('gatewayBackendAddressPoolName')]"
+        },
+        "gatewayName": {
+            "type": "string",
+            "value": "[variables('gatewayName')]"
+        },
+        "gatewayPublicIpFqdn": {
+            "type": "string",
+            "value": "[reference(variables('gatewayPublicIpName')).dnsSettings.fqdn]"
+        },
+        "redisHostName": {
+            "type": "string",
+            "value": "[reference(variables('redisName')).hostName]"
+        },
+        "redisName": {
+            "type": "string",
+            "value": "[variables('redisName')]"
+        },
+        "redisPrimaryKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey]"
+        },
+        "resourceNamePrefix": {
+            "type": "string",
+            "value": "[variables('resourceNamePrefix')]"
+        },
+        "storageAccountNamePrefix": {
+            "type": "string",
+            "value": "[variables('storageAccountNamePrefix')]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[variables('virtualNetworkName')]"
+        }
+    }
+}
