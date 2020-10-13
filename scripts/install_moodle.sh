@@ -16,17 +16,26 @@ function echo_title {
     echo "###############################################################################"
 }
 
+function echo_action {
+    echo ""
+    echo "$1"
+}
+
+function echo_feedback {
+    echo "-> $1"
+}
+
 function installMoodlePlugin {
     local pluginTitle=$1
     local pluginZipFileUrl=$2
     local pluginDirPath=$3
 
-    echo "Installation of Moodle \"${pluginTitle}\" plugin."
-    echo "Downloading \"${pluginTitle}\" plugin zip file..."
+    echo_action "Installing Moodle \"${pluginTitle}\" plugin..."
+    echo_feedback "Downloading \"${pluginTitle}\" plugin zip file..."
     wget $pluginZipFileUrl
-    echo "Extracting \"${pluginTitle}\" plugin files..."
+    echo_feedback "Extracting \"${pluginTitle}\" plugin files..."
     unzip $(basename $pluginZipFileUrl) -d $pluginDirPath
-    echo "Done with \"${pluginTitle}\" plugin installation."
+    echo_feedback "Done."
 }
 
 ###############################################################################
@@ -36,32 +45,29 @@ echo_title "Starting $0 on $(date)."
 ###############################################################################
 echo_title 'Read input parameters.'
 ###############################################################################
-echo 'Initializing expected parameters array...'
-declare -A parameters=( [dbServerAdminPassword]= \
-                        [dbServerAdminUsername]= \
-                        [dbServerFqdn]= \
-                        [dbServerName]= \
-                        [fileShareName]= \
-                        [moodleAdminEmail]= \
-                        [moodleAdminPassword]= \
-                        [moodleAdminUsername]= \
-                        [moodleDbName]= \
-                        [moodleDbPassword]= \
-                        [moodleDbUsername]= \
-                        [moodleFqdn]= \
-                        [moodleUpgradeKey]= \
+echo_action 'Initializing expected parameters array...'
+declare -A parameters=(     [dataDiskSize]= \
+                            [dbServerAdminPassword]= \
+                            [dbServerAdminUsername]= \
+                            [dbServerFqdn]= \
+                            [dbServerName]= \
+                            [moodleAdminEmail]= \
+                            [moodleAdminPassword]= \
+                            [moodleAdminUsername]= \
+                            [moodleDbName]= \
+                            [moodleDbPassword]= \
+                            [moodleDbUsername]= \
+                            [moodleFqdn]= \
+                            [moodleUpgradeKey]= \
                         [redisHostName]= \
                         [redisName]= \
                         [redisPrimaryKey]= \
-                        [smtpRelayFqdn]= \
-                        [smtpRelayPrivateIp]= \
-                        [storageAccountEndPoint]= \
-                        [storageAccountKey]= \
-                        [storageAccountName]= )
+                            [smtpRelayFqdn]= \
+                            [smtpRelayPrivateIp]=)
 
 sortedParameterList=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
 
-echo "Mapping input parameter values and checking for extra parameters..."
+echo_action "Mapping input parameter values and checking for extra parameters..."
 while [[ ${#@} -gt 0 ]];
 do
     key=$1
@@ -71,7 +77,7 @@ do
     if [[ ${key} =~ ^-.*$ && ${parameters[${key:1}]+_} ]]; then
         parameters[${key:1}]="$value"
     else
-        echo "ERROR: Unexpected parameter: $key"
+        echo_feedback "ERROR: Unexpected parameter: $key"
         extraParameterFlag=true;
     fi
 
@@ -79,32 +85,33 @@ do
     shift $(( 2 < ${#@} ? 2 : ${#@} ))
 done
 
-echo "Checking for missing parameters..."
+echo_action "Checking for missing parameters..."
 for p in $sortedParameterList; do
     if [[ -z ${parameters[$p]} ]]; then
-        echo "ERROR: Missing parameter: $p."
+        echo_feedback "ERROR: Missing parameter: $p."
         missingParameterFlag=true;
     fi
 done
 
 # Abort if missing or extra parameters.
 if [[ -z $extraParameterFlag && -z $missingParameterFlag ]]; then
-    echo "INFO: No missing or extra parameters."
+    echo_feedback "INFO: No missing or extra parameters."
 else
-    echo "ERROR: Execution aborted due to missing or extra parameters."
+    echo_feedback "ERROR: Execution aborted due to missing or extra parameters."
     usage="USAGE: $(basename $0)"
     for p in $sortedParameterList; do
         usage="${usage} -${p} \$${p}"
     done
-    echo "${usage}";
+    echo_feedback "${usage}";
     exit 1;
 fi
 
-echo 'Echo parameter values for debug purposes...'
+echo_action 'Echo parameter values for debug purposes...'
 for p in $sortedParameterList; do
-    echo "DEBUG: $p = \"${parameters[$p]}\""
+    echo_feedback "DEBUG: $p = \"${parameters[$p]}\""
 done
-echo "Done."
+
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Set useful variables."
@@ -115,78 +122,80 @@ apache2SitesEnabledDefaultFilePath="/etc/apache2/sites-enabled/000-default.conf"
 apache2User="www-data"
 hostsFilePath="/etc/hosts"
 installDirPath="$(pwd)"
+moodleDataMountPointPath="/moodledata"
 moodleDocumentRootDirPath="${apache2DefaultDocumentRootDirPath}/moodle"
 moodleLocalCacheRootDirPath="${apache2DefaultDocumentRootDirPath}/moodlelocalcache"
 phpIniFilePath="/etc/php/7.2/apache2/php.ini"
-echo "Done."
+
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Update and upgrade the server."
 ###############################################################################
 apt-get update
 apt-get upgrade -y
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install tools."
 ###############################################################################
 apt-get install postgresql-client-10 php-cli unzip -y
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install Moodle dependencies."
 ###############################################################################
 apt-get install apache2 libapache2-mod-php -y
 apt-get install graphviz aspell ghostscript clamav php7.2-pspell php7.2-curl php7.2-gd php7.2-intl php7.2-pgsql php7.2-xml php7.2-xmlrpc php7.2-ldap php7.2-zip php7.2-soap php7.2-mbstring php7.2-redis -y
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Remove server packages that are no longer needed."
 ###############################################################################
 apt-get autoremove -y
-echo "Done."
+echo_feedback "Done."
 
 
 ###############################################################################
 echo_title "Setup SMTP Relay."
 ###############################################################################
-echo "Adding SMTP Relay Private IP address in ${hostsFilePath}..."
+echo_action "Adding SMTP Relay Private IP address in ${hostsFilePath}..."
 echo -e "\n# Redirect SMTP Relay FQDN to Private IP Address.\n${parameters[smtpRelayPrivateIp]}\t${parameters[smtpRelayFqdn]}" >> $hostsFilePath
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Update PHP config."
 ###############################################################################
-echo "Updating upload_max_filesize and post_max_size settings in ${phpIniFilePath}..."
+echo_action "Updating upload_max_filesize and post_max_size settings in ${phpIniFilePath}..."
 sed -i "s/upload_max_filesize.*/upload_max_filesize = 2048M/" $phpIniFilePath
 sed -i "s/post_max_size.*/post_max_size = 2048M/" $phpIniFilePath
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Update Apache config."
 ###############################################################################
 if ! grep -q "${moodleDocumentRootDirPath}" $apache2SitesEnabledDefaultFilePath; then
-    echo "Updating Apache default site DocumentRoot property in ${apache2SitesEnabledDefaultFilePath}..."
+    echo_action "Updating Apache default site DocumentRoot property in ${apache2SitesEnabledDefaultFilePath}..."
     escapedApache2DefaultDocumentRootDirPath=$(sed -E 's/(\/)/\\\1/g' <<< ${apache2DefaultDocumentRootDirPath})
     escapedMoodleDocumentRootDirPath=$(sed -E 's/(\/)/\\\1/g' <<< ${moodleDocumentRootDirPath})
     sed -i -E "s/DocumentRoot[[:space:]]*${escapedApache2DefaultDocumentRootDirPath}/DocumentRoot ${escapedMoodleDocumentRootDirPath}/g" $apache2SitesEnabledDefaultFilePath
 else
-    echo "Skipping $apache2SitesEnabledDefaultFilePath file update: DocumentRoot already properly set."
+    echo_feedback "Skipping $apache2SitesEnabledDefaultFilePath file update: DocumentRoot already properly set."
 fi
 
-echo "Updating Apache ServerSignature and ServerToken directives in ${apache2ConfEnabledSecurityFilePath}..."
+echo_action "Updating Apache ServerSignature and ServerToken directives in ${apache2ConfEnabledSecurityFilePath}..."
 sed -i "s/^ServerTokens[[:space:]]*\(Full\|OS\|Minimal\|Minor\|Major\|Prod\)$/ServerTokens Prod/" $apache2ConfEnabledSecurityFilePath
 sed -i "s/^ServerSignature[[:space:]]*\(On\|Off\|EMail\)$/ServerSignature Off/" $apache2ConfEnabledSecurityFilePath
 
-echo "Restarting Apache2..."
+echo_action "Restarting Apache2..."
 service apache2 restart
 
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Create Moodle database user if not existing."
 ###############################################################################
-echo "Creating and granting privileges to database user ${parameters[moodleDbUsername]}..."
+echo_action "Creating and granting privileges to database user ${parameters[moodleDbUsername]}..."
 export PGPASSWORD="${parameters[dbServerAdminPassword]}"
 psql "host=${parameters[dbServerFqdn]} port=5432 dbname=postgres user=${parameters[dbServerAdminUsername]}@${parameters[dbServerName]} sslmode=require" << EOF
 DO \$\$
@@ -201,66 +210,66 @@ BEGIN
 END
 \$\$;
 EOF
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
-echo_title "Mount Moodle data fileshare."
+echo_title "Mount Moodle Data Disk."
 ###############################################################################
-if [ ! -d "/mnt/${parameters[fileShareName]}" ]; then
-    echo "Creating /mnt/${parameters[fileShareName]} folder..."
-    mkdir /mnt/${parameters[fileShareName]}
+echo_action 'Finding the data disk block path using the data disk size as index...'
+dataDiskBlockPath=/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${parameters[dataDiskSize]}\") print \$1}")
+echo_feedback "Data disk block path found: $dataDiskBlockPath"
+
+echo_action 'Creating a file system in the data disk block if none exists...'
+dataDiskFileSystemType=$(lsblk --noheadings --output fstype $dataDiskBlockPath)
+if [ -z $dataDiskFileSystemType ]; then
+    echo_feedback "No file system detected on $dataDiskBlockPath."
+    dataDiskFileSystemType=ext4
+    echo "Creating file system of type $dataDiskFileSystemType on $dataDiskBlockPath..."
+    mkfs.$dataDiskFileSystemType $dataDiskBlockPath
 else
-    echo "Skipping /mnt/${parameters[fileShareName]} creation."
+    echo_feedback "File system $dataDiskFileSystemType already exist on $dataDiskBlockPath."
 fi
-if [ ! -d "/etc/smbcredentials" ]; then
-    echo "Creating /etc/smbcredentials folder..."
-    mkdir /etc/smbcredentials
-else
-    echo "Skipping /etc/smbcredentials file creation."
-fi
-if [ ! -f "/etc/smbcredentials/openlearningmoodlesa.cred" ]; then
-    echo "Creating /etc/smbcredentials/openlearningmoodlesa.cred file..."
-    echo "username=${parameters[storageAccountName]}" >> /etc/smbcredentials/${parameters[storageAccountName]}.cred
-    echo "password=${parameters[storageAccountKey]}" >> /etc/smbcredentials/${parameters[storageAccountName]}.cred
-else
-    echo "Skipping /etc/smbcredentials/openlearningmoodlesa.cred file creation."
-fi
-echo "Updating permission on /etc/smbcredentials/${parameters[storageAccountName]}.cred..."
-chmod 600 /etc/smbcredentials/${parameters[storageAccountName]}.cred
-if ! grep -q ${parameters[storageAccountName]} /etc/fstab; then
-    echo "Updating /etc/fstab file..."
-    echo "//$(echo ${parameters[storageAccountEndPoint]} | awk -F/ '{print $3}')/${parameters[fileShareName]} /mnt/${parameters[fileShareName]} cifs nofail,vers=3.0,credentials=/etc/smbcredentials/${parameters[storageAccountName]}.cred,dir_mode=0777,file_mode=0777,serverino" >> /etc/fstab
-else
-    echo "Skipping /etc/fstab file update."
-fi
-echo "Mounting all defined mount points..."
+
+echo_action "Setting up Moodle Data mount point..."
+mkdir -p ${moodleDataMountPointPath}
+chown -R root:${apache2User} ${moodleDataMountPointPath}
+chmod -R 775 ${moodleDataMountPointPath}
+
+echo_action 'Updating /etc/fstab file to automount the data disk using its UUID...'
+printf "UUID=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
 mount -a
-echo "Done."
+
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Create Moodle Local Cache directory."
 ###############################################################################
 if [ -d ${moodleLocalCacheRootDirPath} ]; then
-    echo "Deleting old ${moodleLocalCacheRootDirPath} folder..."
+    echo_action "Deleting old ${moodleLocalCacheRootDirPath} folder..."
     rm -rf ${moodleLocalCacheRootDirPath}
 fi
-echo "Creating new ${moodleLocalCacheRootDirPath} folder..."
+
+echo_action "Creating new ${moodleLocalCacheRootDirPath} folder..."
 mkdir ${moodleLocalCacheRootDirPath}
-echo "Updating file permission on ${moodleLocalCacheRootDirPath}..."
+
+echo_action "Updating file permission on ${moodleLocalCacheRootDirPath}..."
 chown -R ${apache2User} ${moodleLocalCacheRootDirPath}
-echo "Done."
+
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Download and extract Moodle files and plugins."
 ###############################################################################
 # Ref.: https://download.moodle.org/releases/supported/
-echo "Downloading Moodle 3.8.4 tar file..."
+echo_action "Downloading Moodle 3.8.4 tar file..."
 wget https://download.moodle.org/download.php/direct/stable38/moodle-3.8.4.tgz
-echo "Extracting moodle tar file..."
+
 if [ -d ${moodleDocumentRootDirPath} ]; then
-    echo "Deleting old ${moodleDocumentRootDirPath} folder..."
+    echo_action "Deleting old ${moodleDocumentRootDirPath} folder..."
     rm -rf ${moodleDocumentRootDirPath}
 fi
+
+echo_action "Extracting moodle tar file..."
 tar zxfv moodle-3.8.4.tgz -C ${apache2DefaultDocumentRootDirPath}
 
 # Ref.: https://moodle.org/plugins/filter_multilang2
@@ -343,34 +352,34 @@ installMoodlePlugin "General plugins (Local): Moodle eMail Test" \
                     "https://moodle.org/plugins/download.php/22516/local_mailtest_moodle39_2020092000.zip" \
                     "${moodleDocumentRootDirPath}/local"
 
-echo "Updating file ownership on ${moodleDocumentRootDirPath}..."
-chown -R ${apache2User} ${moodleDocumentRootDirPath}
-chgrp -R root ${moodleDocumentRootDirPath}
+echo_action "Updating file ownership on ${moodleDocumentRootDirPath}..."
+chown -R ${apache2User}:root ${moodleDocumentRootDirPath}
 
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Run Moodle Installer."
 ###############################################################################
-# Assess whether the moodle tables already exist.
+echo_action 'Assessing whether the moodle tables already exist...'
 # If yes then add the "--skip-database" option to the install script.
 export PGPASSWORD="${parameters[dbServerAdminPassword]}"
 tablePrefix='mdl_'
 tableCount=$(psql "host=${parameters[dbServerFqdn]} port=5432 user=${parameters[dbServerAdminUsername]}@${parameters[dbServerName]} dbname=${parameters[moodleDbName]} sslmode=require" --tuples-only --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodleDbName]}' and table_name like '${tablePrefix}%'")
 if [[ $tableCount -eq 0 ]]; then
-    echo 'Moodle tables NOT found in database. Database must be setup as part of the install.'
+    echo_feedback 'Moodle tables NOT found in database. Database must be setup as part of the install.'
     skipDatabaseOption=''
 else
-    echo 'Moodle tables found in database. Skipping database setup.'
+    echo_feedback 'Moodle tables found in database. Skipping database setup.'
     skipDatabaseOption='--skip-database'
 fi
 
+echo_action 'Running Moodle installation script...'
 sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/install.php \
 --non-interactive \
 --lang=en \
 --chmod=2777 \
 --wwwroot=https://${parameters[moodleFqdn]}/ \
---dataroot=/mnt/${parameters[fileShareName]}/ \
+--dataroot=${moodleDataMountPointPath}/ \
 --dbtype=pgsql \
 --dbhost=${parameters[dbServerFqdn]} \
 --dbname=${parameters[moodleDbName]} \
@@ -388,56 +397,58 @@ sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/insta
 ${skipDatabaseOption} \
 --agree-license
 
+echo_feedback "Done."
+
 ###############################################################################
 echo_title "Update Moodle config for SSL Proxy and Local Cache directory."
 ###############################################################################
 # No need to test for existing values since the file is always new.
-echo "Adding SSL Proxy setting to ${moodleDocumentRootDirPath}/config.php file..."
+echo_action "Adding SSL Proxy setting to ${moodleDocumentRootDirPath}/config.php file..."
 sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' ${moodleDocumentRootDirPath}/config.php
 
-echo "Adding Local Cache Directory setting to ${moodleDocumentRootDirPath}/config.php file..."
+echo_action "Adding Local Cache Directory setting to ${moodleDocumentRootDirPath}/config.php file..."
 sed -i "/^\$CFG->dataroot.*/a \$CFG->localcachedir\t= '${moodleLocalCacheRootDirPath}';" ${moodleDocumentRootDirPath}/config.php
 
-echo "Adding default timezone setting to ${moodleDocumentRootDirPath}/config.php file..."
+echo_action "Adding default timezone setting to ${moodleDocumentRootDirPath}/config.php file..."
 sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" ${moodleDocumentRootDirPath}/config.php
 
-echo "Done"
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Update Moodle Universal Cache (MUC) config for Redis."
 ###############################################################################
-mucConfigFile="/mnt/${parameters[fileShareName]}/muc/config.php"
+mucConfigFile="${moodleDataMountPointPath}/muc/config.php"
 if ! grep -q ${parameters[redisName]} ${mucConfigFile}; then
-    echo "Updating ${mucConfigFile} file..."
+    echo_action "Updating ${mucConfigFile} file..."
     php ${installDirPath}/update_muc.php ${parameters[redisHostName]} ${parameters[redisName]} ${parameters[redisPrimaryKey]} ${mucConfigFile}
 else
-    echo "Skipping ${mucConfigFile} file update."
+    echo_feedback "Skipping ${mucConfigFile} file update."
 fi
-echo "Done"
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install plugins that have been recently added on the file system."
 ###############################################################################
 sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/upgrade.php --non-interactive
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Uninstall plugings that have been recently removed from the file system."
 ###############################################################################
 sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/uninstall_plugins.php --purge-missing --run
-echo "Done."
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Purge all Moodle Caches."
 ###############################################################################
 sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/purge_caches.php
-echo "Done"
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Set Moodle Crontab."
 ###############################################################################
 crontab -l | { cat; echo "* * * * * sudo -u www-data php ${moodleDocumentRootDirPath}/admin/cli/cron.php > /dev/null"; } | crontab -
-echo "Done"
+echo_feedback "Done."
 
 ###############################################################################
 echo_title "Finishing $0 on $(date)."

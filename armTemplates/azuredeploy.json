@@ -44,6 +44,12 @@
                 "description": "The Moodle application database account username."
             }
         },
+        "dataDiskSizeGB" : {
+            "type": "int",
+            "metadata": {
+                "description": "The size of the Moodle Data Disk in giga bytes."
+            }
+        },
         "environmentName": {
             "type": "string",
             "defaultValue": "dev",
@@ -834,30 +840,6 @@
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/pg_qs.query_capture_mode')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
-            ],
-            "properties": {
-                "value": "ALL",
-                "source": "user-override"
-            }
-        },
-        {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/pgms_wait_sampling.query_capture_mode')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
-            ],
-            "properties": {
-                "value": "ALL",
-                "source": "user-override"
-            }
-        },
-        {
             "type": "Microsoft.DBforPostgreSQL/servers/databases",
             "apiVersion": "2017-12-01",
             "name": "[concat(variables('databaseName'), '/', variables('databaseApplicationDatabaseName'))]",
@@ -1404,6 +1386,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
                 "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseName'),variables('databaseApplicationDatabaseName') )]",
+                "[resourceId('Microsoft.DBforPostgreSQL/servers/virtualNetworkRules', variables('databaseName'), variables('applicationSubnetName'))]",
                 "[resourceId('Microsoft.Cache/Redis', variables('redisName'))]"
             ],
             "properties": {
@@ -1413,12 +1396,12 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[concat(parameters('fileRepositoryUri'), '/scripts/install_moodle.sh')]"
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]",
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/update_muc.php')]"
                     ]
                 },
                 "protectedSettings": {
-                    // "commandToExecute": "[concat(' sudo ./install_moodle.sh -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -fileShareName \"ToBeRemoved\" -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', parameters('applicationFqdn'), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -redisHostName ', reference(variables('redisName')).hostName, ' -redisName ', variables('redisName'), ' -redisPrimaryKey ', listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey, ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' -storageAccountEndPoint  \"ToBeRemoved\" -storageAccountKey \"ToBeRemoved\" -storageAccountName \"ToBeRemoved\" > /var/log/install_moodle.log 2>&1')]"
-                    "commandToExecute": "sudo la -al > ls.log"
+                    "commandToExecute": "[concat(' sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'),' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', parameters('applicationFqdn'), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -redisHostName ', reference(variables('redisName')).hostName, ' -redisName ', variables('redisName'), ' -redisPrimaryKey ', listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey, ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }
             }
         }
