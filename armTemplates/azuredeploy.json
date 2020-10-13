@@ -46,6 +46,7 @@
         },
         "dataDiskSizeGB" : {
             "type": "int",
+            "minValue": 31,
             "metadata": {
                 "description": "The size of the Moodle Data Disk in giga bytes."
             }
