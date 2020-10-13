@@ -243,6 +243,7 @@ echo_action 'Updating /etc/fstab file to automount the data disk using its UUID.
 printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
 mount -a
 lsblk
+echo "coucou" > $moodleDataMountPointPath/coucou.txt
 ls -al $moodleDataMountPointPath
 
 echo_feedback "Done."
