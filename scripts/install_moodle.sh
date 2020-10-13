@@ -215,7 +215,7 @@ echo_feedback "Done."
 ###############################################################################
 echo_title "Mount Moodle Data Disk."
 ###############################################################################
-echo_action 'Finding the data disk block path using the data disk size as index...'
+echo_action 'Retrieving the data disk block path using the data disk size as index...'
 dataDiskBlockPath=/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${parameters[dataDiskSize]}\") print \$1}")
 echo_feedback "Data disk block path found: $dataDiskBlockPath"
 
@@ -230,13 +230,17 @@ else
     echo_feedback "File system $dataDiskFileSystemType already exist on $dataDiskBlockPath."
 fi
 
+echo_action 'Retrieving data disk file System UUID...'
+dataDiskFileSystemUuid=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})
+echo_feedback "Data disk file system UUID: $dataDiskFileSystemUuid"
+
 echo_action "Setting up Moodle Data mount point..."
 mkdir -p ${moodleDataMountPointPath}
 chown -R root:${apache2User} ${moodleDataMountPointPath}
 chmod -R 775 ${moodleDataMountPointPath}
 
 echo_action 'Updating /etc/fstab file to automount the data disk using its UUID...'
-printf "UUID=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
+printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
 mount -a
 lsblk
 ls -al $moodleDataMountPointPath
