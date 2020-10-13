@@ -252,7 +252,7 @@ fi
 echo_action 'Retrieving data disk file System UUID...'
 # Bug Fix: Experience demostrated that the UUID is not immediately available, so wait up to 60 seconds.
 elapsedTime=0
-while [ -z $(lsblk --noheadings --output UUID ${dataDiskBlockPath}) -a "$elapsedTime" -lt "60" ]; do
+while [ -z "$(lsblk --noheadings --output UUID ${dataDiskBlockPath})" -a "$elapsedTime" -lt "60" ]; do
     sleep 1
     ((elapsedTime++))
 done
