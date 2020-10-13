@@ -39,6 +39,7 @@ function waitForSuccess {
         fi
         if [ "$counter" -eq "60" ]; then
             printf " Aborted."
+        fi
     done
     printf "\n"
 }
