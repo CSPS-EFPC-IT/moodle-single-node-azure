@@ -2,12 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "applicationFqdn": {
-            "type": "string",
-            "metadata": {
-                "description": "The fully qualified domain name for this moodle instance."
-            }
-        },
         "armTemplateRepoBaseUrl": {
             "type": "string",
             "metadata": {
@@ -18,6 +12,12 @@
             "type": "string",
             "metadata": {
                 "description": "The IP Address of the Corporate Internet Gateway."
+            }
+        },
+        "customApplicationFqdn": {
+            "type": "string",
+            "metadata": {
+                "description": "The custom fully qualified domain name for this moodle instance."
             }
         },
         "databaseAdminPassword": {
@@ -1401,7 +1401,7 @@
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat(' sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'),' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', parameters('applicationFqdn'), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -redisHostName ', reference(variables('redisName')).hostName, ' -redisName ', variables('redisName'), ' -redisPrimaryKey ', listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey, ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                    "commandToExecute": "[concat(' sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -redisHostName ', reference(variables('redisName')).hostName, ' -redisName ', variables('redisName'), ' -redisPrimaryKey ', listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey, ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }
             }
         }

@@ -238,6 +238,8 @@ chmod -R 775 ${moodleDataMountPointPath}
 echo_action 'Updating /etc/fstab file to automount the data disk using its UUID...'
 printf "UUID=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
 mount -a
+lsblk
+ls -al $moodleDataMountPointPath
 
 echo_feedback "Done."
 
