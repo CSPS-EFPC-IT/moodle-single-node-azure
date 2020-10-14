@@ -8,12 +8,6 @@
                 "description": "The base URL of the Azure Resource Manager template repository."
             }
         },
-        "corporateInternetGatewayIpAddress": {
-            "type": "string",
-            "metadata": {
-                "description": "The IP Address of the Corporate Internet Gateway."
-            }
-        },
         "customApplicationFqdn": {
             "type": "string",
             "metadata": {
@@ -32,6 +26,21 @@
                 "description": "The username to use in order to manage the database server."
             }
         },
+        "databaseBackupRetentionDays": {
+            "type": "int",
+            "minValue": 7,
+            "maxValue": 35,
+            "metadata": {
+                "description": "The database backup retention period in days."
+            }
+        },
+        "databaseCapacity": {
+            "type": "int",
+            "allowedValues": [2, 4, 8, 16, 32, 64],
+            "metadata": {
+                "description": "The number of CPUs allocated to the database."
+            }
+        },
         "databaseMoodlePassword": {
             "type": "securestring",
             "metadata": {
@@ -44,6 +53,15 @@
                 "description": "The Moodle application database account username."
             }
         },
+        "databaseStorageMb": {
+            "type": "int",
+            "minValue": 102400,
+            "maxValue": 16777216,
+            "metadata": {
+                "description": "The size of data storage allocated to the database in MB."
+            }
+        },
+
         "dataDiskSizeGB" : {
             "type": "int",
             "minValue": 31,
@@ -187,10 +205,7 @@
         "bastionSubnetName": "AzureBastionSubnet",
         "dailyBackupPolicyDeploymentName": "dailyBackupPolicyDeployment",
         "databaseApplicationDatabaseName": "[tolower(custom.cleanName(parameters('projectShortName')))]",
-        "databaseBackupRetentionDays": "35",
         "databaseName": "[concat(variables('resourceNamePrefix'), '-DB')]",
-        "diagnosticBlobServicesName": "Default",
-        "diagnosticStorageAccountName": "[tolower(concat(custom.cleanName(parameters('projectShortName')), parameters('environmentName'), 'diagsa'))]",
         "gatewayBackendAddressPoolName": "moodle-web-server",
         "gatewayBackendHttpSettingsCollectionName": "[concat(parameters('projectShortName'), '-HTTP-Settings')]",
         "gatewayFrontendIPConfigurationsName": "appGwPublicFrontendIp",
@@ -211,12 +226,7 @@
         "gatewaySubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/27')]",
         "gatewaySubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-SN')]",
         "recoveryServiceVaultDeploymentName": "recoveryServiceVaultDeployment",
-        "redisName": "[concat(variables('resourceNamePrefix'), '-Redis')]",
-        "redisNetworkSecurityGroupName": "[concat(variables('resourceNamePrefix'),'-PAZ-Redis-NSG')]",
-        "redisSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.96/27')]",
-        "redisSubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-Redis-SN')]",
         "resourceNamePrefix": "[concat(parameters('projectShortName'), if(equals(parameters('environmentName'), 'prod'), '', concat('-', toupper(parameters('environmentName')))))]",
-        "storageAccountNamePrefix": "[tolower(concat(custom.cleanName(parameters('projectShortName')), if(equals(parameters('environmentName'), 'prod'), '', take(parameters('environmentName'),4))))]",
         "virtualNetworkAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/24')]",
         "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
         "webServerComputerName": "webserver",
@@ -235,8 +245,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('gatewayNetworkSecurityGroupName'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('applicationNetworkSecurityGroupName'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('redisNetworkSecurityGroupName'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('applicationNetworkSecurityGroupName'))]"
             ],
             "properties": {
                 "addressSpace": {
@@ -277,31 +286,12 @@
                             },
                             "serviceEndpoints": [
                                 {
-                                    "service": "Microsoft.Storage",
-                                    "locations": [
-                                        "[parameters('location')]"
-                                    ]
-                                },
-                                {
                                     "service": "Microsoft.Sql",
                                     "locations": [
                                         "[parameters('location')]"
                                     ]
                                 }
                             ],
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Enabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    },
-                    {
-                        "name": "[variables('redisSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('redisNetworkSecurityGroupName'))]"
-                            },
-                            "serviceEndpoints": [],
                             "delegations": [],
                             "privateEndpointNetworkPolicies": "Enabled",
                             "privateLinkServiceNetworkPolicies": "Enabled"
@@ -725,23 +715,6 @@
                         }
                     },
                     {
-                        "name": "[concat('Allow', variables('databaseName'), '_TCP_5432')]",
-                        "properties": {
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "5432",
-                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 120,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
                         "name": "DenyAllOtherTraffic",
                         "properties": {
                             "protocol": "*",
@@ -823,12 +796,12 @@
                 "name": "GP_Gen5_4",
                 "tier": "GeneralPurpose",
                 "family": "Gen5",
-                "capacity": 4
+                "capacity": "[parameters('databaseCapacity')]"
             },
             "properties": {
                 "storageProfile": {
-                    "storageMB": 102400,
-                    "backupRetentionDays": "[variables('databaseBackupRetentionDays')]",
+                    "storageMB": "[parameters('databaseStorageMb')]",
+                    "backupRetentionDays": "[parameters('databaseBackupRetentionDays')]",
                     "geoRedundantBackup": "Disabled",
                     "storageAutogrow": "Enabled"
                 },
@@ -866,396 +839,6 @@
             }
         },
 
-        {
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2019-11-01",
-            "name": "[variables('redisNetworkSecurityGroupName')]",
-            "location": "[parameters('location')]",
-            "tags": "[parameters('resourceTags')]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_6379-6380')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "6379-6380",
-                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "[concat('Allow', variables('applicationSubnetName'), '_TCP_6379-6380')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "6379-6380",
-                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 110,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_TCP_6379-6380",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "6379-6380",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 120,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_8443')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "8443",
-                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 200,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_TCP_8500",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "8500",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 300,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_UDP_8500",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "UDP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "8500",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 310,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_10221-10231')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "10221-10231",
-                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 400,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_TCP_10221-10231",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "10221-10231",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 410,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "[concat('Allow', variables('applicationSubnetName'), '_TCP_13000-13999')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "13000-13999",
-                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 500,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_TCP_13000-13999",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "13000-13999",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 510,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "[concat('Allow', variables('applicationSubnetName'), '_TCP_15000-15999')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "15000-15999",
-                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 600,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_TCP_15000-15999",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "15000-15999",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 610,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_TCP_16001",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "16001",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 700,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "AllowAzureLoadBalancer_UDP_16001",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "UDP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "16001",
-                            "sourceAddressPrefix": "AzureLoadBalancer",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 710,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "[concat('Allow', variables('redisSubnetName'), '_TCP_20226')]",
-                        "properties": {
-                            "description": "Ref.: https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-premium-vnet#inbound-port-requirements",
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "20226",
-                            "sourceAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "destinationAddressPrefix": "[variables('redisSubnetAddressPrefix')]",
-                            "access": "Allow",
-                            "priority": 800,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    },
-                    {
-                        "name": "DenyAllOtherTraffic",
-                        "properties": {
-                            "protocol": "*",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Deny",
-                            "priority": 4096,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Cache/Redis",
-            "apiVersion": "2019-07-01",
-            "name": "[variables('redisName')]",
-            "location": "[parameters('location')]",
-            "tags": "[parameters('resourceTags')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "sku": {
-                    "name": "Premium",
-                    "family": "P",
-                    "capacity": 1
-                },
-                "enableNonSslPort": true,
-                "redisConfiguration": {
-                    "maxclients": "7500",
-                    "maxmemory-reserved": "200",
-                    "maxfragmentationmemory-reserved": "300",
-                    "maxmemory-delta": "200"
-                },
-                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('redisSubnetName'))]"
-            }
-        },
-
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
-            "name": "[variables('diagnosticStorageAccountName')]",
-            "tags": "[parameters('resourceTags')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-            ],
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "kind": "Storage",
-            "properties": {
-                "networkAcls": {
-                    "bypass": "AzureServices",
-                    "virtualNetworkRules": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]",
-                            "action": "Allow",
-                            "state": "Succeeded"
-                        }
-                    ],
-                    "ipRules": [
-                        {
-                            "value": "[parameters('corporateInternetGatewayIpAddress')]",
-                            "action": "Allow"
-                        }
-                    ],
-                    "defaultAction": "Deny"
-                },
-                "supportsHttpsTrafficOnly": true,
-                "encryption": {
-                    "services": {
-                        "blob": {
-                            "keyType": "Account",
-                            "enabled": true
-                        }
-                    },
-                    "keySource": "Microsoft.Storage"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices",
-            "apiVersion": "2019-06-01",
-            "name": "[concat(variables('diagnosticStorageAccountName'), '/', variables('diagnosticBlobServicesName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
-            ],
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "properties": {
-                "cors": {
-                    "corsRules": []
-                },
-                "deleteRetentionPolicy": {
-                    "enabled": false
-                }
-            }
-        },
-
-        // WebServer VM
         {
             "type": "Microsoft.Compute/disks",
             "apiVersion": "2019-07-01",
@@ -1314,12 +897,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-07-01",
+            "apiVersion": "2020-06-01",
             "name": "[variables('webServerVirtualMachineName')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks', variables('webServerVirtualMachineDataDiskName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('webServerVirtualMachineNetworkInterfaceCardName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('diagnosticStorageAccountName'), variables('diagnosticBlobServicesName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('webServerVirtualMachineNetworkInterfaceCardName'))]"
             ],
             "location": "[parameters('location')]",
             "properties": {
@@ -1373,8 +955,7 @@
                 },
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
-                        "enabled": true,
-                        "storageUri": "[reference(variables('diagnosticStorageAccountName')).primaryEndpoints['blob']]"
+                        "enabled": true
                     }
                 }
             }
@@ -1382,13 +963,12 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('webServerVirtualMachineName'),'/installcustomscript')]",
-            "apiVersion": "2019-07-01",
+            "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
-                "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseName'),variables('databaseApplicationDatabaseName') )]",
-                "[resourceId('Microsoft.DBforPostgreSQL/servers/virtualNetworkRules', variables('databaseName'), variables('applicationSubnetName'))]",
-                "[resourceId('Microsoft.Cache/Redis', variables('redisName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseName'), variables('databaseApplicationDatabaseName') )]",
+                "[resourceId('Microsoft.DBforPostgreSQL/servers/virtualNetworkRules', variables('databaseName'), variables('applicationSubnetName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -1397,70 +977,16 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]",
-                        "[concat(parameters('fileRepositoryUri'),'/scripts/update_muc.php')]"
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]"
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat(' sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -redisHostName ', reference(variables('redisName')).hostName, ' -redisName ', variables('redisName'), ' -redisPrimaryKey ', listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey, ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                    "commandToExecute": "[concat(' sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }
             }
         }
-
     ],
     "outputs": {
-        "applicationNetworkSecurityGroupName": {
-            "type": "string",
-            "value": "[variables('applicationNetworkSecurityGroupName')]"
-        },
-        "applicationSubnetName": {
-            "type": "string",
-            "value": "[variables('applicationSubnetName')]"
-        },
-        "databaseApplicationDatabaseName": {
-            "type": "string",
-            "value": "[variables('databaseApplicationDatabaseName')]"
-        },
-        "databaseFqdn": {
-            "type": "string",
-            "value": "[reference(variables('databaseName')).fullyQualifiedDomainName]"
-        },
-        "databaseName": {
-            "type": "string",
-            "value": "[variables('databaseName')]"
-        },
-        "gatewayBackendAddressPoolName": {
-            "type": "string",
-            "value": "[variables('gatewayBackendAddressPoolName')]"
-        },
-        "gatewayName": {
-            "type": "string",
-            "value": "[variables('gatewayName')]"
-        },
-        "gatewayPublicIpFqdn": {
-            "type": "string",
-            "value": "[reference(variables('gatewayPublicIpName')).dnsSettings.fqdn]"
-        },
-        "redisHostName": {
-            "type": "string",
-            "value": "[reference(variables('redisName')).hostName]"
-        },
-        "redisName": {
-            "type": "string",
-            "value": "[variables('redisName')]"
-        },
-        "redisPrimaryKey": {
-            "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2019-07-01').primarykey]"
-        },
-        "resourceNamePrefix": {
-            "type": "string",
-            "value": "[variables('resourceNamePrefix')]"
-        },
-        "storageAccountNamePrefix": {
-            "type": "string",
-            "value": "[variables('storageAccountNamePrefix')]"
-        },
         "virtualNetworkName": {
             "type": "string",
             "value": "[variables('virtualNetworkName')]"
