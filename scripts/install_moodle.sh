@@ -434,33 +434,33 @@ ${skipDatabaseOption} \
 
 echo_feedback "Done."
 
-# ###############################################################################
-# echo_title "Update Moodle config for SSL Proxy and Local Cache directory."
-# ###############################################################################
-# # No need to test for existing values since the file is always new.
-# echo_action "Adding SSL Proxy setting to ${moodleDocumentRootDirPath}/config.php file..."
-# sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' ${moodleDocumentRootDirPath}/config.php
-
-# echo_action "Adding Local Cache Directory setting to ${moodleDocumentRootDirPath}/config.php file..."
-# sed -i "/^\$CFG->dataroot.*/a \$CFG->localcachedir\t= '${moodleLocalCacheRootDirPath}';" ${moodleDocumentRootDirPath}/config.php
-
-# echo_action "Adding default timezone setting to ${moodleDocumentRootDirPath}/config.php file..."
-# sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" ${moodleDocumentRootDirPath}/config.php
-
-# echo_feedback "Done."
-
 ###############################################################################
-echo_title "Update Moodle Universal Cache (MUC) config for Redis."
+echo_title "Update Moodle config for SSL Proxy and Local Cache directory."
 ###############################################################################
-mucConfigFile="${moodleDataMountPointPath}/muc/config.php"
-waitForSuccess "ls $mucConfigFile" # Bugfix: for some reason, the muc config file creation is delayed.
-if ! grep -q ${parameters[redisName]} ${mucConfigFile}; then
-    echo_action "Updating ${mucConfigFile} file..."
-    php ${installDirPath}/update_muc.php ${parameters[redisHostName]} ${parameters[redisName]} ${parameters[redisPrimaryKey]} ${mucConfigFile}
-else
-    echo_feedback "Skipping ${mucConfigFile} file update."
-fi
+# No need to test for existing values since the file is always new.
+echo_action "Adding SSL Proxy setting to ${moodleDocumentRootDirPath}/config.php file..."
+sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' ${moodleDocumentRootDirPath}/config.php
+
+echo_action "Adding Local Cache Directory setting to ${moodleDocumentRootDirPath}/config.php file..."
+sed -i "/^\$CFG->dataroot.*/a \$CFG->localcachedir\t= '${moodleLocalCacheRootDirPath}';" ${moodleDocumentRootDirPath}/config.php
+
+echo_action "Adding default timezone setting to ${moodleDocumentRootDirPath}/config.php file..."
+sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" ${moodleDocumentRootDirPath}/config.php
+
 echo_feedback "Done."
+
+# ###############################################################################
+# echo_title "Update Moodle Universal Cache (MUC) config for Redis."
+# ###############################################################################
+# mucConfigFile="${moodleDataMountPointPath}/muc/config.php"
+# waitForSuccess "ls $mucConfigFile" # Bugfix: for some reason, the muc config file creation is delayed.
+# if ! grep -q ${parameters[redisName]} ${mucConfigFile}; then
+#     echo_action "Updating ${mucConfigFile} file..."
+#     php ${installDirPath}/update_muc.php ${parameters[redisHostName]} ${parameters[redisName]} ${parameters[redisPrimaryKey]} ${mucConfigFile}
+# else
+#     echo_feedback "Skipping ${mucConfigFile} file update."
+# fi
+# echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install plugins that have been recently added on the file system."
