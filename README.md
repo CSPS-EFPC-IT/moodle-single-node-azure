@@ -43,19 +43,20 @@ And installs the following software (up to their latest available patch level fo
 1. A target resource group.
 1. A Key Vault with a properly signed SSL/TLS Certificate for the new moodle instance.
 1. A User Assigned Managed Identity (UAMI).
-1. Optional - A custom domain name for the new moodle instance.
 
 ## Azure Permissions
 1. Permission to manage (CRUD) resources in the target resource group.
-1. GET and LIST permissions on the Key Vault Secrets granted to the User Assigned Managed Identity. This will allow the Application Gateway to retrieve the SSL/TLS certificate private key from the Key Vault using the UAMI .
+1. GET permission on the Key Vault Secrets granted to the User Assigned Managed Identity. This will allow the Application Gateway to retrieve the SSL/TLS certificate private key from the Key Vault using the UAMI .
 
-## Dependencies
+## Other Dependencies
 1. Optional - An SMTP server.
+1. Optional - A custom domain name for the new moodle instance.
+
 
 # Usage
 1. Clone this projet.
 1. Create a new file named *armTemplates/azureDeploy.parameters.json* based on the *armTemplates/azureDeploy.parameters.example.json* file.
-1. Edit the new _azureDeploy.parameters.json_ file to your need.
+1. Edit the new _azureDeploy.parameters.json_ file to your liking.
 1. Authenticate your Azure Client to your Azure subscription by running the `az login` command and following the instructions.
 1. Adapt and run the following commands (on linux):\
 `deploymentName="MoodleManualDeployment"`\
