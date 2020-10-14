@@ -35,7 +35,7 @@ function waitForSuccess {
         if [ "$returnCode" -ne "0" ]; then
             printf '.'
             sleep 1
-            ((counter++))
+            ((counter+=1))
         fi
         if [ "$counter" -eq "60" ]; then
             printf " Aborted."
@@ -250,25 +250,30 @@ else
 fi
 
 echo_action 'Retrieving data disk file System UUID...'
-# Bug Fix: Experience demostrated that the UUID is not immediately available, so wait up to 60 seconds.
+# Bug Fix: Experience demonstrated that the UUID is not immediately available through lsblk,
+#          thus we wait up to 60 seconds.
 elapsedTime=0
-while [ -z "$(lsblk --noheadings --output UUID ${dataDiskBlockPath})" -a "$elapsedTime" -lt "60" ]; do
+getUuidCmd="lsblk --noheadings --output UUID ${dataDiskBlockPath}"
+while [ -z "$($getUuidCmd)" -a "$elapsedTime" -lt "60" ]; do
     sleep 1
-    ((elapsedTime++))
+    ((elapsedTime+=1))
 done
-dataDiskFileSystemUuid=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})
+dataDiskFileSystemUuid=$($getUuidCmd)
 echo_feedback "Data disk file system UUID: $dataDiskFileSystemUuid"
 
-echo_action "Setting up Moodle Data mount point..."
+echo_action "Creating Moodle Data mount point..."
 mkdir -p ${moodleDataMountPointPath}
-chown -R ${apache2User}:root ${moodleDataMountPointPath}
-chmod -R 775 ${moodleDataMountPointPath}
 
 echo_action 'Updating /etc/fstab file to automount the data disk using its UUID...'
 printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
 
 echo_action 'Mounting all drives...'
 mount -a
+
+echo_action 'Setting permissions ...'
+chown -R ${apache2User}:root ${moodleDataMountPointPath}
+chmod -R 775 ${moodleDataMountPointPath}
+
 
 echo_feedback "Done."
 
