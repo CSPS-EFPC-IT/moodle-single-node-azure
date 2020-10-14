@@ -144,7 +144,6 @@ moodleDataMountPointPath="/moodledata"
 moodleDocumentRootDirPath="${apache2DefaultDocumentRootDirPath}/moodle"
 moodleLocalCacheRootDirPath="${apache2DefaultDocumentRootDirPath}/moodlelocalcache"
 phpIniFilePath="/etc/php/7.2/apache2/php.ini"
-
 echo_feedback "Done."
 
 ###############################################################################
@@ -157,13 +156,13 @@ echo_feedback "Done."
 ###############################################################################
 echo_title "Install tools."
 ###############################################################################
-apt-get install postgresql-client-10 php-cli unzip -y redis
+apt-get install postgresql-client-10 php-cli unzip -y
 echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install Moodle dependencies."
 ###############################################################################
-apt-get install apache2 libapache2-mod-php -y
+apt-get install apache2 libapache2-mod-php redis -y
 apt-get install graphviz aspell ghostscript clamav php7.2-pspell php7.2-curl php7.2-gd php7.2-intl php7.2-pgsql php7.2-xml php7.2-xmlrpc php7.2-ldap php7.2-zip php7.2-soap php7.2-mbstring php7.2-redis -y
 echo_feedback "Done."
 
@@ -172,7 +171,6 @@ echo_title "Remove server packages that are no longer needed."
 ###############################################################################
 apt-get autoremove -y
 echo_feedback "Done."
-
 
 ###############################################################################
 echo_title "Setup SMTP Relay."
@@ -272,7 +270,6 @@ mount -a
 echo_action 'Setting permissions ...'
 chown -R ${apache2User}:root ${moodleDataMountPointPath}
 chmod -R 775 ${moodleDataMountPointPath}
-
 
 echo_feedback "Done."
 
@@ -448,19 +445,6 @@ echo_action "Adding default timezone setting to ${moodleDocumentRootDirPath}/con
 sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" ${moodleDocumentRootDirPath}/config.php
 
 echo_feedback "Done."
-
-# ###############################################################################
-# echo_title "Update Moodle Universal Cache (MUC) config for Redis."
-# ###############################################################################
-# mucConfigFile="${moodleDataMountPointPath}/muc/config.php"
-# waitForSuccess "ls $mucConfigFile" # Bugfix: for some reason, the muc config file creation is delayed.
-# if ! grep -q ${parameters[redisName]} ${mucConfigFile}; then
-#     echo_action "Updating ${mucConfigFile} file..."
-#     php ${installDirPath}/update_muc.php ${parameters[redisHostName]} ${parameters[redisName]} ${parameters[redisPrimaryKey]} ${mucConfigFile}
-# else
-#     echo_feedback "Skipping ${mucConfigFile} file update."
-# fi
-# echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install plugins that have been recently added on the file system."
