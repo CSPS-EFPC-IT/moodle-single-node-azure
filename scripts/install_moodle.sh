@@ -55,7 +55,7 @@ function installMoodlePlugin {
     echo_feedback "Downloading \"${pluginTitle}\" plugin zip file..."
     wget $pluginZipFileUrl
     echo_feedback "Extracting \"${pluginTitle}\" plugin files..."
-    unzip $(basename $pluginZipFileUrl) -d $pluginDirPath
+    unzip -q $(basename $pluginZipFileUrl) -d $pluginDirPath
     echo_feedback "Done."
 }
 
@@ -308,7 +308,7 @@ if [ -d ${moodleDocumentRootDirPath} ]; then
 fi
 
 echo_action "Extracting moodle tar file..."
-tar zxfv moodle-3.8.4.tgz -C ${apache2DefaultDocumentRootDirPath}
+tar zxf moodle-3.8.4.tgz -C ${apache2DefaultDocumentRootDirPath}
 
 # Ref.: https://moodle.org/plugins/filter_multilang2
 installMoodlePlugin "Filters: Multi-Language Content (v2)" \
