@@ -38,7 +38,7 @@
             "type": "int",
             "allowedValues": [2, 4, 8, 16, 32, 64],
             "metadata": {
-                "description": "The number of CPUs allocated to the database."
+                "description": "The number of vCPUs allocated to the database."
             }
         },
         "databaseMoodlePassword": {
@@ -203,7 +203,6 @@
         "bastionPublicIpName": "[concat(variables('bastionName'), '-PublicIP')]",
         "bastionSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.128/27')]",
         "bastionSubnetName": "AzureBastionSubnet",
-        "dailyBackupPolicyDeploymentName": "dailyBackupPolicyDeployment",
         "databaseApplicationDatabaseName": "[tolower(custom.cleanName(parameters('projectShortName')))]",
         "databaseName": "[concat(variables('resourceNamePrefix'), '-DB')]",
         "gatewayBackendAddressPoolName": "moodle-web-server",
@@ -225,7 +224,9 @@
         "gatewaySslCertificateHttpsName": "HTTPS-Certificate",
         "gatewaySubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/27')]",
         "gatewaySubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-SN')]",
-        "recoveryServiceVaultDeploymentName": "recoveryServiceVaultDeployment",
+        "recoveryServiceVaultDeploymentName": "[concat(deployment().name, '_', 'recoveryServiceVault')]",
+        "recoveryServiceVaultProtectedItemsDeploymentName": "[concat(deployment().name, '_', 'recoveryServiceVaultProtectedItems')]",
+        "recoveryServiceVaultBackupPoliciesDeploymentName": "[concat(deployment().name, '_', 'recoveryServiceVaultBackupPolicies')]",
         "resourceNamePrefix": "[concat(parameters('projectShortName'), if(equals(parameters('environmentName'), 'prod'), '', concat('-', toupper(parameters('environmentName')))))]",
         "virtualNetworkAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/24')]",
         "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
@@ -763,14 +764,14 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "name": "[variables('dailyBackupPolicyDeploymentName')]",
+            "name": "[variables('recoveryServiceVaultBackupPoliciesDeploymentName')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', variables('recoveryServiceVaultDeploymentName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('armTemplateRepoBaseUrl'), '/Recovery%20Services%20Vault/Azure%20File%20Share%20Backup/FileShareDailyPolicyDeploy.json')]"
+                    "uri": "[concat(parameters('armTemplateRepoBaseUrl'), '/Recovery%20Services%20Vault/VM%20Backup/VMDailyPolicyDeploy.json')]"
                 },
                 "parameters": {
                     "vaultName": {
@@ -779,8 +780,43 @@
                     "dailyBackupsRetention": {
                         "value": 90
                     },
+                    "instantRpRetentionRangeInDays": {
+                        "value": 5
+                    },
                     "backupTime": {
-                        "value": "00:00"
+                        "value": "02:00"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[variables('recoveryServiceVaultProtectedItemsDeploymentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('recoveryServiceVaultBackupPoliciesDeploymentName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('webServerVirtualMachineName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('armTemplateRepoBaseUrl'), '/Recovery%20Services%20Vault/VM%20Backup/VMBackupDeploy.json')]"
+                },
+                "parameters": {
+                    "vaultName": {
+                        "value": "[reference(variables('recoveryServiceVaultDeploymentName')).outputs.vaultName.value]"
+                    },
+                    "policyName": {
+                        "value": "[reference(variables('recoveryServiceVaultBackupPoliciesDeploymentName')).outputs.policyName.value]"
+                    },
+                    "vmName": {
+                        "value": "[variables('webServerVirtualMachineName')]"
+                    },
+                    "vmRGName": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "vmSubID": {
+                        "value": "[subscription().subscriptionId]"
                     }
                 }
             }
@@ -793,7 +829,7 @@
             "tags": "[parameters('resourceTags')]",
             "location": "[parameters('location')]",
             "sku": {
-                "name": "GP_Gen5_4",
+                "name": "[concat('GP_Gen5_', parameters('databaseCapacity'))]",
                 "tier": "GeneralPurpose",
                 "family": "Gen5",
                 "capacity": "[parameters('databaseCapacity')]"
@@ -852,9 +888,7 @@
                 "creationData": {
                     "createOption": "Empty"
                 },
-                "diskSizeGB": 256,
-                "diskIOPSReadWrite": 1100,
-                "diskMBpsReadWrite": 125,
+                "diskSizeGB": "[parameters('dataDiskSizeGB')]",
                 "encryption": {
                     "type": "EncryptionAtRestWithPlatformKey"
                 }
@@ -926,7 +960,7 @@
                             "lun": 0,
                             "name": "[variables('webServerVirtualMachineDataDiskName')]",
                             "createOption": "Attach",
-                            "caching": "None",
+                            "caching": "ReadOnly",
                             "writeAcceleratorEnabled": false,
                             "managedDisk": {
                                 "id": "[resourceId('Microsoft.Compute/disks', concat(variables('webServerVirtualMachineDataDiskName')))]"
