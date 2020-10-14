@@ -1,23 +1,43 @@
 # moodle-single-node-azure
-Deploys Moodle Application on Azure Cloud.
+Deploys a simple Moodle stack on Azure Cloud.
 
 # Description
 This project deploys the following Azure resources:
-- Virtual Network
+- Virtual Network and Subnets
 - Network Security Groups
-- Application Gateway and Public IP
-- Public IP
-- Virtual Machine and Data Disk
+- Application Gateway and its Public IP
+- Virtual Machine and its Data Disk
 - Postgres Database
 - Recovery Vault
-- Bastion
+- Bastion and its Public IP
+
+And configures the following application stack on the virtual machine using the latest available patches:
+- Ubuntu 18.04
+- Postgres client 10
+- Unzip 6.00
+- PHP Client 7.2
+- Apache2 2.4
+- Redis 4.0
+- PHP 7.2 modules
+  - php7.2-pspell
+  - php7.2-curl
+  - php7.2-gd
+  - php7.2-intl
+  - php7.2-pgsql
+  - php7.2-xml
+  - php7.2-xmlrpc
+  - php7.2-ldap
+  - php7.2-zip
+  - php7.2-soap
+  - php7.2-mbstring
+  - php7.2-redis
 
 # Prerequisites
 
 ## Tools
-1. Azure client (a.k.a az cli)
-1. Text editor
-1. Linux client or emulator
+1. An Azure Client (a.k.a. "az cli")
+1. A Git client
+1. A text editor
 
 ## Azure Ressources
 1. An Azure subscription.
@@ -31,11 +51,12 @@ This project deploys the following Azure resources:
 1. GET and LIST permissions on the Key Vault Secrets granted to the User Assigned Managed Identity. This will allow the Application Gateway to retrieve the SSL/TLS certificate private key from the Key Vault using the UAMI .
 
 # Usage
-1) Clone this projet.
-1) Create a new file named *armTemplates/azureDeploy.parameters.json* based on the *armTemplates/azureDeploy.parameters.example.json* file.
-1) Edit the new _azureDeploy.parameters.json_ file to your need.
-1) Adapt and run the following commands:\
-`deploymentName="MyDeploymentPart1"`\
+1. Clone this projet.
+1. Create a new file named *armTemplates/azureDeploy.parameters.json* based on the *armTemplates/azureDeploy.parameters.example.json* file.
+1. Edit the new _azureDeploy.parameters.json_ file to your need.
+1. Authenticate your Azure Client to your Azure subscription by running the `az login` command and following the instructions.
+1. Adapt and run the following commands (on linux):\
+`deploymentName="MoodleManualDeployment"`\
 `resourceGroupName="[Your resource Group name]"`\
 `templateFile="armTemplate/azureDeploy.json"`\
 `parameterFile="armTemplates/azureDeploy.parameters.json"`\
