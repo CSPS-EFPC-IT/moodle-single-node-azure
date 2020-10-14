@@ -156,14 +156,14 @@ echo_feedback "Done."
 ###############################################################################
 echo_title "Install tools."
 ###############################################################################
-apt-get install postgresql-client-10 php-cli unzip -y
+apt-get install --yes --quiet postgresql-client-10 php-cli unzip
 echo_feedback "Done."
 
 ###############################################################################
 echo_title "Install Moodle dependencies."
 ###############################################################################
-apt-get install apache2 libapache2-mod-php redis -y
-apt-get install graphviz aspell ghostscript clamav php7.2-pspell php7.2-curl php7.2-gd php7.2-intl php7.2-pgsql php7.2-xml php7.2-xmlrpc php7.2-ldap php7.2-zip php7.2-soap php7.2-mbstring php7.2-redis -y
+apt-get install --yes --quiet apache2 libapache2-mod-php redis
+apt-get install --yes --quiet graphviz aspell ghostscript clamav php7.2-pspell php7.2-curl php7.2-gd php7.2-intl php7.2-pgsql php7.2-xml php7.2-xmlrpc php7.2-ldap php7.2-zip php7.2-soap php7.2-mbstring php7.2-redis
 echo_feedback "Done."
 
 ###############################################################################
