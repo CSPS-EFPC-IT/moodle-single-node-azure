@@ -30,7 +30,9 @@ function waitForSuccess {
     returnCode=-1
     printf "Waiting for $1 to succeed"
     while [ "$returnCode" -ne "0" -a $counter -lt "60" ]; do
+        set +e
         result=$($1)
+        set -e
         returnCode=$?
         if [ "$returnCode" -ne "0" ]; then
             printf '.'
