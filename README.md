@@ -11,7 +11,7 @@ This project deploys the following Azure resources:
 - Recovery Vault
 - Bastion and its Public IP
 
-And configures the following application stack on the virtual machine using the latest available patches:
+And installs the following software (up to their latest available patch level for the linux distro) on the virtual machine:
 - Ubuntu 18.04
 - Postgres client 10
 - Unzip 6.00
@@ -33,7 +33,6 @@ And configures the following application stack on the virtual machine using the 
   - php7.2-redis
 
 # Prerequisites
-
 ## Tools
 1. An Azure Client (a.k.a. "az cli")
 1. A Git client
@@ -46,9 +45,12 @@ And configures the following application stack on the virtual machine using the 
 1. A User Assigned Managed Identity (UAMI).
 1. Optional - A custom domain name for the new moodle instance.
 
-## Authorizations
+## Azure Permissions
 1. Permission to manage (CRUD) resources in the target resource group.
 1. GET and LIST permissions on the Key Vault Secrets granted to the User Assigned Managed Identity. This will allow the Application Gateway to retrieve the SSL/TLS certificate private key from the Key Vault using the UAMI .
+
+## Dependencies
+1. Optional - An SMTP server.
 
 # Usage
 1. Clone this projet.
@@ -61,3 +63,5 @@ And configures the following application stack on the virtual machine using the 
 `templateFile="armTemplate/azureDeploy.json"`\
 `parameterFile="armTemplates/azureDeploy.parameters.json"`\
 `az deployment group create --name $deploymentName --resource-group $resourceGroupName --template-file $templateFile --parameter @$parameterFile --verbose`
+
+Enjoy!
