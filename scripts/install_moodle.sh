@@ -32,8 +32,8 @@ function waitForSuccess {
     while [ "$returnCode" -ne "0" -a $counter -lt "60" ]; do
         set +e
         result=$($1)
-        set -e
         returnCode=$?
+        set -e
         if [ "$returnCode" -ne "0" ]; then
             printf '.'
             sleep 1
