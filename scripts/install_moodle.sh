@@ -25,27 +25,6 @@ function echo_feedback {
     echo "-> $1"
 }
 
-function waitForSuccess {
-    counter=0
-    returnCode=-1
-    printf "Waiting for $1 to succeed"
-    while [ "$returnCode" -ne "0" -a $counter -lt "60" ]; do
-        set +e
-        result=$($1)
-        returnCode=$?
-        set -e
-        if [ "$returnCode" -ne "0" ]; then
-            printf '.'
-            sleep 1
-            ((counter+=1))
-        fi
-        if [ "$counter" -eq "60" ]; then
-            printf " Aborted."
-        fi
-    done
-    printf "\n"
-}
-
 function installMoodlePlugin {
     local pluginTitle=$1
     local pluginZipFileUrl=$2
@@ -247,15 +226,15 @@ else
 fi
 
 echo_action 'Retrieving data disk file System UUID...'
-# Bug Fix: Experience demonstrated that the UUID is not immediately available through lsblk,
-#          thus we wait up to 60 seconds.
+# Bug Fix:  Experience demonstrated that the UUID of the new file system is not immediately 
+#           available through lsblk, thus we wait and loop for up to 60 seconds to get it.
 elapsedTime=0
-getUuidCmd="lsblk --noheadings --output UUID ${dataDiskBlockPath}"
-while [ -z "$($getUuidCmd)" -a "$elapsedTime" -lt "60" ]; do
+dataDiskFileSystemUuid=""
+while [ -z "$dataDiskFileSystemUuid" -a "$elapsedTime" -lt "60" ]; do
     sleep 1
     ((elapsedTime+=1))
+    dataDiskFileSystemUuid=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})
 done
-dataDiskFileSystemUuid=$($getUuidCmd)
 echo_feedback "Data disk file system UUID: $dataDiskFileSystemUuid"
 
 echo_action "Creating Moodle Data mount point..."
