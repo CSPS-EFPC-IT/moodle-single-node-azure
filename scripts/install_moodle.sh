@@ -385,6 +385,11 @@ else
     skipDatabaseOption='--skip-database'
 fi
 
+########################### DEBUG ##################################
+whoami
+env | sort
+########################### DEBUG ##################################
+
 echo_action 'Running Moodle installation script...'
 sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/install.php \
 --non-interactive \
@@ -447,7 +452,7 @@ echo_feedback "Done."
 ###############################################################################
 echo_title "Set Moodle Crontab."
 ###############################################################################
-crontab -l | { cat; echo "* * * * * sudo -u www-data php ${moodleDocumentRootDirPath}/admin/cli/cron.php > /dev/null"; } | crontab -
+crontab -l | { cat; echo "* * * * * sudo -u ${apache2User} php ${moodleDocumentRootDirPath}/admin/cli/cron.php > /dev/null"; } | crontab -
 echo_feedback "Done."
 
 ###############################################################################

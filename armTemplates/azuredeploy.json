@@ -1007,7 +1007,7 @@
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
-                "typeHandlerVersion": "2.0",
+                "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
@@ -1015,7 +1015,7 @@
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat(' sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                    "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }
             }
         }
