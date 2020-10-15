@@ -170,7 +170,7 @@
             }
         },
         "webServerAdminUsername": {
-            "type": "securestring",
+            "type": "string",
             "metadata": {
                 "description": "The username to use to connect to the VMSS instances."
             }
@@ -996,7 +996,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('webServerVirtualMachineName'),'/installcustomscript')]",
+            "name": "[concat(variables('webServerVirtualMachineName'),'/installMoodle')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -1010,11 +1010,10 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "fileUris": [
-                        "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]"
-                    ]
+                    "timestamp": 1
                 },
                 "protectedSettings": {
+                    "fileUris": ["[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]"],
                     "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }
             }
