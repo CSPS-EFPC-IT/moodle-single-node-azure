@@ -8,10 +8,10 @@
         "customApplicationFqdn": {
             "value": "[Your custom value here]"
         },
-        "databaseAdminUsername": {
+        "databaseAdminPassword": {
             "value": "[Your custom value here]"
         },
-        "databaseAdminPassword": {
+        "databaseAdminUsername": {
             "value": "[Your custom value here]"
         },
         "databaseBackupRetentionDays": {

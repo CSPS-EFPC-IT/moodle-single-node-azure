@@ -231,9 +231,10 @@ echo_action 'Retrieving data disk file System UUID...'
 elapsedTime=0
 dataDiskFileSystemUuid=""
 while [ -z "$dataDiskFileSystemUuid" -a "$elapsedTime" -lt "60" ]; do
+    echo_feedback "Waiting for 1 second..."
     sleep 1
-    ((elapsedTime+=1))
     dataDiskFileSystemUuid=$(lsblk --noheadings --output UUID ${dataDiskBlockPath})
+    ((elapsedTime+=1))
 done
 echo_feedback "Data disk file system UUID: $dataDiskFileSystemUuid"
 

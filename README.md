@@ -3,12 +3,12 @@ Deploys a simple Moodle stack on Azure Cloud.
 
 # Description
 This project deploys the following Azure resources:
-- Virtual Network and Subnets
+- Virtual Network and its Subnets
 - Network Security Groups
 - Application Gateway and its Public IP
-- Virtual Machine and its Data Disk
+- Virtual Machine and its OS/Data Disks and Network Card
 - Postgres Database
-- Recovery Vault
+- Recovery Service Vault and its Daily Backup Policy and Protected Item (VM backup)
 - Bastion and its Public IP
 
 And installs the following software (up to their latest available patch level for the linux distro) on the virtual machine:
