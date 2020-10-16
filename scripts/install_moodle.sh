@@ -247,7 +247,7 @@ mkdir -p ${moodleDataMountPointPath}
 echo_feedback "${moodleDataMountPointPath} directory created."
 
 fstabFilePath=/etc/fstab
-echo_action 'Updating $fstabFilePath file to automount the data disk using its UUID...'
+echo_action "Updating $fstabFilePath file to automount the data disk using its UUID..."
 if ! grep -q "$dataDiskFileSystemUuid" $fstabFilePath; then
     printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >> $fstabFilePath
     echo_feedback "Updated."
