@@ -96,7 +96,7 @@
         "gatewayUserAssignedIdentity": {
             "type": "object",
             "metadata": {
-                "description": "The User Identity assigned to the Application Gateway to get the SSL Certificat Secret."
+                "description": "The User Identity assigned to the Application Gateway to get the SSL Certificate Secret."
             }
         },
         "location": {
