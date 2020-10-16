@@ -459,12 +459,11 @@ echo_feedback "Done."
 echo_title "Set Moodle Crontab."
 ###############################################################################
 crontabEntry="* * * * * sudo -u ${apache2User} php ${moodleDocumentRootDirPath}/admin/cli/cron.php > /dev/null"
-res=$(crontab -l | grep --fixed-strings "$crontabEntry")
-if [ -z "$res" ]; then
+if [ -z "$(crontab -l | grep --fixed-strings "$crontabEntry")" ]; then
     crontab -l | { cat; echo "$crontabEntry"; } | crontab -
-    echo_feedback "Done."
+    echo "Done."
 else
-    echo_feedback "Skipped: crontab already set up."
+    echo "Skipped: crontab already set up."
 fi
 
 ###############################################################################
