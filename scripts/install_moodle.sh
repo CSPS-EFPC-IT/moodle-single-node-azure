@@ -155,8 +155,12 @@ echo_feedback "Done."
 echo_title "Setup SMTP Relay."
 ###############################################################################
 echo_action "Adding SMTP Relay Private IP address in ${hostsFilePath}..."
-echo -e "\n# Redirect SMTP Relay FQDN to Private IP Address.\n${parameters[smtpRelayPrivateIp]}\t${parameters[smtpRelayFqdn]}" >> $hostsFilePath
-echo_feedback "Done."
+if ! grep -q "${parameters[smtpRelayFqdn]}" $hostsFilePath; then
+    echo -e "\n# Redirect SMTP Relay FQDN to Private IP Address.\n${parameters[smtpRelayPrivateIp]}\t${parameters[smtpRelayFqdn]}" >> $hostsFilePath
+    echo "Done."
+else
+    echo "Skipped: ${hostsFilePath} file already set up."
+fi
 
 ###############################################################################
 echo_title "Update PHP config."
@@ -240,9 +244,16 @@ echo_feedback "Data disk file system UUID: $dataDiskFileSystemUuid"
 
 echo_action "Creating Moodle Data mount point..."
 mkdir -p ${moodleDataMountPointPath}
+echo_feedback "${moodleDataMountPointPath} directory created."
 
-echo_action 'Updating /etc/fstab file to automount the data disk using its UUID...'
-printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >>  /etc/fstab
+fstabFilePath=/etc/fstab
+echo_action 'Updating $fstabFilePath file to automount the data disk using its UUID...'
+if ! grep -q "$dataDiskFileSystemUuid" $fstabFilePath; then
+    printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >> $fstabFilePath
+    echo_feedback "Updated."
+else
+    echo_feedback "Skipped: already set up."
+fi
 
 echo_action 'Mounting all drives...'
 mount -a
@@ -385,11 +396,6 @@ else
     skipDatabaseOption='--skip-database'
 fi
 
-########################### DEBUG ##################################
-whoami
-env | sort
-########################### DEBUG ##################################
-
 echo_action 'Running Moodle installation script...'
 sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/install.php \
 --non-interactive \
@@ -452,8 +458,14 @@ echo_feedback "Done."
 ###############################################################################
 echo_title "Set Moodle Crontab."
 ###############################################################################
-crontab -l | { cat; echo "* * * * * sudo -u ${apache2User} php ${moodleDocumentRootDirPath}/admin/cli/cron.php > /dev/null"; } | crontab -
-echo_feedback "Done."
+crontabEntry="* * * * * sudo -u ${apache2User} php ${moodleDocumentRootDirPath}/admin/cli/cron.php > /dev/null"
+res=$(crontab -l | grep --fixed-strings "$crontabEntry")
+if [ -z "$res" ]; then
+    crontab -l | { cat; echo "$crontabEntry"; } | crontab -
+    echo_feedback "Done."
+else
+    echo_feedback "Skipped: crontab already set up."
+fi
 
 ###############################################################################
 echo_title "Finishing $0 on $(date)."
