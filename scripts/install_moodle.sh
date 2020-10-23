@@ -126,9 +126,14 @@ phpIniFilePath="/etc/php/7.2/apache2/php.ini"
 echo_feedback "Done."
 
 ###############################################################################
-echo_title "Update and upgrade the server."
+echo_title "Update server package index files."
 ###############################################################################
 apt-get update
+echo_feedback "Done."
+
+###############################################################################
+echo_title "Upgrade all installed server packages."
+###############################################################################
 apt-get upgrade -y
 echo_feedback "Done."
 
@@ -157,9 +162,9 @@ echo_title "Setup SMTP Relay."
 echo_action "Adding SMTP Relay Private IP address in ${hostsFilePath}..."
 if ! grep -q "${parameters[smtpRelayFqdn]}" $hostsFilePath; then
     echo -e "\n# Redirect SMTP Relay FQDN to Private IP Address.\n${parameters[smtpRelayPrivateIp]}\t${parameters[smtpRelayFqdn]}" >> $hostsFilePath
-    echo "Done."
+    echo_feedback "Done."
 else
-    echo "Skipped: ${hostsFilePath} file already set up."
+    echo_feedback "Skipped: ${hostsFilePath} file already set up."
 fi
 
 ###############################################################################
