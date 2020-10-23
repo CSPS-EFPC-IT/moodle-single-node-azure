@@ -133,7 +133,7 @@ echo_info "Done."
 echo_title "Upgrade server."
 ###############################################################################
 echo_action "Flushing all existing package index files..."
-rm /var/lib/apt/lists/*
+rm -rf /var/lib/apt/lists/*
 echo_action "Updating server package index files before the upgrade..."
 apt-get update
 echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
