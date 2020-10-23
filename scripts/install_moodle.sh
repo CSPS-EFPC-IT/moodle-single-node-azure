@@ -126,15 +126,17 @@ phpIniFilePath="/etc/php/7.2/apache2/php.ini"
 echo_feedback "Done."
 
 ###############################################################################
-echo_title "Update server package index files."
+echo_title "Upgrade server."
 ###############################################################################
+echo_action "Update server package index files before the upgrade."
 apt-get update
-echo_feedback "Done."
-
-###############################################################################
-echo_title "Upgrade all installed server packages."
-###############################################################################
+echo_action "Upgrade all installed server packages to their latest version and apply available security patches."
 apt-get upgrade -y
+# Bug Fix:  Issue-185 - Experience showed that some upgrades may invalidate the
+#           server package index. Thus, we update the package index list once 
+#           again after the upgrade.
+echo_action "Refresh server package index files after the upgrade."
+apt-get update
 echo_feedback "Done."
 
 ###############################################################################
