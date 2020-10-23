@@ -18,7 +18,7 @@ function echo_title {
 
 function echo_action {
     echo ""
-    echo "$1"
+    echo "*** $1 ***"
 }
 
 function echo_feedback {
