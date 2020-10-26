@@ -29,12 +29,12 @@ function echo_error {
     echo "ERROR  - $1"
 }
 
-function installMoodlePlugin {
+function downloadAndExtractMoodlePlugin {
     local pluginTitle=$1
     local pluginZipFileUrl=$2
     local pluginDirPath=$3
 
-    echo_title "Install Moodle \"${pluginTitle}\" plugin..."
+    echo_title "Download and Extract Moodle \"${pluginTitle}\" plugin..."
 
     echo_action "Downloading \"${pluginTitle}\" plugin zip file..."
     wget $pluginZipFileUrl
@@ -340,84 +340,84 @@ tar zxf moodle-3.8.4.tgz -C ${apache2DefaultDocumentRootDirPath}
 echo_info "Done."
 
 # Ref.: https://moodle.org/plugins/filter_multilang2
-installMoodlePlugin "Filters: Multi-Language Content (v2)" \
-                    "https://moodle.org/plugins/download.php/20674/filter_multilang2_moodle38_2019111900.zip" \
-                    "${moodleDocumentRootDirPath}/filter"
+downloadAndExtractMoodlePlugin  "Filters: Multi-Language Content (v2)" \
+                                "https://moodle.org/plugins/download.php/20674/filter_multilang2_moodle38_2019111900.zip" \
+                                "${moodleDocumentRootDirPath}/filter"
 
 # Ref.: https://moodle.org/plugins/mod_bigbluebuttonbn
-installMoodlePlugin "Activities: BigBlueButtonBN" \
-                    "https://moodle.org/plugins/download.php/21195/mod_bigbluebuttonbn_moodle38_2019042008.zip" \
-                    "${moodleDocumentRootDirPath}/mod"
+downloadAndExtractMoodlePlugin  "Activities: BigBlueButtonBN" \
+                                "https://moodle.org/plugins/download.php/21195/mod_bigbluebuttonbn_moodle38_2019042008.zip" \
+                                "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/local_navbarplus
-installMoodlePlugin "General plugins (Local): Navbar Plus" \
-                    "https://moodle.org/plugins/download.php/21066/local_navbarplus_moodle38_2020021800.zip" \
-                    "${moodleDocumentRootDirPath}/local"
+downloadAndExtractMoodlePlugin  "General plugins (Local): Navbar Plus" \
+                                "https://moodle.org/plugins/download.php/21066/local_navbarplus_moodle38_2020021800.zip" \
+                                "${moodleDocumentRootDirPath}/local"
 
 # Ref.: https://moodle.org/plugins/block_qrcode
-installMoodlePlugin "Blocks: QR code" \
-                    "https://moodle.org/plugins/download.php/20732/block_qrcode_moodle38_2019112100.zip" \
-                    "${moodleDocumentRootDirPath}/blocks"
+downloadAndExtractMoodlePlugin  "Blocks: QR code" \
+                                "https://moodle.org/plugins/download.php/20732/block_qrcode_moodle38_2019112100.zip" \
+                                "${moodleDocumentRootDirPath}/blocks"
 
 # Ref.: https://moodle.org/plugins/mod_facetoface
-installMoodlePlugin "Activities: Facetoface" \
-                    "https://moodle.org/plugins/download.php/18183/mod_facetoface_moodle35_2018110900.zip" \
-                    "${moodleDocumentRootDirPath}/mod"
+downloadAndExtractMoodlePlugin  "Activities: Facetoface" \
+                                "https://moodle.org/plugins/download.php/18183/mod_facetoface_moodle35_2018110900.zip" \
+                                "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/mod_questionnaire
-installMoodlePlugin "Activities: Questionnaire" \
-                    "https://moodle.org/plugins/download.php/21849/mod_questionnaire_moodle39_2020011508.zip" \
-                    "${moodleDocumentRootDirPath}/mod"
+downloadAndExtractMoodlePlugin  "Activities: Questionnaire" \
+                                "https://moodle.org/plugins/download.php/21849/mod_questionnaire_moodle39_2020011508.zip" \
+                                "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/theme_boost_campus
-installMoodlePlugin "Themes: Boost Campus" \
-                    "https://moodle.org/plugins/download.php/21973/theme_boost_campus_moodle38_2020071400.zip" \
-                    "${moodleDocumentRootDirPath}/theme"
+downloadAndExtractMoodlePlugin  "Themes: Boost Campus" \
+                                "https://moodle.org/plugins/download.php/21973/theme_boost_campus_moodle38_2020071400.zip" \
+                                "${moodleDocumentRootDirPath}/theme"
 
 # Ref.: https://moodle.org/plugins/local_staticpage
-installMoodlePlugin "General plugins (Local): Static Pages" \
-                    "https://moodle.org/plugins/download.php/21045/local_staticpage_moodle38_2020021400.zip" \
-                    "${moodleDocumentRootDirPath}/local"
+downloadAndExtractMoodlePlugin  "General plugins (Local): Static Pages" \
+                                "https://moodle.org/plugins/download.php/21045/local_staticpage_moodle38_2020021400.zip" \
+                                "${moodleDocumentRootDirPath}/local"
 
 # Ref.: https://moodle.org/plugins/mod_customcert
-installMoodlePlugin "Activities: Custom certificate" \
-                    "https://moodle.org/plugins/download.php/21208/mod_customcert_moodle38_2019111804.zip" \
-                    "${moodleDocumentRootDirPath}/mod"
+downloadAndExtractMoodlePlugin  "Activities: Custom certificate" \
+                                "https://moodle.org/plugins/download.php/21208/mod_customcert_moodle38_2019111804.zip" \
+                                "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/mod_hvp
-installMoodlePlugin "Activities: Interactive Content – H5P" \
-                    "https://moodle.org/plugins/download.php/21001/mod_hvp_moodle39_2020020500.zip" \
-                    "${moodleDocumentRootDirPath}/mod"
+downloadAndExtractMoodlePlugin  "Activities: Interactive Content – H5P" \
+                                "https://moodle.org/plugins/download.php/21001/mod_hvp_moodle39_2020020500.zip" \
+                                "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/mod_attendance
-installMoodlePlugin "Activities: Attendance" \
-                    "https://moodle.org/plugins/download.php/22326/mod_attendance_moodle39_2020082500.zip" \
-                    "${moodleDocumentRootDirPath}/mod"
+downloadAndExtractMoodlePlugin  "Activities: Attendance" \
+                                "https://moodle.org/plugins/download.php/22326/mod_attendance_moodle39_2020082500.zip" \
+                                "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/block_completion_progress
-installMoodlePlugin "Blocks: Completion Progress" \
-                    "https://moodle.org/plugins/download.php/22199/block_completion_progress_moodle39_2020081000.zip" \
-                    "${moodleDocumentRootDirPath}/blocks"
+downloadAndExtractMoodlePlugin  "Blocks: Completion Progress" \
+                                "https://moodle.org/plugins/download.php/22199/block_completion_progress_moodle39_2020081000.zip" \
+                                "${moodleDocumentRootDirPath}/blocks"
 
 # Ref.: https://moodle.org/plugins/availability_coursecompleted
-installMoodlePlugin "Availability conditions: Restriction by course completion" \
-                    "https://moodle.org/plugins/download.php/21684/availability_coursecompleted_moodle39_2020052401.zip" \
-                    "${moodleDocumentRootDirPath}/availability/condition"
+downloadAndExtractMoodlePlugin  "Availability conditions: Restriction by course completion" \
+                                "https://moodle.org/plugins/download.php/21684/availability_coursecompleted_moodle39_2020052401.zip" \
+                                "${moodleDocumentRootDirPath}/availability/condition"
 
 # Ref.: https://moodle.org/plugins/block_configurable_reports
-installMoodlePlugin "Blocks: Configurable Reports" \
-                    "https://moodle.org/plugins/download.php/20829/block_configurable_reports_moodle38_2019122000.zip" \
-                    "${moodleDocumentRootDirPath}/blocks"
+downloadAndExtractMoodlePlugin  "Blocks: Configurable Reports" \
+                                "https://moodle.org/plugins/download.php/20829/block_configurable_reports_moodle38_2019122000.zip" \
+                                "${moodleDocumentRootDirPath}/blocks"
 
 # Ref.: https://moodle.org/plugins/tool_coursedates
-installMoodlePlugin "Admin tools: Set course dates" \
-                    "https://moodle.org/plugins/download.php/22237/tool_coursedates_moodle39_2020081400.zip" \
-                    "${moodleDocumentRootDirPath}/admin/tool"
+downloadAndExtractMoodlePlugin  "Admin tools: Set course dates" \
+                                "https://moodle.org/plugins/download.php/22237/tool_coursedates_moodle39_2020081400.zip" \
+                                "${moodleDocumentRootDirPath}/admin/tool"
 
 # Ref.: https://moodle.org/plugins/local_mailtest
-installMoodlePlugin "General plugins (Local): Moodle eMail Test" \
-                    "https://moodle.org/plugins/download.php/22516/local_mailtest_moodle39_2020092000.zip" \
-                    "${moodleDocumentRootDirPath}/local"
+downloadAndExtractMoodlePlugin  "General plugins (Local): Moodle eMail Test" \
+                                "https://moodle.org/plugins/download.php/22516/local_mailtest_moodle39_2020092000.zip" \
+                                "${moodleDocumentRootDirPath}/local"
 
 echo_action "Updating file ownership on ${moodleDocumentRootDirPath}..."
 chown -R ${apache2User}:root ${moodleDocumentRootDirPath}
