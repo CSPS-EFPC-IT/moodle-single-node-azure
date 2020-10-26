@@ -148,10 +148,6 @@ echo_action "Flushing all existing package index files..."
 rm -rf /var/lib/apt/lists/*
 echo_info "Done."
 
-echo_action "Refreshing server package index files after the upgrade..."
-apt-get update
-echo_info "Done."
-
 echo_action "Updating server package index files before the upgrade..."
 apt-get update
 echo_info "Done."
