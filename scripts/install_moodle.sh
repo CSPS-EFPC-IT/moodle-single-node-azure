@@ -100,9 +100,7 @@ done
 echo_info "Done."
 
 # Abort if missing or extra parameters.
-if [[ -z $extraParameterFlag && -z $missingParameterFlag ]]; then
-    echo_info "No missing or extra parameters."
-else
+if [[ $extraParameterFlag == "true" || $missingParameterFlag == "true" ]]; then
     echo_error "Execution aborted due to missing or extra parameters."
     usage="USAGE: $(basename $0)"
     for p in $sortedParameterList; do
@@ -112,7 +110,7 @@ else
     exit 1;
 fi
 
-echo_action 'Printing input parameter values...'
+echo_action 'Printing input parameter values fro debugging purposes...'
 for p in $sortedParameterList; do
     echo_info "$p = \"${parameters[$p]}\""
 done
@@ -498,6 +496,6 @@ else
 fi
 
 ###############################################################################
-echo_title "Finish $0 on $(date)."
+echo_title "Finishing $0 on $(date)."
 ###############################################################################
 trap - EXIT
