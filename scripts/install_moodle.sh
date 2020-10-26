@@ -135,9 +135,9 @@ echo_info "Done."
 ###############################################################################
 echo_title "Upgrade server."
 ###############################################################################
-echo_action "Flushing all existing package index files..."
-rm -rf /var/lib/apt/lists/*
-echo_info "Done."
+# echo_action "Flushing all existing package index files..."
+# rm -rf /var/lib/apt/lists/*
+# echo_info "Done."
 
 echo_action "Updating server package index files before the upgrade..."
 apt-get update
@@ -150,9 +150,9 @@ echo_info "Done."
 # Bug Fix:  Issue-185 - Experience showed that some upgrades may invalidate the
 #           server package index. Thus, we update the package index list once
 #           again after the upgrade.
-echo_action "Refreshing server package index files after the upgrade..."
-apt-get update
-echo_info "Done."
+# echo_action "Refreshing server package index files after the upgrade..."
+# apt-get update
+# echo_info "Done."
 
 ###############################################################################
 echo_title "Install tools."
