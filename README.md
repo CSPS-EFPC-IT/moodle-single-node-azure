@@ -1,5 +1,5 @@
 # moodle-single-node-azure
-Deploys a simple Moodle stack on Azure Cloud.
+Deploys a single Moodle stack on Azure Cloud.
 
 # Description
 This project deploys the following Azure resources:

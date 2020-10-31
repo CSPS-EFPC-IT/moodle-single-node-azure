@@ -241,6 +241,8 @@
         "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
         "webServerComputerName": "webserver",
         "webServerVirtualMachineDataDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-Data-Disk')]",
+        "webServerVirtualMachineInstallMoodleExtensionName": "InstallMoodle",
+        "webServerVirtualMachineLinuxDiagnosticExtensionName": "LinuxDiagnostic",
         "webServerVirtualMachineName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-VM')]",
         "webServerVirtualMachineNamePrefix": "[concat(variables('resourceNamePrefix'), '-WebServer')]",
         "webServerVirtualMachineNetworkInterfaceCardName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-NIC')]",
@@ -1041,7 +1043,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('webServerVirtualMachineName'),'/installMoodle')]",
+            "name": "[concat(variables('webServerVirtualMachineName'),'/', variables('webServerVirtualMachineInstallMoodleExtensionName'))]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -1068,11 +1070,11 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2020-06-01",
-            "name": "[concat(variables('webServerVirtualMachineName'), '/LinuxDiagnostic')]",
+            "name": "[concat(variables('webServerVirtualMachineName'), '/', variables('webServerVirtualMachineLinuxDiagnosticExtensionName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('webServerVirtualMachineName'), variables('webServerVirtualMachineInstallMoodleExtensionName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Diagnostics",
