@@ -61,6 +61,7 @@ declare -A parameters=(     [dataDiskSize]= \
                             [moodleAdminEmail]= \
                             [moodleAdminPassword]= \
                             [moodleAdminUsername]= \
+                            [moodleDataMountPointPath]= \
                             [moodleDbName]= \
                             [moodleDbPassword]= \
                             [moodleDbUsername]= \
@@ -126,7 +127,6 @@ apache2SitesEnabledDefaultFilePath="/etc/apache2/sites-enabled/000-default.conf"
 apache2User="www-data"
 hostsFilePath="/etc/hosts"
 installDirPath="$(pwd)"
-moodleDataMountPointPath="/moodledata"
 moodleDocumentRootDirPath="${apache2DefaultDocumentRootDirPath}/moodle"
 moodleLocalCacheRootDirPath="${apache2DefaultDocumentRootDirPath}/moodlelocalcache"
 phpIniFilePath="/etc/php/7.2/apache2/php.ini"
@@ -282,14 +282,14 @@ echo_info "Data disk file system UUID: $dataDiskFileSystemUuid"
 echo_info "Done."
 
 echo_action "Creating Moodle Data mount point..."
-mkdir -p ${moodleDataMountPointPath}
-echo_info "${moodleDataMountPointPath} directory created."
+mkdir -p ${parameters[moodleDataMountPointPath]}
+echo_info "${parameters[moodleDataMountPointPath]} directory created."
 echo_info "Done."
 
 fstabFilePath=/etc/fstab
 echo_action "Updating $fstabFilePath file to automount the data disk using its UUID..."
 if ! grep -q "$dataDiskFileSystemUuid" $fstabFilePath; then
-    printf "UUID=${dataDiskFileSystemUuid}\t${moodleDataMountPointPath}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >> $fstabFilePath
+    printf "UUID=${dataDiskFileSystemUuid}\t${parameters[moodleDataMountPointPath]}\t${dataDiskFileSystemType}\tdefaults,nofail\t0\t2\n" >> $fstabFilePath
     echo_info "Done."
 else
     echo_info "Skipped: already set up."
@@ -300,8 +300,8 @@ mount -a
 echo_info "Done."
 
 echo_action 'Setting permissions ...'
-chown -R ${apache2User}:root ${moodleDataMountPointPath}
-chmod -R 775 ${moodleDataMountPointPath}
+chown -R ${apache2User}:root ${parameters[moodleDataMountPointPath]}
+chmod -R 775 ${parameters[moodleDataMountPointPath]}
 echo_info "Done."
 
 ###############################################################################
@@ -446,7 +446,7 @@ sudo -u ${apache2User} /usr/bin/php ${moodleDocumentRootDirPath}/admin/cli/insta
     --lang=en \
     --chmod=2777 \
     --wwwroot=https://${parameters[moodleFqdn]}/ \
-    --dataroot=${moodleDataMountPointPath}/ \
+    --dataroot=${parameters[moodleDataMountPointPath]}/ \
     --dbtype=pgsql \
     --dbhost=${parameters[dbServerFqdn]} \
     --dbname=${parameters[moodleDbName]} \

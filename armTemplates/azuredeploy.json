@@ -205,6 +205,13 @@
         "bastionSubnetName": "AzureBastionSubnet",
         "databaseApplicationDatabaseName": "[tolower(custom.cleanName(parameters('projectShortName')))]",
         "databaseName": "[concat(variables('resourceNamePrefix'), '-DB')]",
+        "diagnosticStorageAccountName": "[concat(variables('storageAccountNamePrefix'), 'diagsa')]",
+        "diagnosticStorageAccountSasProperties": {
+            "signedServices": "bt",
+            "signedPermission": "acluw",
+            "signedExpiry": "2100-01-01T00:00:00Z",  // Basically, forever.
+            "signedResourceTypes": "co"
+        },
         "gatewayBackendAddressPoolName": "moodle-web-server",
         "gatewayBackendHttpSettingsCollectionName": "[concat(parameters('projectShortName'), '-HTTP-Settings')]",
         "gatewayFrontendIPConfigurationsName": "appGwPublicFrontendIp",
@@ -224,14 +231,18 @@
         "gatewaySslCertificateHttpsName": "HTTPS-Certificate",
         "gatewaySubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/27')]",
         "gatewaySubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-SN')]",
+        "moodleDataMountPointPath": "/moodledata",
         "recoveryServiceVaultDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVault'), 64)]",
         "recoveryServiceVaultProtectedItemsDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultProtectedItems'), 64)]",
         "recoveryServiceVaultBackupPoliciesDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultBackupPolicies'), 64)]",
         "resourceNamePrefix": "[concat(parameters('projectShortName'), if(equals(parameters('environmentName'), 'prod'), '', concat('-', toupper(parameters('environmentName')))))]",
+        "storageAccountNamePrefix": "[tolower(concat(custom.cleanName(parameters('projectShortName')), if(equals(parameters('environmentName'), 'prod'), '', take(parameters('environmentName'),4))))]",
         "virtualNetworkAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/24')]",
         "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
         "webServerComputerName": "webserver",
         "webServerVirtualMachineDataDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-Data-Disk')]",
+        "webServerVirtualMachineInstallMoodleExtensionName": "InstallMoodle",
+        "webServerVirtualMachineLinuxDiagnosticExtensionName": "LinuxDiagnostic",
         "webServerVirtualMachineName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-VM')]",
         "webServerVirtualMachineNamePrefix": "[concat(variables('resourceNamePrefix'), '-WebServer')]",
         "webServerVirtualMachineNetworkInterfaceCardName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-NIC')]",
@@ -876,6 +887,42 @@
         },
 
         {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('diagnosticStorageAccountName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": true,
+                // Storage Account firewall must be turned off for Guest Metrics to work as per the following reference:
+                // https://docs.microsoft.com/en-ca/azure/azure-monitor/platform/metrics-troubleshoot#cannot-pick-guest-os-namespace-and-metrics
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+
+        {
             "type": "Microsoft.Compute/disks",
             "apiVersion": "2019-07-01",
             "name": "[variables('webServerVirtualMachineDataDiskName')]",
@@ -996,7 +1043,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('webServerVirtualMachineName'),'/installMoodle')]",
+            "name": "[concat(variables('webServerVirtualMachineName'),'/', variables('webServerVirtualMachineInstallMoodleExtensionName'))]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -1014,7 +1061,150 @@
                 },
                 "protectedSettings": {
                     "fileUris": ["[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]"],
-                    "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                    "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDataMountPointPath ', variables('moodleDataMountPointPath'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                }
+            }
+        },
+        // Metrics collected by the Linux Diagnostic Extension and sent to an Azure Storage Account are kept for 14 days
+        // as per https://docs.microsoft.com/en-us/azure/azure-monitor/platform/data-platform-metrics#retention-of-metrics.
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2020-06-01",
+            "name": "[concat(variables('webServerVirtualMachineName'), '/', variables('webServerVirtualMachineLinuxDiagnosticExtensionName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('webServerVirtualMachineName'), variables('webServerVirtualMachineInstallMoodleExtensionName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Diagnostics",
+                "type": "LinuxDiagnostic",
+                "typeHandlerVersion": "3.0",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                    "storageAccountName": "[variables('diagnosticStorageAccountName')]",
+                    "storageAccountSasToken": "[listAccountSas(variables('diagnosticStorageAccountName'), '2019-06-01', variables('diagnosticStorageAccountSasProperties')).accountSasToken]"
+                },
+                "settings": {
+                    "StorageAccount": "[variables('diagnosticStorageAccountName')]",
+                    "ladCfg": {
+                        "diagnosticMonitorConfiguration": {
+                            "eventVolume": "Medium",
+                            "metrics": {
+                                "metricAggregation": [
+                                    {
+                                        "scheduledTransferPeriod": "PT1M"
+                                    },
+                                    {
+                                        "scheduledTransferPeriod": "PT1H"
+                                    }
+                                ],
+                                "resourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('webServerVirtualMachineName'))]"
+                            },
+                            "performanceCounters": {
+                                "performanceCounterConfiguration": [
+                                    {
+                                        "class": "memory",
+                                        "annotation": [
+                                            {
+                                                "displayName": "Swap percent used",
+                                                "locale": "en-us"
+                                            }
+                                        ],
+                                        "counter": "percentusedswap",
+                                        "counterSpecifier": "/builtin/memory/percentusedswap",
+                                        "type": "builtin",
+                                        "unit": "Percent",
+                                        "sampleRate": "PT15S"
+                                    },
+                                    {
+                                        "class": "memory",
+                                        "annotation": [
+                                            {
+                                                "displayName": "Memory percentage",
+                                                "locale": "en-us"
+                                            }
+                                        ],
+                                        "counter": "percentusedmemory",
+                                        "counterSpecifier": "/builtin/memory/percentusedmemory",
+                                        "type": "builtin",
+                                        "unit": "Percent",
+                                        "sampleRate": "PT15S"
+                                    },
+                                    {
+                                        "class": "disk",
+                                        "annotation": [
+                                            {
+                                                "displayName": "Disk queue length",
+                                                "locale": "en-us"
+                                            }
+                                        ],
+                                        "condition": "IsAggregate=TRUE",
+                                        "counter": "averagediskqueuelength",
+                                        "counterSpecifier": "/builtin/disk/averagediskqueuelength",
+                                        "type": "builtin",
+                                        "unit": "Count",
+                                        "sampleRate": "PT15S"
+                                    },
+                                    {
+                                        "class": "filesystem",
+                                        "annotation": [
+                                            {
+                                                "displayName": "OS disk filesystem % used space",
+                                                "locale": "en-us"
+                                            }
+                                        ],
+                                        "condition": "Name=\"/\"",
+                                        "counter": "percentusedspace",
+                                        "counterSpecifier": "/builtin/filesystem/osusedspace",
+                                        "type": "builtin",
+                                        "unit": "percent",
+                                        "sampleRate": "PT15S"
+                                    },
+                                    {
+                                        "class": "filesystem",
+                                        "annotation": [
+                                            {
+                                                "displayName": "Data disk filesystem % used space",
+                                                "locale": "en-us"
+                                            }
+                                        ],
+                                        "condition": "[concat('Name=\"', variables('moodleDataMountPointPath'), '\"')]",
+                                        "counter": "percentusedspace",
+                                        "counterSpecifier": "/builtin/filesystem/datausedspace",
+                                        "type": "builtin",
+                                        "unit": "percent",
+                                        "sampleRate": "PT15S"
+                                    }
+                                ]
+                            },
+                            "syslogEvents": {
+                                "syslogEventConfiguration": {
+                                    "LOG_AUTH": "LOG_DEBUG",
+                                    "LOG_AUTHPRIV": "LOG_DEBUG",
+                                    "LOG_CRON": "LOG_DEBUG",
+                                    "LOG_DAEMON": "LOG_DEBUG",
+                                    "LOG_FTP": "LOG_DEBUG",
+                                    "LOG_KERN": "LOG_DEBUG",
+                                    "LOG_LOCAL0": "LOG_DEBUG",
+                                    "LOG_LOCAL1": "LOG_DEBUG",
+                                    "LOG_LOCAL2": "LOG_DEBUG",
+                                    "LOG_LOCAL3": "LOG_DEBUG",
+                                    "LOG_LOCAL4": "LOG_DEBUG",
+                                    "LOG_LOCAL5": "LOG_DEBUG",
+                                    "LOG_LOCAL6": "LOG_DEBUG",
+                                    "LOG_LOCAL7": "LOG_DEBUG",
+                                    "LOG_LPR": "LOG_DEBUG",
+                                    "LOG_MAIL": "LOG_DEBUG",
+                                    "LOG_NEWS": "LOG_DEBUG",
+                                    "LOG_SYSLOG": "LOG_DEBUG",
+                                    "LOG_USER": "LOG_DEBUG",
+                                    "LOG_UUCP": "LOG_DEBUG"
+                                }
+                            }
+                        },
+                        "sampleRateInSeconds": 15
+                    }
                 }
             }
         }
