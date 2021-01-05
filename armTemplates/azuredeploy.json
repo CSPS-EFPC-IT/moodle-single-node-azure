@@ -157,6 +157,13 @@
                 "description": "The private IP address of the email server to use."
             }
         },
+        "virtualMachineTags": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+                "description": "Optional tags specific to Virtual Machines."
+            }
+        },
         "virtualNetworkAddressBase": {
             "type": "string",
             "metadata": {
@@ -926,6 +933,7 @@
             "type": "Microsoft.Compute/disks",
             "apiVersion": "2019-07-01",
             "name": "[variables('webServerVirtualMachineDataDiskName')]",
+            "tags": "[parameters('resourceTags')]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Premium_LRS",
@@ -945,6 +953,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2020-05-01",
             "name": "[variables('webServerVirtualMachineNetworkInterfaceCardName')]",
+            "tags": "[parameters('resourceTags')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
                 "[resourceId('Microsoft.Network/applicationGateways', variables('gatewayName'))]"
@@ -980,6 +989,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2020-06-01",
             "name": "[variables('webServerVirtualMachineName')]",
+            "tags": "[union(parameters('resourceTags'), parameters('virtualMachineTags'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks', variables('webServerVirtualMachineDataDiskName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('webServerVirtualMachineNetworkInterfaceCardName'))]"
