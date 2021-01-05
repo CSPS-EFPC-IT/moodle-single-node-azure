@@ -371,7 +371,7 @@ downloadAndExtractMoodlePlugin  "Activities: Questionnaire" \
 
 # Ref.: https://moodle.org/plugins/theme_boost_campus
 downloadAndExtractMoodlePlugin  "Themes: Boost Campus" \
-                                "https://moodle.org/plugins/download.php/21973/theme_boost_campus_moodle38_2020071400.zip" \
+                                "https://moodle.org/plugins/download.php/22502/theme_boost_campus_moodle38_2020071400.zip" \
                                 "${moodleDocumentRootDirPath}/theme"
 
 # Ref.: https://moodle.org/plugins/local_staticpage
@@ -381,17 +381,17 @@ downloadAndExtractMoodlePlugin  "General plugins (Local): Static Pages" \
 
 # Ref.: https://moodle.org/plugins/mod_customcert
 downloadAndExtractMoodlePlugin  "Activities: Custom certificate" \
-                                "https://moodle.org/plugins/download.php/21208/mod_customcert_moodle38_2019111804.zip" \
+                                "https://moodle.org/plugins/download.php/22973/mod_customcert_moodle38_2019111804.zip" \
                                 "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/mod_hvp
 downloadAndExtractMoodlePlugin  "Activities: Interactive Content – H5P" \
-                                "https://moodle.org/plugins/download.php/21001/mod_hvp_moodle39_2020020500.zip" \
+                                "https://moodle.org/plugins/download.php/22165/mod_hvp_moodle39_2020020500.zip" \
                                 "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/mod_attendance
 downloadAndExtractMoodlePlugin  "Activities: Attendance" \
-                                "https://moodle.org/plugins/download.php/22326/mod_attendance_moodle39_2020082500.zip" \
+                                "https://moodle.org/plugins/download.php/23075/mod_attendance_moodle39_2020082500.zip" \
                                 "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/block_completion_progress
@@ -401,12 +401,12 @@ downloadAndExtractMoodlePlugin  "Blocks: Completion Progress" \
 
 # Ref.: https://moodle.org/plugins/availability_coursecompleted
 downloadAndExtractMoodlePlugin  "Availability conditions: Restriction by course completion" \
-                                "https://moodle.org/plugins/download.php/21684/availability_coursecompleted_moodle39_2020052401.zip" \
+                                "https://moodle.org/plugins/download.php/22755/availability_coursecompleted_moodle39_2020052401.zip" \
                                 "${moodleDocumentRootDirPath}/availability/condition"
 
 # Ref.: https://moodle.org/plugins/block_configurable_reports
 downloadAndExtractMoodlePlugin  "Blocks: Configurable Reports" \
-                                "https://moodle.org/plugins/download.php/20829/block_configurable_reports_moodle38_2019122000.zip" \
+                                "https://moodle.org/plugins/download.php/22758/block_configurable_reports_moodle38_2019122000.zip" \
                                 "${moodleDocumentRootDirPath}/blocks"
 
 # Ref.: https://moodle.org/plugins/tool_coursedates
