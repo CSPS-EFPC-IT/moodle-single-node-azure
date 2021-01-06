@@ -76,6 +76,12 @@
         "smtpRelayPrivateIp": {
             "value": "10.10.10.1"
         },
+        "virtualMachineTags": {
+            "value": {
+                "[Tag name 1]": "[Tag value 1]",
+                "[Tag name 2]": "[Tag value 2]"
+            }
+        },
         "virtualNetworkAddressBase": {
             "value": "10.10.10"
         },
