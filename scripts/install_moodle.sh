@@ -135,30 +135,12 @@ echo_info "Done."
 ###############################################################################
 echo_title "Upgrade server."
 ###############################################################################
-# Issue-185 Experience showed that some "latest" ubuntu images run into issues
-#           with package installation such as not being able to find the unzip
-#           or postgres-client packages. Somehow, the update and/or the upgrade
-#           processes seem to invalidate or corrupt the server package indexes.
-#           As a workaround, we discovered that flushing the package index list
-#           before the first update and updating the package indexes after the
-#           upgrade reduces the occurence of the issue.
-
-# Bug Fix:  See above "Issue-185"
-echo_action "Flushing all existing package index files..."
-rm -rf /var/lib/apt/lists/*
-echo_info "Done."
-
 echo_action "Updating server package index files before the upgrade..."
-apt-get update
+apt update
 echo_info "Done."
 
 echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
-apt-get upgrade -y
-echo_info "Done."
-
-# Bug Fix:  See above "Issue-185"
-echo_action "Refreshing server package index files after the upgrade..."
-apt-get update
+apt upgrade -y
 echo_info "Done."
 
 ###############################################################################
