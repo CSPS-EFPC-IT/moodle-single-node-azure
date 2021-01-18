@@ -348,13 +348,13 @@ get_moodle_plugin   "Availability conditions: Restriction by course completion" 
 
 # Ref.: https://moodle.org/plugins/block_completion_progress
 get_moodle_plugin   "Blocks: Completion Progress" \
-                    "https://github.com/jonof/moodle-block_completion_progress/archive/2020081000.zip" \
+                    "https://moodle.org/plugins/download.php/22199/block_completion_progress_moodle310_2020081000.zip" \
                     "c4c7047dcce96761bb2ccbab118008c5" \
                     "${moodleDocumentRootDirPath}/blocks"
 
 # Ref.: https://moodle.org/plugins/block_configurable_reports
 get_moodle_plugin   "Blocks: Configurable Reports" \
-                    "https://github.com/jleyva/moodle-block_configurablereports/archive/3.9.0.zip" \
+                    "https://moodle.org/plugins/download.php/22758/block_configurable_reports_moodle310_2020110300.zip" \
                     "e693f9f78b7fc486f70c9d1dbc578ba0" \
                     "${moodleDocumentRootDirPath}/blocks"
 
@@ -366,7 +366,7 @@ get_moodle_plugin   "Blocks: QR code" \
 
 # Ref.: https://moodle.org/plugins/filter_multilang2
 get_moodle_plugin   "Filters: Multi-Language Content (v2)" \
-                    "https://github.com/iarenaza/moodle-filter_multilang2/archive/1.1.2.zip" \
+                    "https://moodle.org/plugins/download.php/22662/filter_multilang2_moodle310_2020101300.zip" \
                     "9c4c72c2ef9a00f97889a81cc62da715" \
                     "${moodleDocumentRootDirPath}/filter"
 
@@ -384,7 +384,7 @@ get_moodle_plugin   "Activities: Attendance" \
 
 # Ref.: https://moodle.org/plugins/mod_customcert
 get_moodle_plugin   "Activities: Custom certificate" \
-                    "https://github.com/mdjnelson/moodle-mod_customcert/archive/v3.10.0.zip" \
+                    "https://moodle.org/plugins/download.php/22980/mod_customcert_moodle310_2020110900.zip" \
                     "e1fc30a97ea4b1f39f18302cd3711b08" \
                     "${moodleDocumentRootDirPath}/mod"
 
@@ -396,19 +396,19 @@ get_moodle_plugin   "Activities: Interactive Content – H5P" \
 
 # Ref.: https://moodle.org/plugins/mod_questionnaire
 get_moodle_plugin   "Activities: Questionnaire" \
-                    "https://github.com/PoetOS/moodle-mod_questionnaire/archive/3.9.1.zip" \
+                    "https://moodle.org/plugins/download.php/22949/mod_questionnaire_moodle310_2020062302.zip" \
                     "333f1a31d9d313c914d661b40a8c5dd8" \
                     "${moodleDocumentRootDirPath}/mod"
 
 # Ref.: https://moodle.org/plugins/theme_boost_campus
 get_moodle_plugin   "Themes: Boost Campus" \
-                    "https://github.com/moodleuulm/moodle-theme_boost_campus/archive/v3.10-r2.zip" \
+                    "https://moodle.org/plugins/download.php/23226/theme_boost_campus_moodle310_2020112801.zip" \
                     "e9dd4a1338ca2ea8002d3e7ad5185bcf" \
                     "${moodleDocumentRootDirPath}/theme"
 
 # Ref.: https://moodle.org/plugins/tool_coursedates
 get_moodle_plugin   "Admin tools: Set course dates" \
-                    "https://github.com/LafColITS/moodle-tool_coursedates/archive/v3.7.0.zip" \
+                    "https://moodle.org/plugins/download.php/22237/tool_coursedates_moodle310_2020081400.zip" \
                     "1deb78e3608ab027f88e3e7063586f05" \
                     "${moodleDocumentRootDirPath}/admin/tool"
 
