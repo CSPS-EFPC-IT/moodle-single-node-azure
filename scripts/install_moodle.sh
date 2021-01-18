@@ -318,7 +318,7 @@ echo_title "Download and extract Moodle files."
 ###############################################################################
 # Ref.: https://download.moodle.org/releases/supported/
 echo_action "Downloading Moodle 3.10.1 tar file..."
-moodle_zip_file_url=https://download.moodle.org/download.php/stable310/moodle-3.10.1.tgz
+moodle_zip_file_url=https://download.moodle.org/download.php/direct/stable310/moodle-3.10.1.tgz
 moodle_zip_file=$(basename ${moodle_zip_file_url})
 wget ${moodle_zip_file_url} -O ${moodle_zip_file}
 echo_info "Done."
