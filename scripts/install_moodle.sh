@@ -200,7 +200,7 @@ echo_info "Done."
 echo_title "Clean up server."
 ###############################################################################
 echo_action "Removing server packages that are no longer needed."
-apt-get autoremove -y
+apt autoremove -y
 echo_info "Done."
 
 ###############################################################################
@@ -208,8 +208,10 @@ echo_title "Setup SMTP Server."
 ###############################################################################
 echo_action "Adding SMTP Server Private IP address in ${HOSTS_FILE_PATH}..."
 if ! grep -q "${parameters[smtpRelayFqdn]}" ${HOSTS_FILE_PATH}; then
-  echo -e "\n# Redirect SMTP Server FQDN to Private IP Address.\n" >> ${HOSTS_FILE_PATH}
-  echo -e "${parameters[smtpRelayPrivateIp]}\t${parameters[smtpRelayFqdn]}" >> ${HOSTS_FILE_PATH}
+  cat <<EOF >> ${HOSTS_FILE_PATH}
+# Redirect SMTP Server FQDN to Private IP Address.
+${parameters[smtpRelayPrivateIp]} ${parameters[smtpRelayFqdn]}
+EOF
   echo_info "Done."
 else
   echo_info "Skipped: ${HOSTS_FILE_PATH} file already set up."
@@ -228,8 +230,6 @@ echo_title "Update Apache config."
 ###############################################################################
 echo_action "Updating Apache default site DocumentRoot property in ${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}..."
 if ! grep -q "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" ${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}; then
-  # escapedApache2DefaultDocumentRootDirPath=$(sed -E 's/(\/)/\\\1/g' <<< ${apache2DefaultDocumentRootDirPath})
-  # escapedMoodleDocumentRootDirPath=$(sed -E 's/(\/)/\\\1/g' <<< ${moodleDocumentRootDirPath})
   sed -i -E "s|DocumentRoot[[:space:]]*${APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH}|DocumentRoot ${MOODLE_DOCUMENT_ROOT_DIR_PATH}|g" ${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}
   echo_info "Done."
 else
@@ -286,7 +286,7 @@ else
 fi
 
 echo_action 'Retrieving data disk file System UUID...'
-# Bug Fix:  Experience demonstrated that the UUID of the new file system is not immediately 
+# Bug Fix:  Experience demonstrated that the UUID of the new file system is not immediately
 #           available through lsblk, thus we wait and loop for up to 60 seconds to get it.
 elapsed_time=0
 data_disk_file_system_uuid=""
