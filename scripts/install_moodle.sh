@@ -8,6 +8,7 @@ readonly APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH="/var/www/html"
 readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
 readonly APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH="/etc/apache2/sites-enabled/000-default.conf"
 readonly APACHE2_USER="www-data"
+readonly DATE_FORMAT='%Y-%m-%d %H:%M:%S (%Z)'
 readonly HOSTS_FILE_PATH="/etc/hosts"
 readonly MOODLE_DOCUMENT_ROOT_DIR_PATH="${APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH}/moodle"
 readonly MOODLE_LOCAL_CACHE_DIR_PATH="${APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH}/moodlelocalcache"
@@ -23,15 +24,15 @@ function echo_title {
 
 function echo_action {
   echo ""
-  echo "ACTION - $1"
+  echo "$(date +"$DATE_FORMAT") | ACTION - $1"
 }
 
 function echo_info {
-  echo "INFO   - $1"
+  echo "$(date +"$DATE_FORMAT") | INFO   - $1"
 }
 
 function echo_error {
-  echo "ERROR  - $1" >&2
+  echo "$(date +"$DATE_FORMAT") | ERROR  - $1" >&2
 }
 
 function get_moodle_plugin {
