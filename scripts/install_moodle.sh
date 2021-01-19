@@ -62,15 +62,15 @@ function get_moodle_plugin {
 }
 
 function main {
-  # exit when any command fails
+  # Exit when any command fails
   set -e
-  # keep track of the last executed command
+  # Keep track of the last executed command
   trap 'last_command=${current_command}; current_command=$BASH_COMMAND' DEBUG
-  # echo an error message before exiting
+  # Echo an error message before exiting
   trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
   ###############################################################################
-  echo_title "Starting $0 on $(date)."
+  echo_title "Start of $0"
   ###############################################################################
 
   ###############################################################################
@@ -455,11 +455,17 @@ EOF
   ###############################################################################
   echo_title "Run Moodle Installer."
   ###############################################################################
-  echo_action 'Assessing whether the moodle tables already exist...'
-  # If yes then add the "--skip-database" option to the install script.
+  echo_action 'Assessing whether Moodle installer should skip database setup...'
+  # If moodle database tables already exist then
+  # add the "--skip-database" option to the install script.
   export PGPASSWORD="${parameters[dbServerAdminPassword]}"
   table_prefix='mdl_'
-  table_count=$(psql "host=${parameters[dbServerFqdn]} port=5432 user=${parameters[dbServerAdminUsername]}@${parameters[dbServerName]} dbname=${parameters[moodleDbName]} sslmode=require" --tuples-only --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodleDbName]}' and table_name like '${table_prefix}%'")
+  table_count=$(
+    psql \
+      "host=${parameters[dbServerFqdn]} port=5432 user=${parameters[dbServerAdminUsername]}@${parameters[dbServerName]} dbname=${parameters[moodleDbName]} sslmode=require" \
+      --tuples-only \
+      --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodleDbName]}' and table_name like '${table_prefix}%'" \
+    )
   if (( ${table_count} == 0 )); then # Use arithmetic expansion operator ((...)) to convert string into integer.
     echo_info 'Moodle tables NOT found in database. Database must be setup as part of the install.'
     skip_database_option=''
@@ -532,8 +538,10 @@ EOF
   fi
 
   ###############################################################################
-  echo_title "Finishing $0 on $(date)."
+  echo_title "End of $0"
   ###############################################################################
+
+  # Remove all trap
   trap - EXIT
 }
 
