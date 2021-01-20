@@ -329,7 +329,7 @@ EOF
     echo_info "Done."
   fi
 
-  echo_action "Creating new ${MOODLE_LOCAL_CACHE_DIR_PATH} folder with proper permission..."
+  echo_action "Creating new ${MOODLE_LOCAL_CACHE_DIR_PATH} folder with proper ownership..."
   install -o ${APACHE2_USER} -d ${MOODLE_LOCAL_CACHE_DIR_PATH}
   echo_info "Done."
 
