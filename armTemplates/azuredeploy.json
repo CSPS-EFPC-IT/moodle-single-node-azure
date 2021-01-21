@@ -113,7 +113,7 @@
             }
         },
         "moodleAdminPassword": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The password the Moodle Administrator account."
             }
