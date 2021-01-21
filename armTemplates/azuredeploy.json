@@ -113,7 +113,7 @@
             }
         },
         "moodleAdminPassword": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The password the Moodle Administrator account."
             }
@@ -152,7 +152,7 @@
             }
         },
         "smtpServerPrivateIp": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The private IP address of the email server to use."
             }
@@ -165,7 +165,7 @@
             }
         },
         "virtualNetworkAddressBase": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The virtual network IP address prefix. Format is '255.255.255'."
             }
