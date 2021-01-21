@@ -145,13 +145,13 @@
                 "description": "Additional tags to add to each resource created."
             }
         },
-        "smtpRelayFqdn": {
+        "smtpServerFqdn": {
             "type": "string",
             "metadata": {
                 "description": "The fully qualified domain name of the email server to use."
             }
         },
-        "smtpRelayPrivateIp": {
+        "smtpServerPrivateIp": {
             "type": "string",
             "metadata": {
                 "description": "The private IP address of the email server to use."
@@ -1071,7 +1071,7 @@
                 },
                 "protectedSettings": {
                     "fileUris": ["[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]"],
-                    "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDataMountPointPath ', variables('moodleDataMountPointPath'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpRelayFqdn ', parameters('smtpRelayFqdn'), ' -smtpRelayPrivateIp ', parameters('smtpRelayPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                    "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDataMountPointPath ', variables('moodleDataMountPointPath'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpServerFqdn ', parameters('smtpServerFqdn'), ' -smtpServerPrivateIp ', parameters('smtpServerPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }
             }
         },

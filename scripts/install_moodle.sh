@@ -92,8 +92,8 @@ function main {
     [moodleDbUsername]= \
     [moodleFqdn]= \
     [moodleUpgradeKey]= \
-    [smtpRelayFqdn]= \
-    [smtpRelayPrivateIp]=)
+    [smtpServerFqdn]= \
+    [smtpServerPrivateIp]=)
   sorted_parameter_keys=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
   echo_info "Done."
 
@@ -205,10 +205,10 @@ function main {
   echo_title "Setup SMTP Server."
   ###############################################################################
   echo_action "Adding SMTP Server Private IP address in ${HOSTS_FILE_PATH}..."
-  if ! grep -q "${parameters[smtpRelayFqdn]}" ${HOSTS_FILE_PATH}; then
+  if ! grep -q "${parameters[smtpServerFqdn]}" ${HOSTS_FILE_PATH}; then
     cat <<EOF >> ${HOSTS_FILE_PATH}
 # Redirect SMTP Server FQDN to Private IP Address.
-${parameters[smtpRelayPrivateIp]} ${parameters[smtpRelayFqdn]}
+${parameters[smtpServerPrivateIp]} ${parameters[smtpServerFqdn]}
 EOF
     echo_info "Done."
   else

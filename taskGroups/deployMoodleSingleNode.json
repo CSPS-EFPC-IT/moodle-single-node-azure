@@ -20,7 +20,7 @@
         "csmParametersFileLink": "",
         "csmFile": "$(System.DefaultWorkingDirectory)/_CSPS-EFPC-IT_moodle-single-node-azure/armTemplates/azuredeploy.json",
         "csmParametersFile": "",
-        "overrideParameters": "-armTemplateRepoBaseUrl \"$(armTemplateRepoBaseUrl)\" -customApplicationFqdn \"$(customApplicationFqdn)\" -databaseAdminPassword \"$(databaseAdminPassword)\" -databaseAdminUsername \"$(databaseAdminUsername)\" -databaseBackupRetentionDays $(databaseBackupRetentionDays) -databaseCapacity $(databaseCapacity) -databaseMoodlePassword \"$(databaseMoodlePassword)\" -databaseMoodleUsername \"$(databaseMoodleUsername)\" -databaseStorageMb $(databaseStorageMb) -dataDiskSizeGB $(dataDiskSizeGB) -environmentName \"$(environmentName)\" -fileRepositoryUri \"$(fileRepositoryUri)\" -gatewaySslCertificateUri \"$(gatewaySslCertificateUri)\" -gatewayUserAssignedIdentity $(gatewayUserAssignedIdentity) -location \"$(location)\" -moodleAdminEmail \"$(moodleAdminEmail)\" -moodleAdminPassword \"$(moodleAdminPassword)\" -moodleAdminUsername \"$(moodleAdminUsername)\" -moodleUpgradeKey \"$(moodleUpgradeKey)\" -projectShortName \"$(projectShortName)\" -resourceTags $(resourceTags) -smtpRelayFqdn \"$(smtpRelayFqdn)\" -smtpRelayPrivateIp \"$(smtpRelayPrivateIp)\" -virtualMachineTags \"$(virtualMachineTags)\" -virtualNetworkAddressBase \"$(virtualNetworkAddressBase)\" -webServerAdminPassword \"$(webServerAdminPassword)\" -webServerAdminUsername \"$(webServerAdminUsername)\"",
+        "overrideParameters": "-armTemplateRepoBaseUrl \"$(armTemplateRepoBaseUrl)\" -customApplicationFqdn \"$(customApplicationFqdn)\" -databaseAdminPassword \"$(databaseAdminPassword)\" -databaseAdminUsername \"$(databaseAdminUsername)\" -databaseBackupRetentionDays $(databaseBackupRetentionDays) -databaseCapacity $(databaseCapacity) -databaseMoodlePassword \"$(databaseMoodlePassword)\" -databaseMoodleUsername \"$(databaseMoodleUsername)\" -databaseStorageMb $(databaseStorageMb) -dataDiskSizeGB $(dataDiskSizeGB) -environmentName \"$(environmentName)\" -fileRepositoryUri \"$(fileRepositoryUri)\" -gatewaySslCertificateUri \"$(gatewaySslCertificateUri)\" -gatewayUserAssignedIdentity $(gatewayUserAssignedIdentity) -location \"$(location)\" -moodleAdminEmail \"$(moodleAdminEmail)\" -moodleAdminPassword \"$(moodleAdminPassword)\" -moodleAdminUsername \"$(moodleAdminUsername)\" -moodleUpgradeKey \"$(moodleUpgradeKey)\" -projectShortName \"$(projectShortName)\" -resourceTags $(resourceTags) -smtpServerFqdn \"$(smtpServerFqdn)\" -smtpServerPrivateIp \"$(smtpServerPrivateIp)\" -virtualMachineTags \"$(virtualMachineTags)\" -virtualNetworkAddressBase \"$(virtualNetworkAddressBase)\" -webServerAdminPassword \"$(webServerAdminPassword)\" -webServerAdminUsername \"$(webServerAdminUsername)\"",
         "deploymentMode": "Incremental",
         "deploymentName": "moodleSingleNode_pipeline",
         "deploymentOutputs": "",
@@ -84,21 +84,20 @@
     "Agent",
     "DeploymentGroup"
   ],
-  "revision": 3,
+  "revision": 1,
   "createdBy": {
     "displayName": "Patrick Messier",
     "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
     "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
   },
-  "createdOn": "2020-10-23T13:28:32.370Z",
+  "createdOn": "2021-01-20T14:04:15.497Z",
   "modifiedBy": {
     "displayName": "Patrick Messier",
     "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
     "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
   },
-  "modifiedOn": "2020-11-18T03:12:21.137Z",
-  "comment": "",
-  "id": "746d239e-e2ee-4ebb-b709-81b83cc0d1ba",
+  "modifiedOn": "2021-01-20T14:04:15.497Z",
+  "id": "e29562ad-c156-4ff1-8fb4-f9ac7652d660",
   "name": "Deploy Moodle Single Node",
   "version": {
     "major": 1,
@@ -383,7 +382,7 @@
       "aliases": [],
       "options": {},
       "properties": {
-        "EndpointFilterRule": "ScopeLevel >= deploymentScope"
+        "EndpointFilterRule": ""
       },
       "name": "serviceConnectionName",
       "label": "serviceConnectionName",
@@ -409,12 +408,15 @@
         "2ef27f73-040f-466a-8272-7c8e175085eb": "NetworkingArchitecture-DEV-RG-Connection",
         "2ab963fc-4c3e-4e54-ae4f-2d641b20618b": "WebAnalytics-DEV-RG-Connection",
         "8cf28a7b-4a04-436b-9277-12b0fb3a9409": "WebAnalytics-STAGING-RG-Connection",
-        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection"
+        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection",
+        "9ce19167-afaf-4bda-8d84-6df8f8fdfb40": "KalturaManagementConsole-DEV-RG-Connection",
+        "07487aa2-0a6a-482a-8577-a944de95f42e": "KalturaManagementConsole-STAGING-RG-Connection",
+        "fb75c709-f277-4341-8887-498a38ffef18": "KalturaManagementConsole-RG-Connection"
       },
       "properties": {},
-      "name": "smtpRelayFqdn",
-      "label": "smtpRelayFqdn",
-      "defaultValue": "$(smtpRelayFqdn)",
+      "name": "smtpServerFqdn",
+      "label": "smtpServerFqdn",
+      "defaultValue": "$(smtpServerFqdn)",
       "required": true,
       "type": "string",
       "helpMarkDown": "",
@@ -424,9 +426,9 @@
       "aliases": [],
       "options": {},
       "properties": {},
-      "name": "smtpRelayPrivateIp",
-      "label": "smtpRelayPrivateIp",
-      "defaultValue": "$(smtpRelayPrivateIp)",
+      "name": "smtpServerPrivateIp",
+      "label": "smtpServerPrivateIp",
+      "defaultValue": "$(smtpServerPrivateIp)",
       "required": true,
       "type": "string",
       "helpMarkDown": "",
@@ -448,7 +450,7 @@
       "aliases": [],
       "options": {},
       "properties": {
-        "EndpointFilterRule": "ScopeLevel >= deploymentScope"
+        "EndpointFilterRule": ""
       },
       "name": "smtpServiceConnectionName",
       "label": "smtpServiceConnectionName",
@@ -474,7 +476,10 @@
         "2ef27f73-040f-466a-8272-7c8e175085eb": "NetworkingArchitecture-DEV-RG-Connection",
         "2ab963fc-4c3e-4e54-ae4f-2d641b20618b": "WebAnalytics-DEV-RG-Connection",
         "8cf28a7b-4a04-436b-9277-12b0fb3a9409": "WebAnalytics-STAGING-RG-Connection",
-        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection"
+        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection",
+        "9ce19167-afaf-4bda-8d84-6df8f8fdfb40": "KalturaManagementConsole-DEV-RG-Connection",
+        "07487aa2-0a6a-482a-8577-a944de95f42e": "KalturaManagementConsole-STAGING-RG-Connection",
+        "fb75c709-f277-4341-8887-498a38ffef18": "KalturaManagementConsole-RG-Connection"
       },
       "properties": {},
       "name": "smtpSubscriptionId",
