@@ -23,7 +23,7 @@
         "overrideParameters": "-armTemplateRepoBaseUrl \"$(armTemplateRepoBaseUrl)\" -customApplicationFqdn \"$(customApplicationFqdn)\" -databaseAdminPassword \"$(databaseAdminPassword)\" -databaseAdminUsername \"$(databaseAdminUsername)\" -databaseBackupRetentionDays $(databaseBackupRetentionDays) -databaseCapacity $(databaseCapacity) -databaseMoodlePassword \"$(databaseMoodlePassword)\" -databaseMoodleUsername \"$(databaseMoodleUsername)\" -databaseStorageMb $(databaseStorageMb) -dataDiskSizeGB $(dataDiskSizeGB) -environmentName \"$(environmentName)\" -fileRepositoryUri \"$(fileRepositoryUri)\" -gatewaySslCertificateUri \"$(gatewaySslCertificateUri)\" -gatewayUserAssignedIdentity $(gatewayUserAssignedIdentity) -location \"$(location)\" -moodleAdminEmail \"$(moodleAdminEmail)\" -moodleAdminPassword \"$(moodleAdminPassword)\" -moodleAdminUsername \"$(moodleAdminUsername)\" -moodleUpgradeKey \"$(moodleUpgradeKey)\" -projectShortName \"$(projectShortName)\" -resourceTags $(resourceTags) -smtpRelayFqdn \"$(smtpRelayFqdn)\" -smtpRelayPrivateIp \"$(smtpRelayPrivateIp)\" -virtualMachineTags \"$(virtualMachineTags)\" -virtualNetworkAddressBase \"$(virtualNetworkAddressBase)\" -webServerAdminPassword \"$(webServerAdminPassword)\" -webServerAdminUsername \"$(webServerAdminUsername)\"",
         "deploymentMode": "Incremental",
         "deploymentName": "moodleSingleNode_pipeline",
-        "deploymentOutputs": "",
+        "deploymentOutputs": "armOutput",
         "addSpnToEnvironment": "false"
       },
       "task": {
@@ -34,25 +34,19 @@
     },
     {
       "environment": {},
-      "displayName": "ARM Outputs",
-      "alwaysRun": false,
-      "continueOnError": false,
-      "condition": "succeeded()",
+      "displayName": "Task group: Arm Outputs $(armOutput)",
+      "alwaysRun": true,
+      "continueOnError": true,
+      "condition": "succeededOrFailed()",
       "enabled": true,
       "timeoutInMinutes": 0,
       "inputs": {
-        "ConnectedServiceNameSelector": "ConnectedServiceNameARM",
-        "ConnectedServiceNameARM": "$(serviceConnectionName)",
-        "resourceGroupName": "$(resourceGroupName)",
-        "prefix": "armOutput.",
-        "outputNames": "",
-        "whenLastDeploymentIsFailed": "fail",
-        "deploymentNameFilter": ""
+        "armDeploymentOutputs": "$(armOutput)"
       },
       "task": {
-        "id": "584bcff2-3353-4f11-872b-6ba01267a972",
-        "versionSpec": "6.*",
-        "definitionType": "task"
+        "id": "3ec489be-8fe0-480b-a2d6-7b08edfe1e5d",
+        "versionSpec": "1.*",
+        "definitionType": "metaTask"
       }
     },
     {
@@ -64,7 +58,7 @@
       "enabled": true,
       "timeoutInMinutes": 0,
       "inputs": {
-        "Vnet1_Name": "$(armOutput.virtualNetworkName)",
+        "Vnet1_Name": "$(virtualNetworkName)",
         "Vnet1_RGName": "$(resourceGroupName)",
         "Vnet1_ServiceConnection": "$(serviceConnectionName)",
         "Vnet1_SubID": "$(subscriptionId)",
@@ -84,22 +78,22 @@
     "Agent",
     "DeploymentGroup"
   ],
-  "revision": 3,
+  "revision": 10,
   "createdBy": {
     "displayName": "Patrick Messier",
     "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
     "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
   },
-  "createdOn": "2020-10-23T13:28:32.370Z",
+  "createdOn": "2021-01-05T22:13:17.037Z",
   "modifiedBy": {
     "displayName": "Patrick Messier",
     "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
     "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
   },
-  "modifiedOn": "2020-11-18T03:12:21.137Z",
+  "modifiedOn": "2021-01-20T20:16:44.567Z",
   "comment": "",
-  "id": "746d239e-e2ee-4ebb-b709-81b83cc0d1ba",
-  "name": "Deploy Moodle Single Node",
+  "id": "f2dc144c-2160-4626-ba1a-ca4afadb2bbb",
+  "name": "Deploy Moodle Single Node - 20210120",
   "version": {
     "major": 1,
     "minor": 0,
@@ -107,7 +101,7 @@
     "isTest": false
   },
   "iconUrl": "https://cdn.vsassets.io/v/M176_20201022.3/_content/icon-meta-task.png",
-  "friendlyName": "Deploy Moodle Single Node",
+  "friendlyName": "Deploy Moodle Single Node - 20210120",
   "description": "",
   "category": "Deploy",
   "definitionType": "metaTask",
@@ -409,7 +403,10 @@
         "2ef27f73-040f-466a-8272-7c8e175085eb": "NetworkingArchitecture-DEV-RG-Connection",
         "2ab963fc-4c3e-4e54-ae4f-2d641b20618b": "WebAnalytics-DEV-RG-Connection",
         "8cf28a7b-4a04-436b-9277-12b0fb3a9409": "WebAnalytics-STAGING-RG-Connection",
-        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection"
+        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection",
+        "9ce19167-afaf-4bda-8d84-6df8f8fdfb40": "KalturaManagementConsole-DEV-RG-Connection",
+        "07487aa2-0a6a-482a-8577-a944de95f42e": "KalturaManagementConsole-STAGING-RG-Connection",
+        "fb75c709-f277-4341-8887-498a38ffef18": "KalturaManagementConsole-RG-Connection"
       },
       "properties": {},
       "name": "smtpRelayFqdn",
@@ -448,7 +445,7 @@
       "aliases": [],
       "options": {},
       "properties": {
-        "EndpointFilterRule": "ScopeLevel >= deploymentScope"
+        "EndpointFilterRule": ""
       },
       "name": "smtpServiceConnectionName",
       "label": "smtpServiceConnectionName",
@@ -474,7 +471,10 @@
         "2ef27f73-040f-466a-8272-7c8e175085eb": "NetworkingArchitecture-DEV-RG-Connection",
         "2ab963fc-4c3e-4e54-ae4f-2d641b20618b": "WebAnalytics-DEV-RG-Connection",
         "8cf28a7b-4a04-436b-9277-12b0fb3a9409": "WebAnalytics-STAGING-RG-Connection",
-        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection"
+        "a5572fae-b83e-4baf-a675-5306f51c4c7b": "WebAnalytics-RG-Connection",
+        "9ce19167-afaf-4bda-8d84-6df8f8fdfb40": "KalturaManagementConsole-DEV-RG-Connection",
+        "07487aa2-0a6a-482a-8577-a944de95f42e": "KalturaManagementConsole-STAGING-RG-Connection",
+        "fb75c709-f277-4341-8887-498a38ffef18": "KalturaManagementConsole-RG-Connection"
       },
       "properties": {},
       "name": "smtpSubscriptionId",
@@ -561,7 +561,7 @@
   "satisfies": [],
   "sourceDefinitions": [],
   "dataSourceBindings": [],
-  "instanceNameFormat": "Task group: Deploy Moodle Single Node",
+  "instanceNameFormat": "Task group: Deploy Moodle Single Node - 20210120",
   "preJobExecution": {},
   "execution": {},
   "postJobExecution": {}

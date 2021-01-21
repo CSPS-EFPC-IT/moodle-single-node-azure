@@ -70,10 +70,10 @@
                 "[Tag name 2]": "[Tag value 2]"
             }
         },
-        "smtpRelayFqdn": {
+        "smtpServerFqdn": {
             "value": "[Your custom value here]"
         },
-        "smtpRelayPrivateIp": {
+        "smtpServerPrivateIp": {
             "value": "10.10.10.1"
         },
         "virtualMachineTags": {
