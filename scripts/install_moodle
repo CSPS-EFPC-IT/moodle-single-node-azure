@@ -14,7 +14,7 @@ readonly MOODLE_LOCAL_CACHE_DIR_PATH="${APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH}/
 readonly PHP_INI_FILE_PATH="/etc/php/7.2/apache2/php.ini"
 
 # Helper functions
-./echo_functions.sh
+. ./echo_functions.sh
 
 
 function get_moodle_plugin {
