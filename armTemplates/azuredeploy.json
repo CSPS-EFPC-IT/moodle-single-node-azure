@@ -1071,8 +1071,9 @@
                 },
                 "protectedSettings": {
                     "fileUris": [
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/common_functions.sh')]",
                         "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle')]",
-                        "[concat(parameters('fileRepositoryUri'),'/scripts/echo_functions.sh')]"
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/setup_server')]"
                     ],
                     "commandToExecute": "[concat('sudo ./install_moodle -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDataMountPointPath ', variables('moodleDataMountPointPath'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpServerFqdn ', parameters('smtpServerFqdn'), ' -smtpServerPrivateIp ', parameters('smtpServerPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
                 }

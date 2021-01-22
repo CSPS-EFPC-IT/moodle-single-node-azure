@@ -3,6 +3,25 @@
 # This script must be run as root (ex.: sudo sh [script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
+# Parameters (all manadatory)
+declare -A parameters=( \
+  [dataDiskSize]= \
+  [dbServerAdminPassword]= \
+  [dbServerAdminUsername]= \
+  [dbServerFqdn]= \
+  [dbServerName]= \
+  [moodleAdminEmail]= \
+  [moodleAdminPassword]= \
+  [moodleAdminUsername]= \
+  [moodleDataMountPointPath]= \
+  [moodleDbName]= \
+  [moodleDbPassword]= \
+  [moodleDbUsername]= \
+  [moodleFqdn]= \
+  [moodleUpgradeKey]= \
+  [smtpServerFqdn]= \
+  [smtpServerPrivateIp]=)
+
 # Constants
 readonly APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH="/var/www/html"
 readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
@@ -13,9 +32,8 @@ readonly MOODLE_DOCUMENT_ROOT_DIR_PATH="${APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH
 readonly MOODLE_LOCAL_CACHE_DIR_PATH="${APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH}/moodlelocalcache"
 readonly PHP_INI_FILE_PATH="/etc/php/7.2/apache2/php.ini"
 
-# Helper functions
-. ./echo_functions.sh
-
+# Functions
+source ./common_functions.sh
 
 function get_moodle_plugin {
   local plugin_title=$1
@@ -44,100 +62,27 @@ function get_moodle_plugin {
 }
 
 function main {
-  # Exit when any command fails
-  set -e
-  # Keep track of the last executed command
-  trap 'last_command=${current_command}; current_command=$BASH_COMMAND' DEBUG
-  # Echo an error message before exiting
-  trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
+  set_trap
 
   ###############################################################################
   echo_title "Start of $0"
   ###############################################################################
 
   ###############################################################################
-  echo_title 'Process input parameters.'
+  echo_title "Parse Input Parameters"
   ###############################################################################
-  echo_action 'Initializing expected parameters array...'
-  declare -A parameters=( \
-    [dataDiskSize]= \
-    [dbServerAdminPassword]= \
-    [dbServerAdminUsername]= \
-    [dbServerFqdn]= \
-    [dbServerName]= \
-    [moodleAdminEmail]= \
-    [moodleAdminPassword]= \
-    [moodleAdminUsername]= \
-    [moodleDataMountPointPath]= \
-    [moodleDbName]= \
-    [moodleDbPassword]= \
-    [moodleDbUsername]= \
-    [moodleFqdn]= \
-    [moodleUpgradeKey]= \
-    [smtpServerFqdn]= \
-    [smtpServerPrivateIp]=)
-  sorted_parameter_keys=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
-  echo_info "Done."
-
-  echo_action "Mapping input parameter values and checking for unexpected parameters..."
-  while [[ ${#@} -gt 0 ]];
-  do
-    key=$1
-    value=$2
-
-    # Test if the parameter key start with "-" and
-    # if the parameter key (without the first dash) is in the expected parameter list.
-    if [[ ${key} =~ ^-.*$ && ${parameters[${key:1}]+_} ]]; then
-      parameters[${key:1}]="${value}"
-    else
-      echo_error "Unexpected parameter: ${key}"
-      unexpected_parameter_flag=true
-    fi
-
-    # Move to the next key/value pair or up to the end of the parameter list.
-    shift $(( 2 < ${#@} ? 2 : ${#@} ))
-  done
-  echo_info "Done."
-
-  echo_action "Checking for missing parameters..."
-  for parameter_key in ${sorted_parameter_keys}; do
-    if [[ -z ${parameters[${parameter_key}]} ]]; then
-      echo_error "Missing parameter: ${parameter_key}."
-      missing_parameter_flag=true
-    fi
-  done
-  echo_info "Done."
-
-  # Abort if missing or extra parameters.
-  if [[ ${unexpected_parameter_flag} == "true" || ${missing_parameter_flag} == "true" ]]; then
-    echo_error "Execution aborted due to missing or extra parameters."
-    usage="USAGE: $(basename $0)"
-    for parameter_key in ${sorted_parameter_keys}; do
-      usage="${usage} -${parameter_key} \$${parameter_key}"
-    done
-    echo_error "${usage}";
-    exit 1;
-  fi
-
-  echo_action 'Printing input parameter values fro debugging purposes...'
-  for parameter_key in ${sorted_parameter_keys}; do
-    echo_info "$p = \"${parameters[${parameter_key}]}\""
-  done
-  echo_info "Done."
+  parse_parameters "$@"
 
   ###############################################################################
-  echo_title "Upgrade server."
+  echo_title "Implement Generic Server Setup"
   ###############################################################################
-  echo_action "Updating server package index files before the upgrade..."
-  apt update
-  echo_info "Done."
-
-  echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
-  apt upgrade -y
-  echo_info "Done."
+  ./setup_server \
+    -server_admin_email "csps.applicationdevelopment-developpementdapplications.efpc@canada.ca" \
+    -server_reboot_utc_time "07:00" \
+    -server_name="OpenLearning-DEV-WebServer-VM"
 
   ###############################################################################
-  echo_title "Install tools."
+  echo_title "Install Tools"
   ###############################################################################
   echo_action "Installing postgres client, php client and unzip packages..."
   apt-get install --yes --quiet \
@@ -147,7 +92,7 @@ function main {
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Install Moodle dependencies."
+  echo_title "Install Moodle Dependencies"
   ###############################################################################
   echo_action "Installing apache2 and redis packages..."
   apt-get install --yes --quiet \
@@ -177,13 +122,6 @@ function main {
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Clean up server."
-  ###############################################################################
-  echo_action "Removing server packages that are no longer needed."
-  apt autoremove -y
-  echo_info "Done."
-
-  ###############################################################################
   echo_title "Setup SMTP Server."
   ###############################################################################
   echo_action "Adding SMTP Server Private IP address in ${HOSTS_FILE_PATH}..."
@@ -198,7 +136,7 @@ EOF
   fi
 
   ###############################################################################
-  echo_title "Update PHP config."
+  echo_title "Update PHP Configuration"
   ###############################################################################
   echo_action "Updating upload_max_filesize and post_max_size settings in ${PHP_INI_FILE_PATH}..."
   sed -i "s/upload_max_filesize.*/upload_max_filesize = 2048M/" ${PHP_INI_FILE_PATH}
@@ -206,7 +144,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Update Apache config."
+  echo_title "Update Apache Configuration"
   ###############################################################################
   echo_action "Updating Apache default site DocumentRoot property in ${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}..."
   if ! grep -q "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" ${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}; then
@@ -226,7 +164,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Create Moodle database user if not existing."
+  echo_title "Create Moodle Database User"
   ###############################################################################
   echo_action "Creating and granting privileges to database user ${parameters[moodleDbUsername]}..."
   export PGPASSWORD="${parameters[dbServerAdminPassword]}"
@@ -234,7 +172,7 @@ EOF
 DO \$\$
 BEGIN
   IF EXISTS ( SELECT FROM pg_catalog.pg_roles WHERE rolname='${parameters[moodleDbUsername]}' ) THEN
-    RAISE WARNING 'user ${parameters[moodleDbUsername]} already existing. Skipping task.';
+    RAISE WARNING 'Skipped: user ${parameters[moodleDbUsername]} already exists.';
   ELSE
     CREATE USER ${parameters[moodleDbUsername]} WITH ENCRYPTED PASSWORD '${parameters[moodleDbPassword]}';
     GRANT ALL PRIVILEGES ON DATABASE ${parameters[moodleDbName]} TO ${parameters[moodleDbUsername]};
@@ -246,7 +184,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Mount Moodle Data Disk."
+  echo_title "Mount Moodle Data Disk"
   ###############################################################################
   echo_action 'Retrieving the data disk block path using the data disk size as index...'
   data_disk_block_path=/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${parameters[dataDiskSize]}\") print \$1}")
@@ -303,7 +241,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Create Moodle Local Cache directory."
+  echo_title "Create Moodle Local Cache directory"
   ###############################################################################
   if [ -d ${MOODLE_LOCAL_CACHE_DIR_PATH} ]; then
     echo_action "Deleting old ${MOODLE_LOCAL_CACHE_DIR_PATH} folder..."
@@ -316,7 +254,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Download and extract Moodle files."
+  echo_title "Download and Extract Moodle Files"
   ###############################################################################
   # Ref.: https://download.moodle.org/releases/supported/
   echo_action "Downloading Moodle 3.10.1 tar file..."
@@ -431,7 +369,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Run Moodle Installer."
+  echo_title "Run Moodle Installer"
   ###############################################################################
   echo_action 'Assessing whether Moodle installer should skip database setup...'
   # If moodle database tables already exist then
@@ -479,7 +417,7 @@ EOF
   echo_info "Done."
 
   ###############################################################################
-  echo_title "Moodle Post installation process."
+  echo_title "Moodle Post Installation Process"
   ###############################################################################
   # No need to test for existing values since the file is always new.
   echo_action "Adding SSL Proxy setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
@@ -519,8 +457,7 @@ EOF
   echo_title "End of $0"
   ###############################################################################
 
-  # Remove all trap
-  trap - EXIT
+  unset_trap
 }
 
 main "$@"
