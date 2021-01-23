@@ -79,7 +79,10 @@ function main {
   ./setup_server \
     -server_admin_email "csps.applicationdevelopment-developpementdapplications.efpc@canada.ca" \
     -server_reboot_utc_time "07:00" \
-    -server_name "OpenLearning-DEV-WebServer-VM"
+    -server_name "OpenLearning-DEV-WebServer-VM" \
+    -server_fqdn ${parameters[moodleFqdn] \
+    -smtp_server_fqdn ${parameters[smtpServerFqdn]} \
+    -smtp_server_port 25
 
   ###############################################################################
   echo_title "Install Tools"

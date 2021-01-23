@@ -7,12 +7,16 @@
 declare -A parameters=( \
   [server_admin_email]= \
   [server_reboot_utc_time]= \
-  [server_name]=)
+  [server_name]= \
+  [server_fqdn]= \
+  [smtp_server_fqdn]= \
+  [smtp_server_port]=)
 
 # Constants
-readonly AUTO_UPGRADES_CONF_FILE_PATH=/etc/apt/apt.conf.d/20auto-upgrades
-readonly UNATTENDED_UPGRADES_CONF_FILE_PATH=/etc/apt/apt.conf.d/50unattended-upgrades
 readonly APTICRON_CONF_FILE_PATH=/etc/apticron/apticron.conf
+readonly AUTO_UPGRADES_CONF_FILE_PATH=/etc/apt/apt.conf.d/20auto-upgrades
+readonly POSTFIX_CONF_FILE_PATH=/etc/postfix/main.cf
+readonly UNATTENDED_UPGRADES_CONF_FILE_PATH=/etc/apt/apt.conf.d/50unattended-upgrades
 
 # Functions
 source ./common_functions.sh
@@ -36,12 +40,12 @@ function main {
   apt update
   echo_info "Done."
 
-  # echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
-  # apt upgrade -y
-  # echo_info "Done."
+  echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
+  apt upgrade -y
+  echo_info "Done."
 
   ###############################################################################
-  echo_title "Setup Unattended-Upgrades and related packages"
+  echo_title "Install Unattended-Upgrades, Apticron and related packages"
   ###############################################################################
   export DEBIAN_FRONTEND=noninteractive
   echo_action "Installing packages..."
@@ -50,6 +54,9 @@ function main {
     unattended-upgrades
   echo_info "Done."
 
+  ###############################################################################
+  echo_title "Configure Unattended-Upgrades"
+  ###############################################################################
   echo_action "Enabling OS updates..."
   sed -i -e "s|^//\([[:blank:]]*\"\${distro_id}:\${distro_codename}-updates\";\)$|  \1|g" ${UNATTENDED_UPGRADES_CONF_FILE_PATH}
   echo_info "Done."
@@ -74,6 +81,9 @@ function main {
   sed -i -e "s|^//\(Unattended-Upgrade::Automatic-Reboot-Time\) .*$|\1 \"${parameters[server_reboot_utc_time]}\";|g" ${UNATTENDED_UPGRADES_CONF_FILE_PATH}
   echo_info "Done."
 
+  ###############################################################################
+  echo_title "Configure Aptitude (apt)"
+  ###############################################################################
   echo_action "Setting APT::Periodic::Download-Upgradeable-Packages parameter..."
   echo "APT::Periodic::Download-Upgradeable-Packages \"1\";" >> ${AUTO_UPGRADES_CONF_FILE_PATH}
   echo_info "Done."
@@ -86,6 +96,9 @@ function main {
   sed -i -e "s/^\(EMAIL=\).*$/\1\"${parameters[server_admin_email]}\"/g" ${APTICRON_CONF_FILE_PATH}
   echo_info "Done."
 
+  ###############################################################################
+  echo_title "Configure Apticron"
+  ###############################################################################
   echo_action "Setting Apticron SYSTEM parameter..."
   sed -i -e "s/^\(SYSTEM=\).*$/\1\"${parameters[server_name]}\"/g" ${APTICRON_CONF_FILE_PATH}
   echo_info "Done."
@@ -108,6 +121,29 @@ function main {
 
   echo_action "Setting Apticron CUSTOM_NO_UPDATES_SUBJECT parameter..."
   sed -i -e "s/^# \(CUSTOM_NO_UPDATES_SUBJECT=\)\"\".*$/\1'[apticron] \$SYSTEM: no updates'/g" ${APTICRON_CONF_FILE_PATH}
+  echo_info "Done."
+
+  ###############################################################################
+  echo_title "Configure Postfix"
+  ###############################################################################
+  echo_action "Setting Postfix myhostname parameter..."
+  sed -i -e "s/^\(myhostname =\).*$/\1 ${parameters[server_fqdn]}/g" ${POSTFIX_CONF_FILE_PATH}
+  echo_info "Done."
+
+  echo_action "Setting Postfix myorigin parameter..."
+  sed -i -e "s/^\(myorigin =\).*$/\1 \$myhostname/g" ${POSTFIX_CONF_FILE_PATH}
+  echo_info "Done."
+
+  echo_action "Setting Postfix relayhost parameter..."
+  sed -i -e "s/^\(relayhost =\).*$/\1 ${parameters[smtp_server_fqdn]}:${parameters[smtp_server_port]}/g" ${POSTFIX_CONF_FILE_PATH}
+  echo_info "Done."
+
+  echo_action "Adding Postfix smtp_tls_security_level parameter..."
+  sed -i -e "/^smtp_tls_session_cache_database = .*/a smtp_tls_security_level = encrypt" ${POSTFIX_CONF_FILE_PATH}
+  echo_info "Done."
+
+  echo_action "Reloading Postfix configuration file..."
+  service postfix reload
   echo_info "Done."
 
   ###############################################################################
