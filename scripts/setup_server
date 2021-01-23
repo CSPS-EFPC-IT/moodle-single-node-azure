@@ -36,9 +36,9 @@ function main {
   apt update
   echo_info "Done."
 
-  echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
-  apt upgrade -y
-  echo_info "Done."
+  # echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
+  # apt upgrade -y
+  # echo_info "Done."
 
   ###############################################################################
   echo_title "Setup Unattended-Upgrades and related packages"
