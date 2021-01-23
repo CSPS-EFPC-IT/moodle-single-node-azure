@@ -73,13 +73,13 @@ function main {
   ###############################################################################
   parse_parameters "$@"
 
-  ###############################################################################
-  echo_title "Implement Generic Server Setup"
-  ###############################################################################
-  ./setup_server \
-    -server_admin_email "csps.applicationdevelopment-developpementdapplications.efpc@canada.ca" \
-    -server_reboot_utc_time "07:00" \
-    -server_name "OpenLearning-DEV-WebServer-VM"
+  # ###############################################################################
+  # echo_title "Implement Generic Server Setup"
+  # ###############################################################################
+  # ./setup_server \
+  #   -server_admin_email "csps.applicationdevelopment-developpementdapplications.efpc@canada.ca" \
+  #   -server_reboot_utc_time "07:00" \
+  #   -server_name "OpenLearning-DEV-WebServer-VM"
 
   ###############################################################################
   echo_title "Install Tools"
