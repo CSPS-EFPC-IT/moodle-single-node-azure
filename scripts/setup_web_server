@@ -55,7 +55,7 @@ function main {
     --server_reboot_utc_time="$parameters[web_server_reboot_utc_time]}" \
     --server_resource_name="$parameters[web_server_resource_name]}" \
     --smtp_server_fqdn="$parameters[smtp_server_fqdn]}" \
-    --smtp_server_port="$parameters[smtp_server_port]}")
+    --smtp_server_port="$parameters[smtp_server_port]}"
 
   ###############################################################################
   echo_title "Install Moodle 3.10.1 and client requested plugins"
@@ -76,7 +76,7 @@ function main {
     --moodle_upgrade_key="${parameters[moodle_upgrade_key]}" \
     --smtp_server_fqdn="${parameters[smtp_server_fqdn]}" \
     --smtp_server_private_ip="${parameters[smtp_server_private_ip]}" \
-    --web_server_fqdn="${parameters[web_server_fqdn]}" )
+    --web_server_fqdn="${parameters[web_server_fqdn]}"
 
   ###############################################################################
   echo_title "End of $0"
