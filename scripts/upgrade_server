@@ -15,7 +15,7 @@ function main {
   ###############################################################################
 
   ###############################################################################
-  echo_title "Upgrade server and remove unuused packages"
+  echo_title "Upgrade server and remove unused packages"
   ###############################################################################
   echo_action "Updating server package index files..."
   apt update
