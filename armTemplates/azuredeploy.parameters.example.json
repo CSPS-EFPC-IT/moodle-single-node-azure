@@ -15,25 +15,25 @@
             "value": "[Your custom value here]"
         },
         "databaseBackupRetentionDays": {
-            "value": 7
+            "value": [Your custom value here]
         },
         "databaseCapacity": {
-            "value": 2
+            "value": [Your custom value here]
         },
         "databaseMoodlePassword": {
             "value": "[Your custom value here]"
         },
         "databaseMoodleUsername": {
-            "value": "moodle"
+            "value": "[Your custom value here]"
         },
         "databaseStorageMb": {
-            "value": 102400
+            "value": [Your custom value here]
         },
         "dataDiskSizeGB" : {
-            "value": 50
+            "value": [Your custom value here]
         },
         "environmentName": {
-            "value": "dev"
+            "value": "[Your custom value here]"
         },
         "fileRepositoryUri": {
             "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/moodle-single-node-azure/master"
@@ -47,7 +47,7 @@
             }
         },
         "location": {
-            "value": "Canada Central"
+            "value": "[Your custom value here]"
         },
         "moodleAdminEmail": {
             "value": "[Your custom value here]"
@@ -73,8 +73,11 @@
         "smtpServerFqdn": {
             "value": "[Your custom value here]"
         },
+        "smtpServerPort": {
+            "value": [Your custom value here.]
+        },
         "smtpServerPrivateIp": {
-            "value": "10.10.10.1"
+            "value": "[Your custom value here. Format: 'WWW.XXX.YYY.ZZZ']"
         },
         "virtualMachineTags": {
             "value": {
@@ -83,13 +86,19 @@
             }
         },
         "virtualNetworkAddressBase": {
-            "value": "10.10.10"
+            "value": "[Your custom value here. Format: 'XXX.YYY.ZZZ']"
+        },
+        "webServerAdminEmail": {
+            "value": "[Your custom value here]"
         },
         "webServerAdminPassword": {
             "value": "[Your custom value here]"
         },
         "webServerAdminUsername": {
             "value": "[Your custom value here]"
+        },
+        "webServerRebootUtcTime": {
+            "value": "[Your custom value here. Format: 'HH:MM']"
         }
     }
 }

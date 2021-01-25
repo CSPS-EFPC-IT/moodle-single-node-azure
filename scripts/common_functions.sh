@@ -35,6 +35,9 @@ function echo_title {
 # Assumptions:
 # - A global associative array named "parameters" exists.
 function parse_parameters {
+  local readonly PARAMETER_KEY_PREFIX="--"
+  local readonly PARAMETER_KEY_REGEX_PATTERN="^${PARAMETER_KEY_PREFIX}.*$"
+
   local missing_parameter_flag=false
   local sorted_parameter_keys=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
   local unexpected_parameter_flag=false
@@ -46,10 +49,10 @@ function parse_parameters {
     key=$1
     value=$2
 
-    # Test if the parameter key start with "-" and
-    # if the parameter key (without the first dash) is in the expected parameter list.
-    if [[ ${key} =~ ^-.*$ && ${parameters[${key:1}]+_} ]]; then
-      parameters[${key:1}]="${value}"
+    # Test if the parameter key start with the PARAMETERS_PREFIX and if the parameter
+    # key without the PARAMETERS_PREFIX is in the expected parameter list.
+    if [[ ${key} =~ $PARAMETER_KEY_REGEX_PATTERN && ${parameters[${key:${#PARAMETERS_KEY_PREFIX}}]+_} ]]; then
+      parameters[${key:${#PARAMETERS_KEY_PREFIX}}]="${value}"
     else
       echo_error "Unexpected parameter: ${key}"
       unexpected_parameter_flag=true

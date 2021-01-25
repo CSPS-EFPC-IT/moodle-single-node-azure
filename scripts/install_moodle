@@ -1,26 +1,26 @@
 #!/bin/bash
-# Install Moodle 3.10.1 and some plugins.
+# Install Moodle 3.10.1 and client requested plugins on Ubuntu 18.04.
 # This script must be run as root (ex.: sudo sh [script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
-# Parameters (all manadatory)
+# Parameters: all manadatory and must be prefix with "--" on command line.
 declare -A parameters=( \
-  [dataDiskSize]= \
-  [dbServerAdminPassword]= \
-  [dbServerAdminUsername]= \
-  [dbServerFqdn]= \
-  [dbServerName]= \
-  [moodleAdminEmail]= \
-  [moodleAdminPassword]= \
-  [moodleAdminUsername]= \
-  [moodleDataMountPointPath]= \
-  [moodleDbName]= \
-  [moodleDbPassword]= \
-  [moodleDbUsername]= \
-  [moodleFqdn]= \
-  [moodleUpgradeKey]= \
-  [smtpServerFqdn]= \
-  [smtpServerPrivateIp]=)
+  [data_disk_size]= \
+  [db_server_admin_password]= \
+  [db_server_admin_username]= \
+  [db_server_fqdn]= \
+  [db_server_name]= \
+  [moodle_admin_email]= \
+  [moodle_admin_password]= \
+  [moodle_admin_username]= \
+  [moodle_data_mount_point_path]= \
+  [moodle_db_name]= \
+  [moodle_db_password]= \
+  [moodle_db_username]= \
+  [moodle_upgrade_key]= \
+  [smtp_server_fqdn]= \
+  [smtp_server_private_ip]= \
+  [web_server_fqdn]= )
 
 # Constants
 readonly APACHE2_DEFAULT_DOCUMENT_ROOT_DIR_PATH="/var/www/html"
@@ -74,17 +74,6 @@ function main {
   parse_parameters "$@"
 
   ###############################################################################
-  echo_title "Implement Generic Server Setup"
-  ###############################################################################
-  ./setup_server \
-    -server_admin_email "csps.applicationdevelopment-developpementdapplications.efpc@canada.ca" \
-    -server_reboot_utc_time "07:00" \
-    -server_name "OpenLearning-DEV-WebServer-VM" \
-    -server_fqdn "${parameters[moodleFqdn]}" \
-    -smtp_server_fqdn "${parameters[smtpServerFqdn]}" \
-    -smtp_server_port "25"
-
-  ###############################################################################
   echo_title "Install Tools"
   ###############################################################################
   echo_action "Installing postgres client, php client and unzip packages..."
@@ -128,10 +117,10 @@ function main {
   echo_title "Setup SMTP Server."
   ###############################################################################
   echo_action "Adding SMTP Server Private IP address in ${HOSTS_FILE_PATH}..."
-  if ! grep -q "${parameters[smtpServerFqdn]}" ${HOSTS_FILE_PATH}; then
+  if ! grep -q "${parameters[smtp_server_fqdn]}" ${HOSTS_FILE_PATH}; then
     cat <<EOF >> ${HOSTS_FILE_PATH}
 # Redirect SMTP Server FQDN to Private IP Address.
-${parameters[smtpServerPrivateIp]} ${parameters[smtpServerFqdn]}
+${parameters[smtp_server_private_ip]} ${parameters[smtp_server_fqdn]}
 EOF
     echo_info "Done."
   else
@@ -169,17 +158,17 @@ EOF
   ###############################################################################
   echo_title "Create Moodle Database User"
   ###############################################################################
-  echo_action "Creating and granting privileges to database user ${parameters[moodleDbUsername]}..."
-  export PGPASSWORD="${parameters[dbServerAdminPassword]}"
-  psql "host=${parameters[dbServerFqdn]} port=5432 dbname=postgres user=${parameters[dbServerAdminUsername]}@${parameters[dbServerName]} sslmode=require" << EOF
+  echo_action "Creating and granting privileges to database user ${parameters[moodle_db_username]}..."
+  export PGPASSWORD="${parameters[db_server_admin_password]}"
+  psql "host=${parameters[db_server_fqdn]} port=5432 dbname=postgres user=${parameters[db_server_admin_username]}@${parameters[db_server_name]} sslmode=require" << EOF
 DO \$\$
 BEGIN
-  IF EXISTS ( SELECT FROM pg_catalog.pg_roles WHERE rolname='${parameters[moodleDbUsername]}' ) THEN
-    RAISE WARNING 'Skipped: user ${parameters[moodleDbUsername]} already exists.';
+  IF EXISTS ( SELECT FROM pg_catalog.pg_roles WHERE rolname='${parameters[moodle_db_username]}' ) THEN
+    RAISE WARNING 'Skipped: user ${parameters[moodle_db_username]} already exists.';
   ELSE
-    CREATE USER ${parameters[moodleDbUsername]} WITH ENCRYPTED PASSWORD '${parameters[moodleDbPassword]}';
-    GRANT ALL PRIVILEGES ON DATABASE ${parameters[moodleDbName]} TO ${parameters[moodleDbUsername]};
-    RAISE INFO 'User ${parameters[moodleDbUsername]} created.';
+    CREATE USER ${parameters[moodle_db_username]} WITH ENCRYPTED PASSWORD '${parameters[moodle_db_password]}';
+    GRANT ALL PRIVILEGES ON DATABASE ${parameters[moodle_db_name]} TO ${parameters[moodle_db_username]};
+    RAISE INFO 'User ${parameters[moodle_db_username]} created.';
   END IF;
 END
 \$\$;
@@ -190,7 +179,7 @@ EOF
   echo_title "Mount Moodle Data Disk"
   ###############################################################################
   echo_action 'Retrieving the data disk block path using the data disk size as index...'
-  data_disk_block_path=/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${parameters[dataDiskSize]}\") print \$1}")
+  data_disk_block_path=/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${parameters[data_disk_size]}\") print \$1}")
   echo_info "Data disk block path found: ${data_disk_block_path}"
   echo_info "Done."
 
@@ -221,14 +210,14 @@ EOF
   echo_info "Done."
 
   echo_action "Creating Moodle Data mount point..."
-  mkdir -p ${parameters[moodleDataMountPointPath]}
-  echo_info "${parameters[moodleDataMountPointPath]} directory created."
+  mkdir -p ${parameters[moodle_data_mount_point_path]}
+  echo_info "${parameters[moodle_data_mount_point_path]} directory created."
   echo_info "Done."
 
   fstab_file_path=/etc/fstab
   echo_action "Updating $fstab_file_path file to automount the data disk using its UUID..."
   if ! grep -q "${data_disk_file_system_uuid}" ${fstab_file_path}; then
-    printf "UUID=${data_disk_file_system_uuid}\t${parameters[moodleDataMountPointPath]}\t${data_disk_file_system_type}\tdefaults,nofail\t0\t2\n" >> ${fstab_file_path}
+    printf "UUID=${data_disk_file_system_uuid}\t${parameters[moodle_data_mount_point_path]}\t${data_disk_file_system_type}\tdefaults,nofail\t0\t2\n" >> ${fstab_file_path}
     echo_info "Done."
   else
     echo_info "Skipped: already set up."
@@ -239,8 +228,8 @@ EOF
   echo_info "Done."
 
   echo_action 'Setting permissions ...'
-  chown -R ${APACHE2_USER}:root ${parameters[moodleDataMountPointPath]}
-  chmod -R 775 ${parameters[moodleDataMountPointPath]}
+  chown -R ${APACHE2_USER}:root ${parameters[moodle_data_mount_point_path]}
+  chmod -R 775 ${parameters[moodle_data_mount_point_path]}
   echo_info "Done."
 
   ###############################################################################
@@ -377,13 +366,13 @@ EOF
   echo_action 'Assessing whether Moodle installer should skip database setup...'
   # If moodle database tables already exist then
   # add the "--skip-database" option to the install script.
-  export PGPASSWORD="${parameters[dbServerAdminPassword]}"
+  export PGPASSWORD="${parameters[db_server_admin_password]}"
   table_prefix='mdl_'
   table_count=$(
     psql \
-      "host=${parameters[dbServerFqdn]} port=5432 user=${parameters[dbServerAdminUsername]}@${parameters[dbServerName]} dbname=${parameters[moodleDbName]} sslmode=require" \
+      "host=${parameters[db_server_fqdn]} port=5432 user=${parameters[db_server_admin_username]}@${parameters[db_server_name]} dbname=${parameters[moodle_db_name]} sslmode=require" \
       --tuples-only \
-      --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodleDbName]}' and table_name like '${table_prefix}%'" \
+      --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodle_db_name]}' and table_name like '${table_prefix}%'" \
     )
   if (( ${table_count} == 0 )); then # Use arithmetic expansion operator ((...)) to convert string into integer.
     echo_info 'Moodle tables NOT found in database. Database must be setup as part of the install.'
@@ -399,22 +388,22 @@ EOF
     --non-interactive \
     --lang=en \
     --chmod=2777 \
-    --wwwroot=https://${parameters[moodleFqdn]}/ \
-    --dataroot=${parameters[moodleDataMountPointPath]}/ \
+    --wwwroot=https://${parameters[web_server_fqdn]}/ \
+    --dataroot=${parameters[moodle_data_mount_point_path]}/ \
     --dbtype=pgsql \
-    --dbhost=${parameters[dbServerFqdn]} \
-    --dbname=${parameters[moodleDbName]} \
+    --dbhost=${parameters[db_server_fqdn]} \
+    --dbname=${parameters[moodle_db_name]} \
     --prefix=$table_prefix \
     --dbport=5432 \
-    --dbuser=${parameters[moodleDbUsername]}@${parameters[dbServerName]} \
-    --dbpass="${parameters[moodleDbPassword]}" \
+    --dbuser=${parameters[moodle_db_username]}@${parameters[db_server_name]} \
+    --dbpass="${parameters[moodle_db_password]}" \
     --fullname="Moodle" \
     --shortname="Moodle" \
     --summary="Welcome - Bienvenue" \
-    --adminuser=${parameters[moodleAdminUsername]} \
-    --adminpass="${parameters[moodleAdminPassword]}" \
-    --adminemail=${parameters[moodleAdminEmail]} \
-    --upgradekey=${parameters[moodleUpgradeKey]} \
+    --adminuser=${parameters[moodle_admin_username]} \
+    --adminpass="${parameters[moodle_admin_password]}" \
+    --adminemail=${parameters[moodle_admin_email]} \
+    --upgradekey=${parameters[moodle_upgrade_key]} \
     ${skip_database_option} \
     --agree-license
   echo_info "Done."

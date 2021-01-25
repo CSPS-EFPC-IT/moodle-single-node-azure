@@ -1,14 +1,14 @@
 #!/bin/bash
-# Common tasks that should be run on any VMs prior to customization.
-# This script must be run as root (ex.: sudo sh [script_name])
+# Install unattended upgrade tools on Ubuntu 18.04.
+# This script must be run as root (ex.: sudo sh ./[script_name]).
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
-# Parameters (all manadatory)
+# Parameters: all manadatory and must be prefix with "--" on command line.
 declare -A parameters=( \
   [server_admin_email]= \
-  [server_reboot_utc_time]= \
-  [server_name]= \
   [server_fqdn]= \
+  [server_reboot_utc_time]= \
+  [server_resource_name]= \
   [smtp_server_fqdn]= \
   [smtp_server_port]=)
 
@@ -32,17 +32,6 @@ function main {
   echo_title "Parse Input Parameters"
   ###############################################################################
   parse_parameters "$@"
-
-  ###############################################################################
-  echo_title "Upgrade server"
-  ###############################################################################
-  echo_action "Updating server package index files before the upgrade..."
-  apt update
-  echo_info "Done."
-
-  echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
-  apt upgrade -y
-  echo_info "Done."
 
   ###############################################################################
   echo_title "Install Unattended-Upgrades, Apticron and related packages"
@@ -100,7 +89,7 @@ function main {
   echo_title "Configure Apticron"
   ###############################################################################
   echo_action "Setting Apticron SYSTEM parameter..."
-  sed -i -e "s/^\(SYSTEM=\).*$/\1\"${parameters[server_name]}\"/g" ${APTICRON_CONF_FILE_PATH}
+  sed -i -e "s/^\(SYSTEM=\).*$/\1\"${parameters[server_resource_name]}\"/g" ${APTICRON_CONF_FILE_PATH}
   echo_info "Done."
 
   echo_action "Setting Apticron NOTIFY_HOLDS parameter..."
@@ -144,13 +133,6 @@ function main {
 
   echo_action "Reloading Postfix configuration file..."
   service postfix reload
-  echo_info "Done."
-
-  ###############################################################################
-  echo_title "Clean up server"
-  ###############################################################################
-  echo_action "Removing server packages that are no longer needed."
-  apt autoremove -y
   echo_info "Done."
 
   ###############################################################################
