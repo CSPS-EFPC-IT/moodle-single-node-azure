@@ -84,7 +84,7 @@ function parse_parameters {
 
   echo_action 'Printing input parameter values fro debugging purposes...'
   for parameter_key in ${sorted_parameter_keys}; do
-    echo_info "$p = \"${parameters[${parameter_key}]}\""
+    echo_info "${parameter_key} = \"${parameters[${parameter_key}]}\""
   done
   echo_info "Done."
 }
