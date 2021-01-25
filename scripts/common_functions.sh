@@ -51,8 +51,8 @@ function parse_parameters {
 
     # Test if the parameter key start with the PARAMETERS_PREFIX and if the parameter
     # key without the PARAMETERS_PREFIX is in the expected parameter list.
-    if [[ ${key} =~ $PARAMETER_KEY_REGEX_PATTERN && ${parameters[${key:${#PARAMETERS_KEY_PREFIX}}]+_} ]]; then
-      parameters[${key:${#PARAMETERS_KEY_PREFIX}}]="${value}"
+    if [[ ${key} =~ $PARAMETER_KEY_REGEX_PATTERN && ${parameters[${key:${#PARAMETER_KEY_PREFIX}}]+_} ]]; then
+      parameters[${key:${#PARAMETER_KEY_PREFIX}}]="${value}"
     else
       echo_error "Unexpected parameter: ${key}"
       unexpected_parameter_flag=true
