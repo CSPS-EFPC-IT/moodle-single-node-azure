@@ -255,8 +255,7 @@ EOF
   echo_info "Done."
 
   echo_action "Verifying downloaded file integrity..."
-  # if ! echo "SHA256(${moodle_tgz_file})= 547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" | sha256sum --check; then
-  if ! echo "SHA256(${moodle_tgz_file})= 547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513a" | sha256sum --check; then
+  if ! echo "SHA256(${moodle_tgz_file})= 547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" | sha256sum --check; then
     echo_error "Downloaded file corrupted. Aborting."
     exit 1
   fi
