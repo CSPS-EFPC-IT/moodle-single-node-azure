@@ -255,7 +255,8 @@ EOF
   echo_info "Done."
 
   echo_action "Verifying downloaded file integrity..."
-  if ! echo "SHA256(${moodle_tgz_file})= 547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" | sha256sum --check; then
+  # if ! echo "SHA256(${moodle_tgz_file})= 547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" | sha256sum --check; then
+  if ! echo "SHA256(${moodle_tgz_file})= 547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513a" | sha256sum --check; then
     echo_error "Downloaded file corrupted. Aborting."
     exit 1
   fi
@@ -278,19 +279,11 @@ EOF
     "30ae974217c013b6fc2ea561428c4fce" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/availability/condition"
 
-  # # Ref.: https://moodle.org/plugins/block_completion_progress
-  # get_moodle_plugin \
-  #   "Blocks: Completion Progress" \
-  #   "https://moodle.org/plugins/download.php/22199/block_completion_progress_moodle310_2020081000.zip" \
-  #   "c4c7047dcce96761bb2ccbab118008c5" \
-  #   "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/blocks"
-
-  # Test with WRONG MD5 Value.
   # Ref.: https://moodle.org/plugins/block_completion_progress
   get_moodle_plugin \
     "Blocks: Completion Progress" \
     "https://moodle.org/plugins/download.php/22199/block_completion_progress_moodle310_2020081000.zip" \
-    "d4c7047dcce96761bb2ccbab118008c5" \
+    "c4c7047dcce96761bb2ccbab118008c5" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/blocks"
 
   # Ref.: https://moodle.org/plugins/block_configurable_reports
