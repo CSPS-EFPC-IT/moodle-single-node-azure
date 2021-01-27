@@ -35,7 +35,7 @@ readonly PHP_INI_FILE_PATH="/etc/php/7.2/apache2/php.ini"
 # Functions
 source ./common_functions.sh
 
-function get_moodle_plugin {
+function get_moodle_plugin() {
   local plugin_title=$1
   local plugin_zip_file_url=$2
   local plugin_md5_sum=$3
@@ -60,7 +60,7 @@ function get_moodle_plugin {
   echo_info "Done."
 }
 
-function main {
+function main() {
   set_trap
 
   ###############################################################################

@@ -12,20 +12,20 @@
 readonly DATE_FORMAT='%Y-%m-%d %H:%M:%S (%Z)'
 
 # Functions
-function echo_action {
+function echo_action() {
   echo ""
   echo "$(date +"$DATE_FORMAT") | ACTION - $1"
 }
 
-function echo_error {
+function echo_error() {
   echo "$(date +"$DATE_FORMAT") | ERROR  - $1" >&2
 }
 
-function echo_info {
+function echo_info() {
   echo "$(date +"$DATE_FORMAT") | INFO   - $1"
 }
 
-function echo_title {
+function echo_title() {
   echo ""
   echo "###############################################################################"
   echo "$1"
@@ -34,7 +34,7 @@ function echo_title {
 
 # Assumptions:
 # - A global associative array named "parameters" exists.
-function parse_parameters {
+function parse_parameters() {
   local readonly PARAMETER_KEY_PREFIX="--"
   local readonly PARAMETER_KEY_REGEX_PATTERN="^${PARAMETER_KEY_PREFIX}.*$"
 
@@ -89,7 +89,7 @@ function parse_parameters {
   echo_info "Done."
 }
 
-function set_trap {
+function set_trap() {
   # Exit when any command fails
   set -e
   # Keep track of the last executed command
@@ -98,7 +98,7 @@ function set_trap {
   trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 }
 
-function unset_trap {
+function unset_trap() {
   # Remove all trap
   trap - EXIT
 }
