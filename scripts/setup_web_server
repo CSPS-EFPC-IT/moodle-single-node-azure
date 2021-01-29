@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # Setup Moodle Single Node Web Server.
 # This script must be run as root (ex.: sudo sh ./[script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
@@ -27,28 +28,23 @@ declare -A parameters=( \
   [web_server_resource_name]= )
 
   # Functions
-source ./common_functions.sh
+source ./utils.sh
 
 function main() {
-  stop_on_error
+  # Exit when any command fails
+  set -e
+  utils::enable_exit_trap
+  utils::echo_title "Start of $0"
 
-  ###############################################################################
-  echo_title "Start of $0"
-  ###############################################################################
+  #############################################################################
 
-  ###############################################################################
-  echo_title "Parse Input Parameters"
-  ###############################################################################
-  parse_parameters "$@"
+  utils::echo_title "Parse Input Parameters"
+  utils::parse_parameters "$@"
 
-  ###############################################################################
-  echo_title "Upgrade server and removes unused packages"
-  ###############################################################################
+  utils::echo_title "Upgrade server and removes unused packages"
   ./upgrade_server
 
-  ###############################################################################
-  echo_title "Install unattended upgrade tools"
-  ###############################################################################
+  utils::echo_title "Install unattended upgrade tools"
   ./install_unattended_upgrade_tools \
     --server_admin_email "${parameters[web_server_admin_email]}" \
     --server_fqdn "${parameters[web_server_fqdn]}" \
@@ -57,9 +53,7 @@ function main() {
     --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
     --smtp_server_port "${parameters[smtp_server_port]}"
 
-  ###############################################################################
-  echo_title "Install Moodle 3.10.1 and client requested plugins"
-  ###############################################################################
+  utils::echo_title "Install Moodle 3.10.1 and client requested plugins"
   ./install_moodle \
     --data_disk_size "${parameters[data_disk_size]}" \
     --db_server_admin_password "${parameters[db_server_admin_password]}" \
@@ -78,10 +72,10 @@ function main() {
     --smtp_server_private_ip "${parameters[smtp_server_private_ip]}" \
     --web_server_fqdn "${parameters[web_server_fqdn]}"
 
-  ###############################################################################
-  echo_title "End of $0"
-  ###############################################################################
+  #############################################################################
 
+  utils::echo_title "End of $0"
+  utils::disable_exit_trap
 }
 
 main "$@"

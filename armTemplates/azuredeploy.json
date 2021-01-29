@@ -1090,7 +1090,7 @@
                 },
                 "protectedSettings": {
                     "fileUris": [
-                        "[concat(parameters('fileRepositoryUri'),'/scripts/common_functions.sh')]",
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/utils.sh')]",
                         "[concat(parameters('fileRepositoryUri'),'/scripts/upgrade_server')]",
                         "[concat(parameters('fileRepositoryUri'),'/scripts/install_unattended_upgrade_tools')]",
                         "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle')]",
