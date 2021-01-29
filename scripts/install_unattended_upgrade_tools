@@ -22,7 +22,6 @@ readonly UNATTENDED_UPGRADES_CONF_FILE_PATH=/etc/apt/apt.conf.d/50unattended-upg
 source ./common_functions.sh
 
 function main() {
-  stop_on_error
 
   ###############################################################################
   echo_title "Start of $0"

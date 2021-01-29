@@ -30,7 +30,8 @@ declare -A parameters=( \
 source ./common_functions.sh
 
 function main() {
-  stop_on_error
+  # Exit when any command fails
+  set -e
 
   ###############################################################################
   echo_title "Start of $0"
@@ -82,7 +83,6 @@ function main() {
   echo_title "End of $0"
   ###############################################################################
 
-  
 }
 
 main "$@"
