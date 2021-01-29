@@ -20,9 +20,6 @@ function main() {
   apt update
   echo_info "Done."
 
- #testing - simulating error
- exit 1
-
   echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
   apt upgrade -y
   echo_info "Done."
@@ -34,7 +31,6 @@ function main() {
   ###############################################################################
   echo_title "End of $0"
   ###############################################################################
-
 }
 
 main "$@"
