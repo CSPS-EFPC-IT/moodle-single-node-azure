@@ -218,7 +218,7 @@ EOF
   # Ref.: https://download.moodle.org/releases/supported/
   get_moodle_core \
     "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.1.tgz" \
-    "547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f"
+    "547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
   ###############################################################################
