@@ -28,7 +28,7 @@ readonly APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH="/etc/apache2/sites-enabled/000-
 readonly APACHE2_USER="www-data"
 readonly MOODLE_DOCUMENT_ROOT_DIR_PATH="/var/www/html/moodle"
 readonly MOODLE_LOCAL_CACHE_DIR_PATH="/var/www/html/moodlelocalcache"
-readonly MOODLE_TABLE_PREFIX="mdl_" # IMPORTANT: Changing this value will break the ability to upgrade of an existing environment.
+readonly MOODLE_TABLE_PREFIX="mdl_" # IMPORTANT: Changing this value will break the ability to upgrade an existing environment.
 readonly PHP_INI_FILE_PATH="/etc/php/7.2/apache2/php.ini"
 
 # Functions
