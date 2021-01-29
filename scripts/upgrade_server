@@ -9,7 +9,7 @@
 source ./utils.sh
 
 function main() {
-  utils::enable_exit_trap
+  utils::utils::set_exit_trap
   utils::echo_title "Start of $0"
 
   #############################################################################
@@ -31,7 +31,7 @@ function main() {
   #############################################################################
 
   utils::echo_title "End of $0"
-  utils::disable_exit_trap
+  utils::utils::unset_exit_trap
 }
 
 main "$@"
