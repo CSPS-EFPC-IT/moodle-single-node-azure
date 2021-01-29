@@ -33,7 +33,7 @@ source ./utils.sh
 function main() {
   # Exit when any command fails
   set -e
-  utils::utils::set_exit_trap
+  utils::set_exit_trap
   utils::echo_title "Start of $0"
 
   #############################################################################
@@ -75,7 +75,7 @@ function main() {
   #############################################################################
 
   utils::echo_title "End of $0"
-  utils::utils::unset_exit_trap
+  utils::unset_exit_trap
 }
 
 main "$@"

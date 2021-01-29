@@ -23,7 +23,7 @@ readonly UNATTENDED_UPGRADES_CONF_FILE_PATH=/etc/apt/apt.conf.d/50unattended-upg
 source ./utils.sh
 
 function main() {
-  utils::utils::set_exit_trap
+  utils::set_exit_trap
   utils::echo_title "Start of $0"
 
   ###############################################################################
