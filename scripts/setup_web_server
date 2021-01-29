@@ -30,7 +30,7 @@ declare -A parameters=( \
 source ./common_functions.sh
 
 function main() {
-  set_trap
+  stop_on_error
 
   ###############################################################################
   echo_title "Start of $0"
@@ -82,7 +82,7 @@ function main() {
   echo_title "End of $0"
   ###############################################################################
 
-  unset_trap
+  
 }
 
 main "$@"
