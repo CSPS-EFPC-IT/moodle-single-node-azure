@@ -180,6 +180,10 @@ function parse_parameters() {
     echo_info "${key} = \"${parameters[${key}]}\""
   done
   echo_info "Done."
+
+  echo_action 'Locking down parameters array...'
+  readonly parameters
+  echo_info "Done."
 }
 
 #######################################
