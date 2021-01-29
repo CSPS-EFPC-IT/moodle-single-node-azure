@@ -33,7 +33,7 @@ readonly MOODLE_TABLE_PREFIX="mdl_" # IMPORTANT: Changing this value will break 
 readonly PHP_INI_FILE_PATH="/etc/php/7.2/apache2/php.ini"
 
 # Functions
-source ./common_functions.sh
+source ./utils.sh
 
 function get_moodle_core() {
   local core_tgz_file_url="$1"
@@ -97,12 +97,12 @@ function main() {
   utils::set_exit_trap
   utils::echo_title "Start of $0"
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Parse Input Parameters"
   parse_parameters "$@"
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Install Tools"
   utils::echo_action "Installing postgres client, php client and unzip packages..."
@@ -112,7 +112,7 @@ function main() {
     unzip
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Install Moodle Dependencies"
 
@@ -143,7 +143,7 @@ function main() {
     php7.2-zip
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Setup SMTP Server."
 
@@ -152,14 +152,14 @@ function main() {
     "${parameters[smtp_server_fqdn]}" \
     "Redirect SMTP Server FQDN to Private IP Address."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Update PHP Configuration"
 
   utils::update_php_config_file "upload_max_filesize" "2048M" ${PHP_INI_FILE_PATH}
   utils::update_php_config_file "post_max_size" "2048M" ${PHP_INI_FILE_PATH}
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Update Apache2 Configuration"
 
@@ -170,7 +170,7 @@ function main() {
   service apache2 restart
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Create Moodle Database User"
 
@@ -192,7 +192,7 @@ EOF
   unset PGPASSWORD
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Mount Moodle Data Disk"
 
@@ -205,7 +205,7 @@ EOF
   chmod -R 775 "${parameters[moodle_data_mount_point_path]}"
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Create Moodle Local Cache directory"
 
@@ -219,7 +219,7 @@ EOF
   install -o "${APACHE2_USER}" -d "${MOODLE_LOCAL_CACHE_DIR_PATH}"
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Get Moodle Core"
 
@@ -229,7 +229,7 @@ EOF
     "547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Get Moodle Plugins"
 
@@ -323,7 +323,7 @@ EOF
   chown -R "${APACHE2_USER}:root" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Run Moodle Installer"
 
@@ -373,7 +373,7 @@ EOF
 
   utils::echo_info "Done."
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "Moodle Post Installation Process"
 
@@ -411,7 +411,7 @@ EOF
     utils::echo_info "Skipped: crontab already set up."
   fi
 
-  ###############################################################################
+  #############################################################################
 
   utils::echo_title "End of $0"
   utils::unset_exit_trap

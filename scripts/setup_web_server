@@ -31,8 +31,6 @@ declare -A parameters=( \
 source ./utils.sh
 
 function main() {
-  # Exit when any command fails
-  set -e
   utils::set_exit_trap
   utils::echo_title "Start of $0"
 

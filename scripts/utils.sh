@@ -276,19 +276,21 @@ function utils::parse_parameters() {
 }
 
 #######################################
-# Set EXIT trap to echo last command and its exit code.
+# Set EXIT trap to echo failed command and its exit code.
 # Globals:
 #   $BASH_COMMAND
 #   last_command
 #   current_command
 # Outputs:
-#   Writes last command and exit code to STDOUT.
+#   Writes last command and exit code to STDERR.
 #######################################
 function utils::set_exit_trap() {
+    # Exit script when any command fails
+  set -e
   # Keep track of the last executed command
   trap 'last_command=${current_command}; current_command=${BASH_COMMAND}' DEBUG
   # Echo an error message before exiting
-  trap 'echo "\"${last_command}\" exited with code $?."' EXIT
+  trap 'echo "\"${last_command}\" command failed with exit code $?." >&2' EXIT
 }
 
 #######################################
@@ -374,6 +376,9 @@ function utils::update_php_config_file() {
 # Counter part of set_exit_trap.
 #######################################
 function utils::unset_exit_trap() {
+  # Remove DEBUG and EXIT trap
   trap - DEBUG
   trap - EXIT
+  # Allow script to continue on error.
+  set +e
 }
