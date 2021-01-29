@@ -298,7 +298,7 @@ function stop_on_error() {
   # Keep track of the last executed command
   trap 'last_command=${current_command}; current_command=$BASH_COMMAND' DEBUG
   # Echo an error message before exiting
-  trap 'echo "\"${last_command}\" command failed with exit code $?." >&2' EXIT
+  trap 'echo "\"${last_command}\" command $(if (( $? <> 0 )); then echo "failed with exit code $?"; else echo "exited normally"; fi)."' EXIT
 }
 
 #######################################
