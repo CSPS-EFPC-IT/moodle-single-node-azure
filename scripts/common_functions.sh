@@ -134,8 +134,7 @@ function parse_parameters() {
 
   echo_action "Mapping input parameter values and checking for unexpected parameters..."
   unexpected_parameter_flag=false
-  while [[ ${#@} -gt 0 ]];
-  do
+  while [[ ${#@} -gt 0 ]]; do
     key=$1
     value=$2
 
