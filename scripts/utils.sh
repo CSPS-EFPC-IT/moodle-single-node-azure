@@ -35,12 +35,12 @@ function utils::add_hosts_file_entry() {
 
   readonly HOSTS_FILE_PATH="/etc/hosts"
 
-  echo_action "Adding entry for ${fqdn} in ${HOSTS_FILE_PATH}..."
+  utils::echo_action "Adding entry for ${fqdn} in ${HOSTS_FILE_PATH}..."
   if ! grep -q "${fqdn}" "${HOSTS_FILE_PATH}"; then
     printf "# ${comment}\n${ip} ${fqdn}\n" >> "${HOSTS_FILE_PATH}"
-    echo_info "Done."
+    utils::echo_info "Done."
   else
-    echo_info "Skipped: ${HOSTS_FILE_PATH} already contains entry for ${fqdn}."
+    utils::echo_info "Skipped: ${HOSTS_FILE_PATH} already contains entry for ${fqdn}."
   fi
 }
 
@@ -109,8 +109,8 @@ function utils::echo_title() {
 function utils::harden_apache2() {
   local config_file_path="$1"
 
-  update_apache2_config_file "ServerTokens" "Prod" "${config_file_path}"
-  update_apache2_config_file "ServerSignature" "Off" "${config_file_path}"
+  utils::update_apache2_config_file "ServerTokens" "Prod" "${config_file_path}"
+  utils::update_apache2_config_file "ServerSignature" "Off" "${config_file_path}"
 }
 
 #######################################
@@ -142,57 +142,57 @@ function utils::mount_data_disk_by_size() {
   local data_disk_file_system_uuid
   local elapsed_time
 
-  echo_action 'Retrieving data disk block path using data disk size as index...'
+  utils::echo_action 'Retrieving data disk block path using data disk size as index...'
   data_disk_block_path="/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${data_disk_size}\") print \$1}")"
-  echo_info "Data disk block path found: ${data_disk_block_path}"
-  echo_info "Done."
+  utils::echo_info "Data disk block path found: ${data_disk_block_path}"
+  utils::echo_info "Done."
 
-  echo_action 'Creating file system on data disk block if none exists...'
+  utils::echo_action 'Creating file system on data disk block if none exists...'
   data_disk_file_system_type="$(lsblk --noheadings --output fstype ${data_disk_block_path})"
   if [ -z "${data_disk_file_system_type}" ]; then
-    echo_info "No file system detected on ${data_disk_block_path}."
+    utils::echo_info "No file system detected on ${data_disk_block_path}."
     data_disk_file_system_type="${DEFAULT_FILE_SYSTEM_TYPE}"
-    echo_action "Creating file system of type ${data_disk_file_system_type} on ${data_disk_block_path}..."
+    utils::echo_action "Creating file system of type ${data_disk_file_system_type} on ${data_disk_block_path}..."
     mkfs.${data_disk_file_system_type} ${data_disk_block_path}
-    echo_info "Done."
+    utils::echo_info "Done."
   else
-    echo_info "Skipped: File system ${data_disk_file_system_type} already exist on ${data_disk_block_path}."
+    utils::echo_info "Skipped: File system ${data_disk_file_system_type} already exist on ${data_disk_block_path}."
   fi
 
-  echo_action 'Retrieving data disk file system UUID...'
+  utils::echo_action 'Retrieving data disk file system UUID...'
   # Bug Fix:  Experience demonstrated that the UUID of the new file system is not immediately
   #           available through lsblk, thus we wait and loop for up to 60 seconds to get it.
   elapsed_time=0
   data_disk_file_system_uuid=""
   while [[ -z "${data_disk_file_system_uuid}" && "${elapsed_time}" -lt "${TIMEOUT}" ]]; do
-    echo_info "Waiting for 1 second..."
+    utils::echo_info "Waiting for 1 second..."
     sleep 1
     data_disk_file_system_uuid="$(lsblk --noheadings --output UUID "${data_disk_block_path}")"
     ((elapsed_time+=1))
   done
   if [[ -z "${data_disk_file_system_uuid}" ]]; then
-    echo_error "Could not retrieve the data disk file system UUID within ${TIMEOUT} seconds. Aborting."
+    utils::echo_error "Could not retrieve the data disk file system UUID within ${TIMEOUT} seconds. Aborting."
     exit 1
   else
-    echo_info "Data disk file system UUID: ${data_disk_file_system_uuid}"
+    utils::echo_info "Data disk file system UUID: ${data_disk_file_system_uuid}"
   fi
-  echo_info "Done."
+  utils::echo_info "Done."
 
-  echo_action "Creating data disk mount point at ${data_disk_mount_point_path}..."
+  utils::echo_action "Creating data disk mount point at ${data_disk_mount_point_path}..."
   mkdir -p "${data_disk_mount_point_path}"
-  echo_info "Done."
+  utils::echo_info "Done."
 
-  echo_action "Updating ${FSTAB_FILE_PATH} file to automount the data disk using its UUID..."
+  utils::echo_action "Updating ${FSTAB_FILE_PATH} file to automount the data disk using its UUID..."
   if grep -q "${data_disk_file_system_uuid}" "${FSTAB_FILE_PATH}"; then
-    echo_info "Skipped: already set up."
+    utils::echo_info "Skipped: already set up."
   else
     printf "UUID=${data_disk_file_system_uuid}\t${data_disk_mount_point_path}\t${data_disk_file_system_type}\tdefaults,nofail\t0\t2\n" >> "${FSTAB_FILE_PATH}"
-    echo_info "Done."
+    utils::echo_info "Done."
   fi
 
-  echo_action 'Mounting all drives...'
+  utils::echo_action 'Mounting all drives...'
   mount -a
-  echo_info "Done."
+  utils::echo_info "Done."
 }
 
 #######################################
@@ -222,7 +222,7 @@ function utils::parse_parameters() {
   local usage
   local value
 
-  echo_action "Mapping input parameter values and checking for unexpected parameters..."
+  utils::echo_action "Mapping input parameter values and checking for unexpected parameters..."
   unexpected_parameter_flag=false
   while [[ ${#@} -gt 0 ]]; do
     key=$1
@@ -233,46 +233,46 @@ function utils::parse_parameters() {
     if [[ ${key} =~ $KEY_REGEX_PATTERN && ${parameters[${key:${#KEY_PREFIX}}]+_} ]]; then
       parameters[${key:${#KEY_PREFIX}}]="${value}"
     else
-      echo_error "Unexpected parameter: ${key}"
+      utils::echo_error "Unexpected parameter: ${key}"
       unexpected_parameter_flag=true
     fi
 
     # Move to the next key/value pair or up to the end of the parameter list.
     shift $(( 2 < ${#@} ? 2 : ${#@} ))
   done
-  echo_info "Done."
+  utils::echo_info "Done."
 
-  echo_action "Checking for missing parameters..."
+  utils::echo_action "Checking for missing parameters..."
   sorted_keys=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
   missing_parameter_flag=false
   for key in ${sorted_keys}; do
     if [[ -z ${parameters[${key}]} ]]; then
-      echo_error "Missing parameter: ${key}."
+      utils::echo_error "Missing parameter: ${key}."
       missing_parameter_flag=true
     fi
   done
-  echo_info "Done."
+  utils::echo_info "Done."
 
   # Abort if missing or extra parameters.
   usage="USAGE: $(basename $0)"
   if [[ ${unexpected_parameter_flag} == "true" || ${missing_parameter_flag} == "true" ]]; then
-    echo_error "Execution aborted due to missing or extra parameters."
+    utils::echo_error "Execution aborted due to missing or extra parameters."
     for key in ${sorted_keys}; do
       usage="${usage} -${key} \$${key}"
     done
-    echo_error "${usage}";
+    utils::echo_error "${usage}";
     exit 1;
   fi
 
-  echo_action 'Printing input parameter values for debugging purposes...'
+  utils::echo_action 'Printing input parameter values for debugging purposes...'
   for key in ${sorted_keys}; do
-    echo_info "${key} = \"${parameters[${key}]}\""
+    utils::echo_info "${key} = \"${parameters[${key}]}\""
   done
-  echo_info "Done."
+  utils::echo_info "Done."
 
-  echo_action 'Locking down parameters array...'
+  utils::echo_action 'Locking down parameters array...'
   readonly parameters
-  echo_info "Done."
+  utils::echo_info "Done."
 }
 
 #######################################
@@ -306,19 +306,19 @@ function utils::update_apache2_config_file() {
   local value="$2"
   local config_file_path="$3"
 
-  echo_action "Setting \"${parameter}\" to \"${value}\" in ${config_file_path}..."
+  utils::echo_action "Setting \"${parameter}\" to \"${value}\" in ${config_file_path}..."
 
   # Check if one and only one line match the search criteria.
   case $(grep "^[[:blank:]]*${parameter}[[:blank:]].*$" "${config_file_path}" | wc -l) in
     0)
-      echo_error "No line matched the search criteria. Aborting."
+      utils::echo_error "No line matched the search criteria. Aborting."
       exit 1
       ;;
     1)
-      echo_info "One line matched the search criteria."
+      utils::echo_info "One line matched the search criteria."
       ;;
     *)
-      echo_error "More than one line matched the search criteria. Aborting."
+      utils::echo_error "More than one line matched the search criteria. Aborting."
       exit 1
       ;;
   esac
@@ -326,7 +326,7 @@ function utils::update_apache2_config_file() {
   # Perform substitution while maintaining code indentation.
   sed -i -E "s|^([[:blank:]]*)${parameter}[[:blank:]].*$|\1${parameter} ${value}|g" "${config_file_path}"
 
-  echo_info "Done."
+  utils::echo_info "Done."
 }
 
 #######################################
@@ -346,20 +346,20 @@ function utils::update_php_config_file() {
 
   local regex
 
-  echo_action "Setting \"${parameter}\" to \"${value}\" in ${config_file_path}..."
+  utils::echo_action "Setting \"${parameter}\" to \"${value}\" in ${config_file_path}..."
 
   # Check if one and only one line match the search criteria.
   regex="^${parameter}[[:blank:]]*=.*$"
   case $(grep "${regex}" "${config_file_path}" | wc -l) in
     0)
-      echo_error "No line matched the search criteria. Aborting."
+      utils::echo_error "No line matched the search criteria. Aborting."
       exit 1
       ;;
     1)
-      echo_info "One line matched the search criteria."
+      utils::echo_info "One line matched the search criteria."
       ;;
     *)
-      echo_error "More than one line matched the search criteria. Aborting."
+      utils::echo_error "More than one line matched the search criteria. Aborting."
       exit 1
       ;;
   esac
@@ -367,7 +367,7 @@ function utils::update_php_config_file() {
   # Perform substitution.
   sed -i -E "s|${regex}|${parameter} = ${value}|g" "${config_file_path}"
 
-  echo_info "Done."
+  utils::echo_info "Done."
 }
 
 #######################################
