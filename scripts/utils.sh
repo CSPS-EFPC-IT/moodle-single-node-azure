@@ -143,7 +143,7 @@ function utils::mount_data_disk_by_size() {
   local data_disk_file_system_uuid
   local elapsed_time
 
-  utils::echo_action 'Retrieving data disk block device path using data disk size as index...'
+  utils::echo_action "Retrieving data disk block device path using data disk size as index..."
   data_disk_block_device_name="$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${data_disk_size}\") print \$1}")"
   case $(echo "${data_disk_block_device_name}" | wc -w) in
     0)
@@ -160,7 +160,7 @@ function utils::mount_data_disk_by_size() {
   esac
   utils::echo_info "Done."
 
-  utils::echo_action 'Creating file system on data disk block if none exists...'
+  utils::echo_action "Creating file system on data disk block if none exists..."
   data_disk_file_system_type="$(lsblk --noheadings --output fstype ${data_disk_block_device_path})"
   if [ -z "${data_disk_file_system_type}" ]; then
     utils::echo_info "No file system detected on ${data_disk_block_device_path}."
@@ -172,7 +172,7 @@ function utils::mount_data_disk_by_size() {
     utils::echo_info "Skipped: File system ${data_disk_file_system_type} already exist on ${data_disk_block_device_path}."
   fi
 
-  utils::echo_action 'Retrieving data disk file system UUID...'
+  utils::echo_action "Retrieving data disk file system UUID..."
   # Bug Fix:  Experience demonstrated that the UUID of the new file system is not immediately
   #           available through lsblk, thus we wait and loop for up to 60 seconds to get it.
   elapsed_time=0
@@ -203,7 +203,7 @@ function utils::mount_data_disk_by_size() {
     utils::echo_info "Done."
   fi
 
-  utils::echo_action 'Mounting all drives...'
+  utils::echo_action "Mounting all drives..."
   mount -a
   utils::echo_info "Done."
 }
@@ -277,13 +277,13 @@ function utils::parse_parameters() {
     exit 1;
   fi
 
-  utils::echo_action 'Printing input parameter values for debugging purposes...'
+  utils::echo_action "Printing input parameter values for debugging purposes..."
   for key in ${sorted_keys}; do
     utils::echo_info "${key} = \"${parameters[${key}]}\""
   done
   utils::echo_info "Done."
 
-  utils::echo_action 'Locking down parameters array...'
+  utils::echo_action "Locking down parameters array..."
   readonly parameters
   utils::echo_info "Done."
 }

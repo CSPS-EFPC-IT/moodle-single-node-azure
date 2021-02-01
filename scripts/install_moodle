@@ -221,7 +221,7 @@ EOF
     "${parameters[data_disk_size]}" \
     "${parameters[moodle_data_mount_point_path]}"
 
-  utils::echo_action 'Setting permissions ...'
+  utils::echo_action "Setting permissions ..."
   chown -R "${APACHE2_USER}:root" "${parameters[moodle_data_mount_point_path]}"
   chmod -R 775 "${parameters[moodle_data_mount_point_path]}"
   utils::echo_info "Done."
@@ -350,7 +350,7 @@ EOF
 
   moodle_install_options=""
 
-  utils::echo_action 'Assessing whether Moodle installer should skip database setup...'
+  utils::echo_action "Assessing whether Moodle installer should skip database setup..."
   # If moodle database tables already exist then
   # add the "--skip-database" option to the install script.
   export PGPASSWORD="${parameters[db_server_admin_password]}"
@@ -361,14 +361,14 @@ EOF
       --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodle_db_name]}' and table_name like '${MOODLE_TABLE_PREFIX}%'" \
     )
   if (( "${table_count}" == 0 )); then # Use arithmetic expansion operator ((...)) to convert string into integer.
-    utils::echo_info 'Moodle tables NOT found in database. Database must be setup as part of the install.'
+    utils::echo_info "Moodle tables NOT found in database. Database must be setup as part of the install."
   else
-    utils::echo_info 'Moodle tables found in database. Database setup must be skipped.'
+    utils::echo_info "Moodle tables found in database. Database setup must be skipped."
     moodle_install_options="${moodle_install_options} --skip-database"
   fi
   utils::echo_info "Done."
 
-  utils::echo_action 'Running Moodle installation script...'
+  utils::echo_action "Running Moodle installation script..."
   sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/install.php" \
     --adminemail="${parameters[moodle_admin_email]}" \
     --adminpass="${parameters[moodle_admin_password]}" \
