@@ -114,17 +114,17 @@ function utils::harden_apache2() {
 }
 
 #######################################
-# Mount a data disk identified by its size to a mount point.
-# Since that is no way to predict the device name of a data disk, we use the
-# device size as to identify the data disk. This means that is it impossible
-# to use this function utils::to mount a data disk that has the same size as another
-# device attached to the server.
-# The data disk is formated if no file system exists.
+# Mount a data disk identified by its size.
+# Since that is no way to set or predict a data disk device name, we use
+# attached block device size to find the data disk that needs to be mounted.
+# Hence, this function will fail if 0 or more than one attached block device
+# match the size of data disk to mount.
+# A EXT4 file system is created on the data disk if none exists.
 # Globals:
 # Arguments:
 #   1) size of the disk to mount, a string as returned by the
 #      "lsblk --output name,size" command.
-#   2) mount_point_path, a path
+#   2) data disk mount point, a path
 # Outputs:
 #   Writes normal log messages to STDOUT.
 #   Writes error messages to STDERR.
@@ -137,26 +137,39 @@ function utils::mount_data_disk_by_size() {
   readonly FSTAB_FILE_PATH="/etc/fstab"
   readonly TIMEOUT=60
 
-  local data_disk_block_path
+  local data_disk_block_device_path
+  local data_disk_block_device_name
   local data_disk_file_system_type
   local data_disk_file_system_uuid
   local elapsed_time
 
-  utils::echo_action 'Retrieving data disk block path using data disk size as index...'
-  data_disk_block_path="/dev/$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${data_disk_size}\") print \$1}")"
-  utils::echo_info "Data disk block path found: ${data_disk_block_path}"
+  utils::echo_action 'Retrieving data disk block device path using data disk size as index...'
+  data_disk_block_device_name="$(lsblk --noheadings --output name,size | awk "{if (\$2 == \"${data_disk_size}\") print \$1}")"
+  case $(echo "${data_disk_block_device_name}" | wc -w) in
+    0)
+      utils::echo_error "No block device matches the given data disk size (${data_disk_size}). Aborting."
+      exit 1
+      ;;
+    1)
+      utils::echo_info "Unique block device found: ${data_disk_block_device_name}"
+      data_disk_block_device_path="/dev/${data_disk_block_device_name}"
+    *)
+      utils::echo_error "More than one block devices match the given data disk size (${data_disk_size}). Aborting."
+      exit 1
+      ;;
+  esac
   utils::echo_info "Done."
 
   utils::echo_action 'Creating file system on data disk block if none exists...'
-  data_disk_file_system_type="$(lsblk --noheadings --output fstype ${data_disk_block_path})"
+  data_disk_file_system_type="$(lsblk --noheadings --output fstype ${data_disk_block_device_path})"
   if [ -z "${data_disk_file_system_type}" ]; then
-    utils::echo_info "No file system detected on ${data_disk_block_path}."
+    utils::echo_info "No file system detected on ${data_disk_block_device_path}."
     data_disk_file_system_type="${DEFAULT_FILE_SYSTEM_TYPE}"
-    utils::echo_action "Creating file system of type ${data_disk_file_system_type} on ${data_disk_block_path}..."
-    mkfs.${data_disk_file_system_type} ${data_disk_block_path}
+    utils::echo_action "Creating file system of type ${data_disk_file_system_type} on ${data_disk_block_device_path}..."
+    mkfs.${data_disk_file_system_type} ${data_disk_block_device_path}
     utils::echo_info "Done."
   else
-    utils::echo_info "Skipped: File system ${data_disk_file_system_type} already exist on ${data_disk_block_path}."
+    utils::echo_info "Skipped: File system ${data_disk_file_system_type} already exist on ${data_disk_block_device_path}."
   fi
 
   utils::echo_action 'Retrieving data disk file system UUID...'
@@ -167,7 +180,7 @@ function utils::mount_data_disk_by_size() {
   while [[ -z "${data_disk_file_system_uuid}" && "${elapsed_time}" -lt "${TIMEOUT}" ]]; do
     utils::echo_info "Waiting for 1 second..."
     sleep 1
-    data_disk_file_system_uuid="$(lsblk --noheadings --output UUID "${data_disk_block_path}")"
+    data_disk_file_system_uuid="$(lsblk --noheadings --output UUID "${data_disk_block_device_path}")"
     ((elapsed_time+=1))
   done
   if [[ -z "${data_disk_file_system_uuid}" ]]; then
