@@ -246,7 +246,7 @@ function utils::parse_parameters() {
   utils::echo_action "Checking for missing parameters..."
   sorted_keys=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
   missing_parameter_flag=false
-  for key in "${sorted_keys}"; do
+  for key in ${sorted_keys}; do
     if [[ -z "${parameters[${key}]}" ]]; then
       utils::echo_error "Missing parameter: ${key}."
       missing_parameter_flag=true
@@ -258,7 +258,7 @@ function utils::parse_parameters() {
   usage="USAGE: $(basename $0)"
   if [[ "${unexpected_parameter_flag}" == "true" || "${missing_parameter_flag}" == "true" ]]; then
     utils::echo_error "Execution aborted due to missing or extra parameters."
-    for key in "${sorted_keys}"; do
+    for key in ${sorted_keys}; do
       usage="${usage} ${KEY_PREFIX}${key} \$${key}"
     done
     utils::echo_error "${usage}";
@@ -266,7 +266,7 @@ function utils::parse_parameters() {
   fi
 
   utils::echo_action "Printing input parameter values for debugging purposes..."
-  for key in "${sorted_keys}"; do
+  for key in ${sorted_keys}; do
     utils::echo_info "${key} = \"${parameters[${key}]}\""
   done
   utils::echo_info "Done."
