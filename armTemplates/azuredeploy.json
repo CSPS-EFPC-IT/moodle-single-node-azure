@@ -197,7 +197,7 @@
         "webServerRebootUtcTime": {
             "type": "string",
             "metadata": {
-                "description": "The Web server automatic reboot time in UTC."
+                "description": "The Web server automatic reboot time in UTC. Format: 'HH:MM'"
             }
         }
 
