@@ -20,7 +20,7 @@ function utils::add_hosts_file_entry() {
   local fqdn="$2"
   local comment="$3"
 
-  readonly HOSTS_FILE_PATH="/etc/hosts"
+  local readonly HOSTS_FILE_PATH="/etc/hosts"
 
   utils::echo_action "Adding entry for ${fqdn} in ${HOSTS_FILE_PATH}..."
   if ! grep -q "${fqdn}" "${HOSTS_FILE_PATH}"; then
@@ -120,9 +120,9 @@ function utils::mount_data_disk_by_size() {
   local data_disk_size="$1"
   local data_disk_mount_point_path="$2"
 
-  readonly DEFAULT_FILE_SYSTEM_TYPE="ext4"
-  readonly FSTAB_FILE_PATH="/etc/fstab"
-  readonly TIMEOUT=60
+  local readonly DEFAULT_FILE_SYSTEM_TYPE="ext4"
+  local readonly FSTAB_FILE_PATH="/etc/fstab"
+  local readonly TIMEOUT=60
 
   local data_disk_block_device_path
   local data_disk_block_device_name
