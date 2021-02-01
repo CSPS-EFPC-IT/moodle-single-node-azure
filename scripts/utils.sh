@@ -153,6 +153,7 @@ function utils::mount_data_disk_by_size() {
     1)
       utils::echo_info "Unique block device found: ${data_disk_block_device_name}"
       data_disk_block_device_path="/dev/${data_disk_block_device_name}"
+      ;;
     *)
       utils::echo_error "More than one block devices match the given data disk size (${data_disk_size}). Aborting."
       exit 1
