@@ -231,7 +231,7 @@ function utils::parse_parameters() {
 
     # Test if the parameter key start with the KEY_PREFIX and if the parameter
     # key without the PARAMETERS_PREFIX is in the expected parameter list.
-    if [[ "${key}" =~ "$KEY_REGEX_PATTERN" && "${parameters[${key:${#KEY_PREFIX}}]+_}" ]]; then
+    if [[ "${key}" =~ $KEY_REGEX_PATTERN && ${parameters[${key:${#KEY_PREFIX}}]+_} ]]; then
       parameters[${key:${#KEY_PREFIX}}]="${value}"
     else
       utils::echo_error "Unexpected parameter: ${key}"
@@ -259,7 +259,7 @@ function utils::parse_parameters() {
   if [[ "${unexpected_parameter_flag}" == "true" || "${missing_parameter_flag}" == "true" ]]; then
     utils::echo_error "Execution aborted due to missing or extra parameters."
     for key in "${sorted_keys}"; do
-      usage="${usage} -${key} \$${key}"
+      usage="${usage} ${KEY_PREFIX}${key} \$${key}"
     done
     utils::echo_error "${usage}";
     exit 1;
