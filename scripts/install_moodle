@@ -64,7 +64,7 @@ function get_moodle_core() {
   fi
   utils::echo_info "Done."
 
-  if [ -d "${core_dir_path}" ]; then
+  if [[ -d "${core_dir_path}" ]]; then
     utils::echo_action "Deleting existing Moodle installation: ${core_dir_path}..."
     rm -rf "${core_dir_path}"
     utils::echo_info "Done."
@@ -230,7 +230,7 @@ EOF
 
   utils::echo_title "Create Moodle Local Cache directory"
 
-  if [ -d "${MOODLE_LOCAL_CACHE_DIR_PATH}" ]; then
+  if [[ -d "${MOODLE_LOCAL_CACHE_DIR_PATH}" ]]; then
     utils::echo_action "Deleting old ${MOODLE_LOCAL_CACHE_DIR_PATH} folder..."
     rm -rf "${MOODLE_LOCAL_CACHE_DIR_PATH}"
     utils::echo_info "Done."
@@ -425,7 +425,7 @@ EOF
 
   utils::echo_action "Setting up Moodle Crontab..."
   crontab_entry="* * * * * sudo -u ${APACHE2_USER} php ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/cron.php > /dev/null"
-  if [ -z "$(crontab -l | grep --fixed-strings "${crontab_entry}")" ]; then
+  if [[ -z "$(crontab -l | grep --fixed-strings "${crontab_entry}")" ]]; then
     crontab -l | { cat; echo "${crontab_entry}"; } | crontab -
     utils::echo_info "Done."
   else

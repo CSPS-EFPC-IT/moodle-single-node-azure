@@ -150,7 +150,7 @@ function utils::mount_data_disk_by_size() {
 
   utils::echo_action "Creating file system on data disk block if none exists..."
   data_disk_file_system_type="$(lsblk --noheadings --output fstype ${data_disk_block_device_path})"
-  if [ -z "${data_disk_file_system_type}" ]; then
+  if [[ -z "${data_disk_file_system_type}" ]]; then
     utils::echo_info "No file system detected on ${data_disk_block_device_path}."
     data_disk_file_system_type="${DEFAULT_FILE_SYSTEM_TYPE}"
     utils::echo_action "Creating file system of type ${data_disk_file_system_type} on ${data_disk_block_device_path}..."
