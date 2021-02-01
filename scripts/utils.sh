@@ -45,13 +45,13 @@ function utils::add_hosts_file_entry() {
 }
 
 #######################################
-# Echo a text string using the ACTION format.
+# Echo a message using the ACTION format.
 # Globals:
 #   DATE_FORMAT
 # Arguments:
-#   Message to echo
+#   Message, a text string.
 # Outputs:
-#   Writes message to echo to STDOUT.
+#   Writes message to STDOUT.
 #######################################
 function utils::echo_action() {
   echo ""
@@ -59,37 +59,37 @@ function utils::echo_action() {
 }
 
 #######################################
-# Echo a text string using the ERROR format.
+# Echo a message using the ERROR format.
 # Globals:
 #   DATE_FORMAT
 # Arguments:
-#   Message to echo
+#   Message, a text string.
 # Outputs:
-#   Writes message to echo to STDERR.
+#   Writes message to STDERR.
 #######################################
 function utils::echo_error() {
   echo "$(date +"$DATE_FORMAT") | ERROR  - $1" >&2
 }
 
 #######################################
-# Echo a text string using the INFO format.
+# Echo a message using the INFO format.
 # Globals:
 #   DATE_FORMAT
 # Arguments:
-#   Message to echo
+#   Message, text string.
 # Outputs:
-#   Writes message to echo to STDOUT.
+#   Writes message to STDOUT.
 #######################################
 function utils::echo_info() {
   echo "$(date +"$DATE_FORMAT") | INFO   - $1"
 }
 
 #######################################
-# Echo a text string using the TITLE format.
+# Echo a message using the TITLE format.
 # Arguments:
-#   Message to echo
+#   Message, a text string.
 # Outputs:
-#   Writes message to echo to STDOUT.
+#   Writes message to STDOUT.
 #######################################
 function utils::echo_title() {
   echo ""
