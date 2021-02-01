@@ -154,7 +154,7 @@ function utils::mount_data_disk_by_size() {
     utils::echo_info "No file system detected on ${data_disk_block_device_path}."
     data_disk_file_system_type="${DEFAULT_FILE_SYSTEM_TYPE}"
     utils::echo_action "Creating file system of type ${data_disk_file_system_type} on ${data_disk_block_device_path}..."
-    mkfs.${data_disk_file_system_type} ${data_disk_block_device_path}
+    mkfs.${data_disk_file_system_type} "${data_disk_block_device_path}"
     utils::echo_info "Done."
   else
     utils::echo_info "Skipped: File system ${data_disk_file_system_type} already exist on ${data_disk_block_device_path}."
@@ -231,7 +231,7 @@ function utils::parse_parameters() {
 
     # Test if the parameter key start with the KEY_PREFIX and if the parameter
     # key without the PARAMETERS_PREFIX is in the expected parameter list.
-    if [[ ${key} =~ $KEY_REGEX_PATTERN && ${parameters[${key:${#KEY_PREFIX}}]+_} ]]; then
+    if [[ "${key}" =~ "$KEY_REGEX_PATTERN" && "${parameters[${key:${#KEY_PREFIX}}]+_}" ]]; then
       parameters[${key:${#KEY_PREFIX}}]="${value}"
     else
       utils::echo_error "Unexpected parameter: ${key}"
@@ -246,8 +246,8 @@ function utils::parse_parameters() {
   utils::echo_action "Checking for missing parameters..."
   sorted_keys=$(echo ${!parameters[@]} | tr " " "\n" | sort | tr "\n" " ");
   missing_parameter_flag=false
-  for key in ${sorted_keys}; do
-    if [[ -z ${parameters[${key}]} ]]; then
+  for key in "${sorted_keys}"; do
+    if [[ -z "${parameters[${key}]}" ]]; then
       utils::echo_error "Missing parameter: ${key}."
       missing_parameter_flag=true
     fi
@@ -256,9 +256,9 @@ function utils::parse_parameters() {
 
   # Abort if missing or extra parameters.
   usage="USAGE: $(basename $0)"
-  if [[ ${unexpected_parameter_flag} == "true" || ${missing_parameter_flag} == "true" ]]; then
+  if [[ "${unexpected_parameter_flag}" == "true" || "${missing_parameter_flag}" == "true" ]]; then
     utils::echo_error "Execution aborted due to missing or extra parameters."
-    for key in ${sorted_keys}; do
+    for key in "${sorted_keys}"; do
       usage="${usage} -${key} \$${key}"
     done
     utils::echo_error "${usage}";
@@ -266,7 +266,7 @@ function utils::parse_parameters() {
   fi
 
   utils::echo_action "Printing input parameter values for debugging purposes..."
-  for key in ${sorted_keys}; do
+  for key in "${sorted_keys}"; do
     utils::echo_info "${key} = \"${parameters[${key}]}\""
   done
   utils::echo_info "Done."
