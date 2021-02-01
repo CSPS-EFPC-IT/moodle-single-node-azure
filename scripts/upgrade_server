@@ -14,7 +14,7 @@ function main() {
 
   #############################################################################
 
-  utils::echo_title "Upgrade server and remove unused packages"
+  utils::echo_title "Upgrade Server and Remove Unused Packages"
 
   utils::echo_action "Updating server package index files..."
   apt update

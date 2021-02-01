@@ -39,10 +39,10 @@ function main() {
   utils::echo_title "Parse Input Parameters"
   utils::parse_parameters "$@"
 
-  utils::echo_title "Upgrade server and removes unused packages"
+  utils::echo_title "Upgrade Server and Removes Unused Packages"
   ./upgrade_server
 
-  utils::echo_title "Install unattended upgrade tools"
+  utils::echo_title "Install Unattended Upgrade Tools"
   ./install_unattended_upgrade_tools \
     --server_admin_email "${parameters[web_server_admin_email]}" \
     --server_fqdn "${parameters[web_server_fqdn]}" \
@@ -51,7 +51,7 @@ function main() {
     --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
     --smtp_server_port "${parameters[smtp_server_port]}"
 
-  utils::echo_title "Install Moodle and client requested plugins"
+  utils::echo_title "Install Moodle and Client Requested Plugins"
   ./install_moodle \
     --data_disk_size "${parameters[data_disk_size]}" \
     --db_server_admin_password "${parameters[db_server_admin_password]}" \

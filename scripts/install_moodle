@@ -166,7 +166,7 @@ function main() {
 
   #############################################################################
 
-  utils::echo_title "Setup SMTP Server."
+  utils::echo_title "Setup SMTP Server"
 
   utils::add_hosts_file_entry \
     "${parameters[smtp_server_private_ip]}" \
