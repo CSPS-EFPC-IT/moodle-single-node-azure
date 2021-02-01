@@ -102,11 +102,11 @@ function utils::harden_apache2() {
 
 #######################################
 # Mount a data disk identified by its size.
-# Since that is no way to set or predict a data disk device name, we use
-# attached block device size to find the data disk that needs to be mounted.
-# Hence, this function will fail if 0 or more than one attached block device
-# match the size of data disk to mount.
-# A EXT4 file system is created on the data disk if none exists.
+# Since there is no way to set or predict the block device name associated to
+# a data disk, we use the block device size to identify the data disk that
+# needs to be mounted. Hence, this function will fail if none or more than one
+# attached block devices match the size of data disk to mount.
+# A file system (EXT4) is created on the mounted data disk if none exists.
 # Globals:
 # Arguments:
 #   1) size of the disk to mount, a string as returned by the
