@@ -6,19 +6,6 @@
 # Constants
 readonly DATE_FORMAT='%Y-%m-%d %H:%M:%S (%Z)'
 
-# Function's comment template
-#######################################
-# [Description of the function.]
-# Globals:
-#   [List of global variables used and modified, if any.]
-# Arguments:
-#   [Arguments taken, if any.]
-# Outputs:
-#   [Output to STDOUT or STDERR, if any.]
-# Returns:
-#   [Returned values other than the default exit status of the last command run.]
-#######################################
-
 #######################################
 # Add new commented entry in server hosts file.
 # Arguments:
