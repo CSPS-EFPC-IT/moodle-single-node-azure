@@ -286,7 +286,7 @@ function utils::parse_parameters() {
 #   Writes last command and exit code to STDERR.
 #######################################
 function utils::set_exit_trap() {
-    # Exit script when any command fails
+  # Exit script when any command fails
   set -e
   # Keep track of the last executed command
   trap 'last_command=${current_command}; current_command=${BASH_COMMAND}' DEBUG
