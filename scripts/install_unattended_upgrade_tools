@@ -1,0 +1,147 @@
+#!/bin/bash
+#
+# Install unattended upgrade tools on Ubuntu 18.04.
+# This script must be run as root (ex.: sudo sh ./[script_name]).
+# Style Guide: https://google.github.io/styleguide/shellguide.html
+
+# Parameters: all manadatory and must be prefix with "--" on command line.
+declare -A parameters=( \
+  [server_admin_email]= \
+  [server_fqdn]= \
+  [server_reboot_utc_time]= \
+  [server_resource_name]= \
+  [smtp_server_fqdn]= \
+  [smtp_server_port]=)
+
+# Constants
+readonly APTICRON_CONF_FILE_PATH="/etc/apticron/apticron.conf"
+readonly AUTO_UPGRADES_CONF_FILE_PATH="/etc/apt/apt.conf.d/20auto-upgrades"
+readonly POSTFIX_CONF_FILE_PATH="/etc/postfix/main.cf"
+readonly UNATTENDED_UPGRADES_CONF_FILE_PATH="/etc/apt/apt.conf.d/50unattended-upgrades"
+
+# Functions
+source ./utils.sh
+
+function main() {
+  utils::set_exit_trap
+  utils::echo_title "Start of $0"
+
+  #############################################################################
+
+  utils::echo_title "Parse Input Parameters"
+  utils::parse_parameters "$@"
+
+  #############################################################################
+
+  utils::echo_title "Install Unattended-Upgrades, Apticron and related packages"
+
+  export DEBIAN_FRONTEND=noninteractive
+  utils::echo_action "Installing packages..."
+  apt install -y \
+    apticron \
+    unattended-upgrades
+  utils::echo_info "Done."
+
+  #############################################################################
+
+  utils::echo_title "Configure Unattended-Upgrades"
+
+  utils::echo_action "Enabling OS updates..."
+  sed -i -e "s|^//\([[:blank:]]*\"\${distro_id}:\${distro_codename}-updates\";\)$|  \1|g" "${UNATTENDED_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Unattended-Upgrade::Mail parameter..."
+  sed -i -e "s|^//\(Unattended-Upgrade::Mail\) .*$|\1 \"${parameters[server_admin_email]}\";|g" "${UNATTENDED_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Enabling Unattended-Upgrade::Remove-Unused-Kernel-Packages..."
+  sed -i -e "s|^//\(Unattended-Upgrade::Remove-Unused-Kernel-Packages\) .*$|\1 \"true\";|g" "${UNATTENDED_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Enabling Unattended-Upgrade::Remove-Unused-Dependencies..."
+  sed -i -e "s|^//\(Unattended-Upgrade::Remove-Unused-Dependencies\) .*$|\1 \"true\";|g" "${UNATTENDED_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Enabling Unattended-Upgrade::Automatic-Reboot..."
+  sed -i -e "s|^//\(Unattended-Upgrade::Automatic-Reboot\) .*$|\1 \"true\";|g" "${UNATTENDED_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Unattended-Upgrade::Automatic-Reboot-Time..."
+  sed -i -e "s|^//\(Unattended-Upgrade::Automatic-Reboot-Time\) .*$|\1 \"${parameters[server_reboot_utc_time]}\";|g" "${UNATTENDED_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  #############################################################################
+
+  utils::echo_title "Configure Aptitude (apt)"
+
+  utils::echo_action "Setting APT::Periodic::Download-Upgradeable-Packages parameter..."
+  echo "APT::Periodic::Download-Upgradeable-Packages \"1\";" >> "${AUTO_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting APT::Periodic::AutocleanInterval parameter..."
+  echo "APT::Periodic::AutocleanInterval \"7\";" >> "${AUTO_UPGRADES_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Apticron EMAIL parameter..."
+  sed -i -e "s/^\(EMAIL=\).*$/\1\"${parameters[server_admin_email]}\"/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  #############################################################################
+
+  utils::echo_title "Configure Apticron"
+
+  utils::echo_action "Setting Apticron SYSTEM parameter..."
+  sed -i -e "s/^\(SYSTEM=\).*$/\1\"${parameters[server_resource_name]}\"/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Apticron NOTIFY_HOLDS parameter..."
+  sed -i -e "s/^\(NOTIFY_HOLDS=\).*$/\1\"0\"/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Apticron NOTIFY_NEW parameter..."
+  sed -i -e "s/^\(NOTIFY_NEW=\).*$/\1\"0\"/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Apticron NOTIFY_NO_UPDATES parameter..."
+  sed -i -e "s/^\(NOTIFY_NO_UPDATES=\).*$/\1\"0\"/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Apticron CUSTOM_SUBJECT parameter..."
+  sed -i -e "s/^# \(CUSTOM_SUBJECT=\)\"\".*$/\1'[apticron] \$SYSTEM: \$NUM_PACKAGES package update(s)'/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Apticron CUSTOM_NO_UPDATES_SUBJECT parameter..."
+  sed -i -e "s/^# \(CUSTOM_NO_UPDATES_SUBJECT=\)\"\".*$/\1'[apticron] \$SYSTEM: no updates'/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  #############################################################################
+
+  utils::echo_title "Configure Postfix"
+
+  utils::echo_action "Setting Postfix myhostname parameter..."
+  sed -i -e "s/^\(myhostname =\).*$/\1 ${parameters[server_fqdn]}/g" "${POSTFIX_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Postfix myorigin parameter..."
+  sed -i -e "s/^\(myorigin =\).*$/\1 \$myhostname/g" "${POSTFIX_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Setting Postfix relayhost parameter..."
+  sed -i -e "s/^\(relayhost =\).*$/\1 ${parameters[smtp_server_fqdn]}:${parameters[smtp_server_port]}/g" "${POSTFIX_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Adding Postfix smtp_tls_security_level parameter..."
+  sed -i -e "/^smtp_tls_session_cache_database = .*/a smtp_tls_security_level = encrypt" "${POSTFIX_CONF_FILE_PATH}"
+  utils::echo_info "Done."
+
+  utils::echo_action "Reloading Postfix configuration file..."
+  service postfix reload
+  utils::echo_info "Done."
+
+  #############################################################################
+
+  utils::echo_title "End of $0"
+  utils::unset_exit_trap
+}
+
+main "$@"

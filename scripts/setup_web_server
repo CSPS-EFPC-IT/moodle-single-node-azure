@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Setup Moodle Single Node Web Server.
+# This script must be run as root (ex.: sudo sh ./[script_name])
+# Style Guide: https://google.github.io/styleguide/shellguide.html
+
+# Parameters: all manadatory and must be prefix with "--" on command line.
+declare -A parameters=( \
+  [data_disk_size]= \
+  [db_server_admin_password]= \
+  [db_server_admin_username]= \
+  [db_server_fqdn]= \
+  [db_server_name]= \
+  [moodle_admin_email]= \
+  [moodle_admin_password]= \
+  [moodle_admin_username]= \
+  [moodle_data_mount_point_path]= \
+  [moodle_db_name]= \
+  [moodle_db_password]= \
+  [moodle_db_username]= \
+  [moodle_upgrade_key]= \
+  [smtp_server_fqdn]= \
+  [smtp_server_port]= \
+  [smtp_server_private_ip]= \
+  [web_server_admin_email]= \
+  [web_server_fqdn]= \
+  [web_server_reboot_utc_time]= \
+  [web_server_resource_name]= )
+
+  # Functions
+source ./utils.sh
+
+function main() {
+  utils::set_exit_trap
+  utils::echo_title "Start of $0"
+
+  #############################################################################
+
+  utils::echo_title "Parse Input Parameters"
+  utils::parse_parameters "$@"
+
+  utils::echo_title "Upgrade Server and Removes Unused Packages"
+  ./upgrade_server
+
+  utils::echo_title "Install Unattended Upgrade Tools"
+  ./install_unattended_upgrade_tools \
+    --server_admin_email "${parameters[web_server_admin_email]}" \
+    --server_fqdn "${parameters[web_server_fqdn]}" \
+    --server_reboot_utc_time "${parameters[web_server_reboot_utc_time]}" \
+    --server_resource_name "${parameters[web_server_resource_name]}" \
+    --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
+    --smtp_server_port "${parameters[smtp_server_port]}"
+
+  utils::echo_title "Install Moodle and Client Requested Plugins"
+  ./install_moodle \
+    --data_disk_size "${parameters[data_disk_size]}" \
+    --db_server_admin_password "${parameters[db_server_admin_password]}" \
+    --db_server_admin_username "${parameters[db_server_admin_username]}" \
+    --db_server_fqdn "${parameters[db_server_fqdn]}" \
+    --db_server_name "${parameters[db_server_name]}" \
+    --moodle_admin_email "${parameters[moodle_admin_email]}" \
+    --moodle_admin_password "${parameters[moodle_admin_password]}" \
+    --moodle_admin_username "${parameters[moodle_admin_username]}" \
+    --moodle_data_mount_point_path "${parameters[moodle_data_mount_point_path]}" \
+    --moodle_db_name "${parameters[moodle_db_name]}" \
+    --moodle_db_password "${parameters[moodle_db_password]}" \
+    --moodle_db_username "${parameters[moodle_db_username]}" \
+    --moodle_upgrade_key "${parameters[moodle_upgrade_key]}" \
+    --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
+    --smtp_server_private_ip "${parameters[smtp_server_private_ip]}" \
+    --web_server_fqdn "${parameters[web_server_fqdn]}"
+
+  #############################################################################
+
+  utils::echo_title "End of $0"
+  utils::unset_exit_trap
+}
+
+main "$@"

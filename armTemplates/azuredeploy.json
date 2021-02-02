@@ -151,6 +151,12 @@
                 "description": "The fully qualified domain name of the email server to use."
             }
         },
+        "smtpServerPort": {
+            "type": "int",
+            "metadata": {
+                "description": "The SMTP server port."
+            }
+        },
         "smtpServerPrivateIp": {
             "type": "securestring",
             "metadata": {
@@ -170,18 +176,31 @@
                 "description": "The virtual network IP address prefix. Format is '255.255.255'."
             }
         },
+        "webServerAdminEmail": {
+            "type": "string",
+            "metadata": {
+                "description": "The Web server administrator's email address."
+            }
+        },
         "webServerAdminPassword": {
             "type": "securestring",
             "metadata": {
-                "description": "The password to use to connect to the VMSS instances."
+                "description": "The Web server administrator's password."
             }
         },
         "webServerAdminUsername": {
             "type": "string",
             "metadata": {
-                "description": "The username to use to connect to the VMSS instances."
+                "description": "The Web server administrator's username."
+            }
+        },
+        "webServerRebootUtcTime": {
+            "type": "string",
+            "metadata": {
+                "description": "The Web server automatic reboot time in UTC. Format: 'HH:MM'"
             }
         }
+
     },
     "functions": [
         {
@@ -248,7 +267,7 @@
         "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
         "webServerComputerName": "webserver",
         "webServerVirtualMachineDataDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-Data-Disk')]",
-        "webServerVirtualMachineInstallMoodleExtensionName": "InstallMoodle",
+        "webServerVirtualMachineSetupExtensionName": "SetupWebServer",
         "webServerVirtualMachineLinuxDiagnosticExtensionName": "LinuxDiagnostic",
         "webServerVirtualMachineName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-VM')]",
         "webServerVirtualMachineNamePrefix": "[concat(variables('resourceNamePrefix'), '-WebServer')]",
@@ -1053,7 +1072,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('webServerVirtualMachineName'),'/', variables('webServerVirtualMachineInstallMoodleExtensionName'))]",
+            "name": "[concat(variables('webServerVirtualMachineName'),'/', variables('webServerVirtualMachineSetupExtensionName'))]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -1070,8 +1089,14 @@
                     "timestamp": 1
                 },
                 "protectedSettings": {
-                    "fileUris": ["[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle.sh')]"],
-                    "commandToExecute": "[concat('sudo ./install_moodle.sh -dataDiskSize ', parameters('dataDiskSizeGB'), 'G', ' -dbServerAdminPassword ', parameters('databaseAdminPassword'), ' -dbServerAdminUsername ', parameters('databaseAdminUsername'), ' -dbServerFqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' -dbServerName ', variables('databaseName'), ' -moodleAdminEmail ', parameters('moodleAdminEmail'), ' -moodleAdminPassword ', parameters('moodleAdminPassword'), ' -moodleAdminUsername ', parameters('moodleAdminUsername'), ' -moodleDataMountPointPath ', variables('moodleDataMountPointPath'), ' -moodleDbName ', variables('databaseApplicationDatabaseName'), ' -moodleDbPassword ', parameters('databaseMoodlePassword'), ' -moodleDbUsername ', parameters('databaseMoodleUsername'), ' -moodleFqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' -moodleUpgradeKey ', parameters('moodleUpgradeKey'), ' -smtpServerFqdn ', parameters('smtpServerFqdn'), ' -smtpServerPrivateIp ', parameters('smtpServerPrivateIp'), ' > /var/log/install_moodle.log 2>&1')]"
+                    "fileUris": [
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/utils.sh')]",
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/upgrade_server')]",
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/install_unattended_upgrade_tools')]",
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle')]",
+                        "[concat(parameters('fileRepositoryUri'),'/scripts/setup_web_server')]"
+                    ],
+                    "commandToExecute": "[concat('sudo ./setup_web_server', ' --data_disk_size ', parameters('dataDiskSizeGB'), 'G', ' --db_server_admin_password ', parameters('databaseAdminPassword'), ' --db_server_admin_username ', parameters('databaseAdminUsername'), ' --db_server_fqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' --db_server_name ', variables('databaseName'), ' --moodle_admin_email ', parameters('moodleAdminEmail'), ' --moodle_admin_password ', parameters('moodleAdminPassword'),' --moodle_admin_username ', parameters('moodleAdminUsername'),' --moodle_data_mount_point_path ', variables('moodleDataMountPointPath'),' --moodle_db_name ', variables('databaseApplicationDatabaseName'),' --moodle_db_password ', parameters('databaseMoodlePassword'),' --moodle_db_username ', parameters('databaseMoodleUsername'),' --moodle_upgrade_key ', parameters('moodleUpgradeKey'),' --smtp_server_fqdn ', parameters('smtpServerFqdn'),' --smtp_server_port ' , parameters('smtpServerPort'),' --smtp_server_private_ip ', parameters('smtpServerPrivateIp'),' --web_server_admin_email ', parameters('webServerAdminEmail'),' --web_server_fqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' --web_server_reboot_utc_time ', parameters('webServerRebootUtcTime'), ' --web_server_resource_name ', variables('webServerVirtualMachineName'), ' > /var/log/setup_web_server.log 2>&1')]"
                 }
             }
         },
@@ -1084,7 +1109,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('webServerVirtualMachineName'), variables('webServerVirtualMachineInstallMoodleExtensionName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('webServerVirtualMachineName'), variables('webServerVirtualMachineSetupExtensionName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Diagnostics",

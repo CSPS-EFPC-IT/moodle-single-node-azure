@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# Upgrade server and remove unused packages on Ubuntu 18.04.
+# This script must be run as root (ex.: sudo sh ./[script_name]) and prior to
+# any server customization.
+# Style Guide: https://google.github.io/styleguide/shellguide.html
+
+# Functions
+source ./utils.sh
+
+function main() {
+  utils::set_exit_trap
+  utils::echo_title "Start of $0"
+
+  #############################################################################
+
+  utils::echo_title "Upgrade Server and Remove Unused Packages"
+
+  utils::echo_action "Updating server package index files..."
+  apt update
+  utils::echo_info "Done."
+
+  utils::echo_action "Upgrading all installed server packages to their latest version and apply available security patches..."
+  apt upgrade -y
+  utils::echo_info "Done."
+
+  utils::echo_action "Removing server packages that are no longer needed."
+  apt autoremove -y
+  utils::echo_info "Done."
+
+  #############################################################################
+
+  utils::echo_title "End of $0"
+  utils::unset_exit_trap
+}
+
+main "$@"
