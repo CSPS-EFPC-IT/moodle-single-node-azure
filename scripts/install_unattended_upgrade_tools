@@ -103,7 +103,7 @@ function main() {
   utils::echo_info "Done."
 
   utils::echo_action "Setting Apticron NOTIFY_NO_UPDATES parameter..."
-  sed -i -e "s/^\(NOTIFY_NO_UPDATES=\).*$/\1\"1\"/g" "${APTICRON_CONF_FILE_PATH}"
+  sed -i -e "s/^\(NOTIFY_NO_UPDATES=\).*$/\1\"0\"/g" "${APTICRON_CONF_FILE_PATH}"
   utils::echo_info "Done."
 
   utils::echo_action "Setting Apticron CUSTOM_SUBJECT parameter..."
