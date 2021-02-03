@@ -23,7 +23,7 @@
         "overrideParameters": "-armTemplateRepoBaseUrl \"$(armTemplateRepoBaseUrl)\" -customApplicationFqdn \"$(customApplicationFqdn)\" -databaseAdminPassword \"$(databaseAdminPassword)\" -databaseAdminUsername \"$(databaseAdminUsername)\" -databaseBackupRetentionDays $(databaseBackupRetentionDays) -databaseCapacity $(databaseCapacity) -databaseMoodlePassword \"$(databaseMoodlePassword)\" -databaseMoodleUsername \"$(databaseMoodleUsername)\" -databaseStorageMb $(databaseStorageMb) -dataDiskSizeGB $(dataDiskSizeGB) -environmentName \"$(environmentName)\" -fileRepositoryUri \"$(fileRepositoryUri)\" -gatewaySslCertificateUri \"$(gatewaySslCertificateUri)\" -gatewayUserAssignedIdentity $(gatewayUserAssignedIdentity) -location \"$(location)\" -moodleAdminEmail \"$(moodleAdminEmail)\" -moodleAdminPassword \"$(moodleAdminPassword)\" -moodleAdminUsername \"$(moodleAdminUsername)\" -moodleUpgradeKey \"$(moodleUpgradeKey)\" -projectShortName \"$(projectShortName)\" -resourceTags $(resourceTags) -smtpServerFqdn \"$(smtpServerFqdn)\" -smtpServerPort \"$(smtpServerPort)\" -smtpServerPrivateIp \"$(smtpServerPrivateIp)\" -virtualMachineTags \"$(virtualMachineTags)\" -virtualNetworkAddressBase \"$(virtualNetworkAddressBase)\" -webServerAdminEmail \"$(webServerAdminEmail)\" -webServerAdminPassword \"$(webServerAdminPassword)\" -webServerAdminUsername \"$(webServerAdminUsername)\" -webServerRebootUtcTime \"$(webServerRebootUtcTime)\"",
         "deploymentMode": "Incremental",
         "deploymentName": "moodleSingleNode_pipeline",
-        "deploymentOutputs": "",
+        "deploymentOutputs": "armOutput1",
         "addSpnToEnvironment": "false"
       },
       "task": {
@@ -34,25 +34,19 @@
     },
     {
       "environment": {},
-      "displayName": "ARM Outputs",
+      "displayName": "Task group: Arm Outputs",
       "alwaysRun": false,
       "continueOnError": false,
       "condition": "succeeded()",
       "enabled": true,
       "timeoutInMinutes": 0,
       "inputs": {
-        "ConnectedServiceNameSelector": "ConnectedServiceNameARM",
-        "ConnectedServiceNameARM": "$(serviceConnectionName)",
-        "resourceGroupName": "$(resourceGroupName)",
-        "prefix": "armOutput.",
-        "outputNames": "",
-        "whenLastDeploymentIsFailed": "fail",
-        "deploymentNameFilter": ""
+        "armDeploymentOutputs": "$(armOutput1)"
       },
       "task": {
-        "id": "584bcff2-3353-4f11-872b-6ba01267a972",
-        "versionSpec": "6.*",
-        "definitionType": "task"
+        "id": "3ec489be-8fe0-480b-a2d6-7b08edfe1e5d",
+        "versionSpec": "1.*",
+        "definitionType": "metaTask"
       }
     },
     {
@@ -64,7 +58,7 @@
       "enabled": true,
       "timeoutInMinutes": 0,
       "inputs": {
-        "Vnet1_Name": "$(armOutput.virtualNetworkName)",
+        "Vnet1_Name": "$(virtualNetworkName)",
         "Vnet1_RGName": "$(resourceGroupName)",
         "Vnet1_ServiceConnection": "$(serviceConnectionName)",
         "Vnet1_SubID": "$(subscriptionId)",
@@ -84,21 +78,22 @@
     "Agent",
     "DeploymentGroup"
   ],
-  "revision": 1,
+  "revision": 3,
   "createdBy": {
     "displayName": "Patrick Messier",
     "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
     "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
   },
-  "createdOn": "2021-01-20T14:04:15.497Z",
+  "createdOn": "2021-01-26T16:21:15.460Z",
   "modifiedBy": {
     "displayName": "Patrick Messier",
     "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
     "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
   },
-  "modifiedOn": "2021-01-20T14:04:15.497Z",
-  "id": "e29562ad-c156-4ff1-8fb4-f9ac7652d660",
-  "name": "Deploy Moodle Single Node - 20210126",
+  "modifiedOn": "2021-02-02T16:59:30.160Z",
+  "comment": "",
+  "id": "81ddab35-8188-4672-89b0-d6a7f3838aef",
+  "name": "Deploy Moodle Single Node - New",
   "version": {
     "major": 1,
     "minor": 0,
@@ -106,7 +101,7 @@
     "isTest": false
   },
   "iconUrl": "https://cdn.vsassets.io/v/M176_20201022.3/_content/icon-meta-task.png",
-  "friendlyName": "Deploy Moodle Single Node - 20210126",
+  "friendlyName": "Deploy Moodle Single Node - New",
   "description": "",
   "category": "Deploy",
   "definitionType": "metaTask",
@@ -382,7 +377,7 @@
       "aliases": [],
       "options": {},
       "properties": {
-        "EndpointFilterRule": ""
+        "EndpointFilterRule": "ScopeLevel >= deploymentScope"
       },
       "name": "serviceConnectionName",
       "label": "serviceConnectionName",
@@ -437,7 +432,7 @@
       "defaultValue": "$(smtpServerPrivateIp)",
       "required": true,
       "type": "string",
-      "helpMarkDown": "Resource Group containing the SMTP VN.",
+      "helpMarkDown": "",
       "groupName": ""
     },
     {
@@ -566,7 +561,7 @@
   "satisfies": [],
   "sourceDefinitions": [],
   "dataSourceBindings": [],
-  "instanceNameFormat": "Task group: Deploy Moodle Single Node - 20210126",
+  "instanceNameFormat": "Task group: Deploy Moodle Single Node - New",
   "preJobExecution": {},
   "execution": {},
   "postJobExecution": {}
