@@ -289,6 +289,13 @@ EOF
     "9c4c72c2ef9a00f97889a81cc62da715" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/filter"
 
+  # Course formats: Tiles format
+  # Ref.: https://moodle.org/plugins/format_tiles
+  get_moodle_plugin \
+    "https://moodle.org/plugins/download.php/23359/format_tiles_moodle310_2020080613.zip" \
+    "46be6a340e35abb334f77f347bede345" \
+    "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/course/format"
+
   # General plugins (Local): Moodle eMail Test
   # Ref.: https://moodle.org/plugins/local_mailtest
   # Note: This plugin is not requested by clients. It is install to ease mail
