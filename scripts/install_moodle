@@ -291,10 +291,19 @@ EOF
 
   # Course formats: Tiles format
   # Ref.: https://moodle.org/plugins/format_tiles
+  # Ref.: https://dev.azure.com/CSPS-EFPC-UX/learning-platform/_workitems/edit/287
   get_moodle_plugin \
     "https://moodle.org/plugins/download.php/23359/format_tiles_moodle310_2020080613.zip" \
     "46be6a340e35abb334f77f347bede345" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/course/format"
+
+  # General plugins (Local): User bulk enrolment
+  # Ref.: https://moodle.org/plugins/local_bulkenrol
+  # Ref.: https://dev.azure.com/CSPS-EFPC-UX/learning-platform/_workitems/288
+  get_moodle_plugin \
+    "https://moodle.org/plugins/download.php/23386/local_bulkenrol_moodle310_2021010900.zip" \
+    "f5ab161df25a4a7340d6f021c52e2336" \
+    "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/local"
 
   # General plugins (Local): Moodle eMail Test
   # Ref.: https://moodle.org/plugins/local_mailtest
