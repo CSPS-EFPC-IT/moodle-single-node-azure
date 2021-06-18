@@ -345,8 +345,8 @@ EOF
   # Themes: Boost Campus
   # Ref.: https://moodle.org/plugins/theme_boost_campus
   get_moodle_plugin \
-    "https://moodle.org/plugins/download.php/23483/theme_boost_campus_moodle310_2020112802.zip" \
-    "062594ccc68c1b3fd5cad2a8cb314776" \
+    "https://moodle.org/plugins/download.php/23935/theme_boost_campus_moodle310_2020112805.zip" \
+    "fcddac5c2a1f4dfb1fa647042bd9ff3a" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/theme"
 
   # Admin tools: Set course dates
