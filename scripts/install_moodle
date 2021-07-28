@@ -287,12 +287,8 @@ EOF
   sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
   utils::echo_info "Done."
 
-  utils::echo_action "Installing plugins that have been recently added on the file system..."
+  utils::echo_action "Upgrade moodle database to match new Moodle core and/or plugin version..."
   sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/upgrade.php" --non-interactive
-  utils::echo_info "Done."
-
-  utils::echo_action "Uninstalling plugings that have been recently removed from the file system..."
-  sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/uninstall_plugins.php" --purge-missing --run
   utils::echo_info "Done."
 
   utils::echo_action "Purging all Moodle Caches..."
