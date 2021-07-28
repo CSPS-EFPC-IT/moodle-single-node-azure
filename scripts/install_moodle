@@ -75,40 +75,6 @@ function get_moodle_core() {
   utils::echo_info "Done."
 }
 
-#######################################
-# Get and extract Moodle plugin files.
-# Arguments:
-#   1) URL of the Moodle plugin zip file to download.
-#   2) MD5 hash code of the Moodle plugin zip file to download.
-#   3) Plugin installation directory path.
-# Outputs:
-#   Writes normal log messages to STDOUT.
-#   Writes error messages to STDERR.
-#######################################
-function get_moodle_plugin() {
-  local plugin_zip_file_url="$1"
-  local plugin_md5_sum="$2"
-  local plugin_dir_path="$3"
-
-  local plugin_zip_file
-
-  utils::echo_action "Downloading plugin zip file..."
-  plugin_zip_file="$(basename ${plugin_zip_file_url})"
-  wget "${plugin_zip_file_url}" -O "${plugin_zip_file}"
-  utils::echo_info "Done."
-
-  utils::echo_action "Checking downloaded file integrity..."
-  if ! echo "${plugin_md5_sum}  ${plugin_zip_file}" | md5sum --check; then
-    utils::echo_error "Downloaded file corrupted. Aborting."
-    exit 1;
-  fi;
-  utils::echo_info "Done."
-
-  utils::echo_action "Extracting plugin files..."
-  unzip -q "${plugin_zip_file}" -d "${plugin_dir_path}"
-  utils::echo_info "Done."
-}
-
 function main() {
 
   local crontab_entry
@@ -249,6 +215,10 @@ EOF
     "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.1.tgz" \
     "547973f2dc2ca7b992c193dab4991c88768338fd2bd04b9d786e62de08cf513f" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
+
+  utils::echo_action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
+  chown -R "${APACHE2_USER}:root" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
+  utils::echo_info "Done."
 
   #############################################################################
 
