@@ -212,8 +212,8 @@ EOF
 
   # Ref.: https://download.moodle.org/releases/supported/
   get_moodle_core \
-    "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.6.tgz" \
-    "b2d99590a079e00d6d23871c6d4c57c53d2cbce63f82805babf5178b65e3ecd2" \
+    "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.7.tgz" \
+    "384ad7180e57cbd32fb2b516b1cf360d3d32bcf93267e1930557833fd8f3e7fc" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
   utils::echo_action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
