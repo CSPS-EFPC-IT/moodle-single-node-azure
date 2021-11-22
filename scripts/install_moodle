@@ -293,7 +293,7 @@ EOF
   utils::echo_info "Done."
 
   # Security Check - Writable config.php.
-  utils::echo_action "Prevent Moodle processes from updaitng ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  utils::echo_action "Prevent Moodle processes from updating ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
   chmod u-w "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
   utils::echo_info "Done."
 
