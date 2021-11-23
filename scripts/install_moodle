@@ -287,6 +287,16 @@ EOF
   sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
   utils::echo_info "Done."
 
+  # Security Check - Executable paths.
+  utils::echo_action "Adding directive to prevent executable paths to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  sed -i "/^\$CFG->upgradekey.*/a \$CFG->preventexecpath = true;" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  utils::echo_info "Done."
+
+  # Security Check - Writable config.php.
+  utils::echo_action "Prevent Moodle processes from updating ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  chmod u-w "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  utils::echo_info "Done."
+
   utils::echo_action "Upgrade moodle database to match new Moodle core and/or plugin version..."
   sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/upgrade.php" --non-interactive
   utils::echo_info "Done."
