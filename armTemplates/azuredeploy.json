@@ -8,6 +8,12 @@
                 "description": "The base URL of the Azure Resource Manager template repository."
             }
         },
+        "corporateGatewayIpAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "The Outbound IP address of the corporate network gateway."
+            }
+        },
         "customApplicationFqdn": {
             "type": "string",
             "metadata": {
@@ -258,9 +264,9 @@
         "gatewaySubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/27')]",
         "gatewaySubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-SN')]",
         "moodleDataMountPointPath": "/moodledata",
+        "recoveryServiceVaultBackupPoliciesDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultBackupPolicies'), 64)]",
         "recoveryServiceVaultDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVault'), 64)]",
         "recoveryServiceVaultProtectedItemsDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultProtectedItems'), 64)]",
-        "recoveryServiceVaultBackupPoliciesDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultBackupPolicies'), 64)]",
         "resourceNamePrefix": "[concat(parameters('projectShortName'), if(equals(parameters('environmentName'), 'prod'), '', concat('-', toupper(parameters('environmentName')))))]",
         "storageAccountNamePrefix": "[tolower(concat(custom.cleanName(parameters('projectShortName')), if(equals(parameters('environmentName'), 'prod'), '', take(parameters('environmentName'),4))))]",
         "virtualNetworkAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/24')]",
@@ -325,6 +331,12 @@
                             "serviceEndpoints": [
                                 {
                                     "service": "Microsoft.Sql",
+                                    "locations": [
+                                        "[parameters('location')]"
+                                    ]
+                                },
+                                {
+                                    "service": "Microsoft.Storage",
                                     "locations": [
                                         "[parameters('location')]"
                                     ]
@@ -395,14 +407,14 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "AllowPublicInternet_Any_80_443",
+                        "name": "Allow_PublicInternet_Any_80_443_Inbound",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
                             "sourceAddressPrefix": "Internet",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 100,
+                            "priority": 1000,
                             "direction": "Inbound",
                             "sourcePortRanges": [],
                             "destinationPortRanges": [
@@ -414,7 +426,7 @@
                         }
                     },
                     {
-                        "name": "AllowGatewayManager_TCP_65200-65535",
+                        "name": "Allow_GatewayManager_TCP_65200-65535_Inbound",
                         "properties": {
                             "description": "https://docs.microsoft.com/en-us/azure/application-gateway/configuration-overview#network-security-groups-on-the-application-gateway-subnet",
                             "protocol": "TCP",
@@ -423,7 +435,7 @@
                             "sourceAddressPrefix": "GatewayManager",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 110,
+                            "priority": 1010,
                             "direction": "Inbound",
                             "sourcePortRanges": [],
                             "destinationPortRanges": [],
@@ -432,7 +444,7 @@
                         }
                     },
                     {
-                        "name": "AllowAzureLoadBalancer_Any_Any",
+                        "name": "Allow_AzureLoadBalancer_Any_Any_Inbound",
                         "properties": {
                             "description": "https://docs.microsoft.com/en-us/azure/application-gateway/configuration-overview#network-security-groups-on-the-application-gateway-subnet",
                             "protocol": "*",
@@ -441,7 +453,7 @@
                             "sourceAddressPrefix": "AzureLoadBalancer",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 120,
+                            "priority": 1020,
                             "direction": "Inbound",
                             "sourcePortRanges": [],
                             "destinationPortRanges": [],
@@ -450,7 +462,7 @@
                         }
                     },
                     {
-                        "name": "DenyAllOtherTraffic",
+                        "name": "Deny_AllOther_Inbound",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -718,14 +730,14 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "[concat('Allow', variables('gatewayName'), '_TCP_80')]",
+                        "name": "[concat('Allow_', variables('gatewayName'), '_TCP_80_Inbound')]",
                         "properties": {
                             "protocol": "TCP",
                             "sourcePortRange": "*",
                             "sourceAddressPrefix": "[variables('gatewaySubnetAddressPrefix')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 100,
+                            "priority": 1000,
                             "direction": "Inbound",
                             "sourcePortRanges": [],
                             "destinationPortRanges": [
@@ -736,7 +748,7 @@
                         }
                     },
                     {
-                        "name": "[concat('Allow', variables('bastionName'), '_TCP_22')]",
+                        "name": "[concat('Allow_', variables('bastionName'), '_TCP_22_Inbound')]",
                         "properties": {
                             "protocol": "TCP",
                             "sourcePortRange": "*",
@@ -744,7 +756,7 @@
                             "sourceAddressPrefix": "[variables('bastionSubnetAddressPrefix')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 110,
+                            "priority": 1010,
                             "direction": "Inbound",
                             "sourcePortRanges": [],
                             "destinationPortRanges": [],
@@ -753,7 +765,7 @@
                         }
                     },
                     {
-                        "name": "DenyAllOtherTraffic",
+                        "name": "Deny_AllOther_Inbound",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -916,6 +928,9 @@
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
             "name": "[variables('diagnosticStorageAccountName')]",
+            "dependsOn":[
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
             "tags": "[parameters('resourceTags')]",
             "location": "[parameters('location')]",
             "sku": {
@@ -930,9 +945,19 @@
                 // https://docs.microsoft.com/en-ca/azure/azure-monitor/platform/metrics-troubleshoot#cannot-pick-guest-os-namespace-and-metrics
                 "networkAcls": {
                     "bypass": "AzureServices",
-                    "virtualNetworkRules": [],
-                    "ipRules": [],
-                    "defaultAction": "Allow"
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]",
+                            "action": "Allow"
+                        }
+                    ],
+                    "ipRules": [
+                        {
+                            "value": "[parameters('corporateGatewayIpAddress')]",
+                            "action": "allow"
+                        }
+                    ],
+                    "defaultAction": "Deny"
                 },
                 "supportsHttpsTrafficOnly": true,
                 "encryption": {
