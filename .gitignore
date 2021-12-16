@@ -1,3 +1,2 @@
 azuredeploy.parameters.*.json
 !azuredeploy.parameters.example.json
-/*.sh

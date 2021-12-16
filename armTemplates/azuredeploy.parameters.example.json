@@ -5,6 +5,9 @@
         "armTemplateRepoBaseUrl": {
             "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/SysAdmins-ARMTemplates/master"
         },
+        "corporateGatewayIpAddress": {
+            "value": "255.255.255.255"
+        },
         "customApplicationFqdn": {
             "value": "my.custom.app.domain"
         },
@@ -77,7 +80,7 @@
             "value": 587
         },
         "smtpServerPrivateIp": {
-            "value": "10.10.10.10"
+            "value": "255.255.255.255"
         },
         "virtualMachineTags": {
             "value": {
@@ -86,7 +89,7 @@
             }
         },
         "virtualNetworkAddressBase": {
-            "value": "10.10.10"
+            "value": "255.255.255"
         },
         "webServerAdminEmail": {
             "value": "myadmin@domain"
