@@ -35,6 +35,9 @@
         "dataDiskSizeGB" : {
             "value": 32
         },
+        "deniedIpAddresses" : {
+            "value": "10.10.10.10/32"
+        },
         "environmentName": {
             "value": "myEnv"
         },
