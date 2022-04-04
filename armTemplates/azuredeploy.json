@@ -415,7 +415,7 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "custom_rule_500",
+                        "name": "Deny_CustomExclusion_Any_Any_Inbound",
                         "properties": {
                             "access": "Deny",
                             "description": "Custom security rule.",
