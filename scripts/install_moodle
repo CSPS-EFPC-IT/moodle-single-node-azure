@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Install Moodle 3.10.6 without any additional plugins on Ubuntu 18.04.
+# Install Moodle 3.10.10 without any additional plugins on Ubuntu 18.04.
 # This script must be run as root (ex.: sudo sh [script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
@@ -212,8 +212,8 @@ EOF
 
   # Ref.: https://download.moodle.org/releases/supported/
   get_moodle_core \
-    "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.8.tgz" \
-    "7de57edb2500036b590a46fcd4b30fc33e4cf23137ede02641027aa8c7834cca" \
+    "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.10.tgz" \
+    "5489641723ec9883b73e9019bda4589a594e9935f27d123a6052f587ba1e5c0c" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
   utils::echo_action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
