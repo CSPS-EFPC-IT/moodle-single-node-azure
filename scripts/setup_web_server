@@ -72,7 +72,9 @@ function main() {
 
   utils::echo_title "Install Linux Diagnostic Extension Prerequisites"
   # Ref.: https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/diagnostics-linux-v3
+  utils::echo_action "Installing python2..."
   sudo apt install -y python2
+  utils::echo_action "Updating python link..."
   sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
 
   #############################################################################
