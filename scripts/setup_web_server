@@ -71,6 +71,7 @@ function main() {
     --web_server_fqdn "${parameters[web_server_fqdn]}"
 
   utils::echo_title "Install Linux Diagnostic Extension Prerequisites"
+  # Ref.: https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/diagnostics-linux-v3
   sudo apt install -y python2
   sudo update-alternatives --remove-all python
   sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
