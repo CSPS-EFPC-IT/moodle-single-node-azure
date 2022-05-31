@@ -95,7 +95,7 @@ function main() {
   utils::echo_action "Installing postgres client, php client and unzip packages..."
   apt-get install --yes --quiet \
     php-cli \
-    postgresql-client-10 \
+    postgresql-client-12 \
     unzip
   utils::echo_info "Done."
 
