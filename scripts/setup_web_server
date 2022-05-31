@@ -70,6 +70,11 @@ function main() {
     --smtp_server_private_ip "${parameters[smtp_server_private_ip]}" \
     --web_server_fqdn "${parameters[web_server_fqdn]}"
 
+  utils::echo_title "Install Linux Diagnostic Extension Prerequisites"
+  sudo apt install -y python2
+  sudo update-alternatives --remove-all python
+  sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+
   #############################################################################
 
   utils::echo_title "End of $0"
