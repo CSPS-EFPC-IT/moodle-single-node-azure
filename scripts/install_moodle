@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Install Moodle 3.10.11 without any additional plugins on Ubuntu 18.04.
+# Install Moodle 3.11.7 without any additional plugins on Ubuntu 18.04.
 # This script must be run as root (ex.: sudo sh [script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
@@ -116,18 +116,18 @@ function main() {
     clamav \
     ghostscript \
     graphviz \
-    php7.2-curl \
-    php7.2-gd \
-    php7.2-intl \
-    php7.2-ldap \
-    php7.2-mbstring \
-    php7.2-pgsql \
-    php7.2-pspell \
-    php7.2-redis \
-    php7.2-soap \
-    php7.2-xml \
-    php7.2-xmlrpc \
-    php7.2-zip
+    php7.4-curl \
+    php7.4-gd \
+    php7.4-intl \
+    php7.4-ldap \
+    php7.4-mbstring \
+    php7.4-pgsql \
+    php7.4-pspell \
+    php7.4-redis \
+    php7.4-soap \
+    php7.4-xml \
+    php7.4-xmlrpc \
+    php7.4-zip
   utils::echo_info "Done."
 
   #############################################################################
@@ -212,8 +212,8 @@ EOF
 
   # Ref.: https://download.moodle.org/releases/supported/
   get_moodle_core \
-    "https://download.moodle.org/download.php/direct/stable310/moodle-3.10.11.tgz" \
-    "7a1e50d6a296a8c265b899d1fdd33897c0fe85e4b7acd58c7f65bcdb27f17dec" \
+    "https://download.moodle.org/download.php/direct/stable310/moodle-3.11.7.tgz" \
+    "c38a7d76c7b806fc1cbacee7fd835b1f8f9932d01332fc45cc4c5b7a8107c940" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
   utils::echo_action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
