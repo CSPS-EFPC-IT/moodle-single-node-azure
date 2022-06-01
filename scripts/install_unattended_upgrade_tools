@@ -15,6 +15,7 @@ declare -A parameters=( \
 
 # Constants
 readonly APTICRON_CONF_FILE_PATH="/etc/apticron/apticron.conf"
+readonly APTICRON_DEFAULT_CONF_FILE_PATH="/usr/lib/apticron/apticron.conf"
 readonly AUTO_UPGRADES_CONF_FILE_PATH="/etc/apt/apt.conf.d/20auto-upgrades"
 readonly POSTFIX_CONF_FILE_PATH="/etc/postfix/main.cf"
 readonly UNATTENDED_UPGRADES_CONF_FILE_PATH="/etc/apt/apt.conf.d/50unattended-upgrades"
@@ -82,13 +83,18 @@ function main() {
   echo "APT::Periodic::AutocleanInterval \"7\";" >> "${AUTO_UPGRADES_CONF_FILE_PATH}"
   utils::echo_info "Done."
 
-  utils::echo_action "Setting Apticron EMAIL parameter..."
-  sed -i -e "s/^\(EMAIL=\).*$/\1\"${parameters[server_admin_email]}\"/g" "${APTICRON_CONF_FILE_PATH}"
-  utils::echo_info "Done."
-
   #############################################################################
 
   utils::echo_title "Configure Apticron"
+
+  if [[ ! -f ${APTICRON_CONF_FILE_PATH} ]]; then
+    utils::echo_action "Initializing Apticron Configuration file..."
+    cp "${APTICRON_DEFAULT_CONF_FILE_PATH}" "${APTICRON_CONF_FILE_PATH}"
+  fi
+
+  utils::echo_action "Setting Apticron EMAIL parameter..."
+  sed -i -e "s/^\(EMAIL=\).*$/\1\"${parameters[server_admin_email]}\"/g" "${APTICRON_CONF_FILE_PATH}"
+  utils::echo_info "Done."
 
   utils::echo_action "Setting Apticron SYSTEM parameter..."
   sed -i -e "s/^\(SYSTEM=\).*$/\1\"${parameters[server_resource_name]}\"/g" "${APTICRON_CONF_FILE_PATH}"

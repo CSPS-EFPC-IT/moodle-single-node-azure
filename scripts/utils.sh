@@ -333,7 +333,7 @@ function utils::update_apache2_config_file() {
 }
 
 #######################################
-# Update the value of existing and already enabled parameter in a PHP config file.
+# Update and enable an existing parameter in a PHP config file.
 # Arguments:
 #   1) Parameter to set, text string.
 #   2) Value to set, text string.
@@ -352,8 +352,8 @@ function utils::update_php_config_file() {
   utils::echo_action "Setting \"${parameter}\" to \"${value}\" in ${config_file_path}..."
 
   # Check if one and only one line match the search criteria.
-  regex="^${parameter}[[:blank:]]*=.*$"
-  case $(grep "${regex}" "${config_file_path}" | wc -l) in
+  regex="^;?${parameter}[[:blank:]]*=.*$"
+  case $(grep -c -E "${regex}" "${config_file_path}") in
     0)
       utils::echo_error "No line matched the search criteria. Aborting."
       exit 1
@@ -368,7 +368,7 @@ function utils::update_php_config_file() {
   esac
 
   # Perform substitution.
-  sed -i -E "s|${regex}|${parameter} = ${value}|g" "${config_file_path}"
+  sed -i -E "s|${regex}|${parameter} = ${value}|1" "${config_file_path}"
 
   utils::echo_info "Done."
 }
