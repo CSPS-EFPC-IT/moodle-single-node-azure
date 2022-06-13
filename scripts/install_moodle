@@ -164,25 +164,24 @@ function main() {
   a2enmod rewrite
 
   utils::echo_action "Creating Moodle site configuration from the default site configuration..."
+
   moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # shellcheck disable=SC2016
   moodle_site_config_file_part_2='
-        #
         # Moodle Specific Configuration
-        #
+        # Ref.: https://docs.moodle.org/311/en/Apache
 
+        # Enable the slash arguments function
+        AcceptPathInfo On
+
+        # Handle 40x Errors
         # This sends all missing files to moodle to render nicely, see MDL-56041
         ErrorDocument 404 /error/index.php
-
         # This sends any 403 from apache through to the same page, but also
         # overrides the http status with 404 instead for better security.
         ErrorDocument 403 /error/index.php?code=404
 
-        # Prevent directory listing
-        <Directory "MOODLE_DOCUMENT_ROOT_DIR_PATH">
-                Options -Indexes
-        </Directory>
-
+        # Hide internal paths
         RewriteEngine On
         RewriteRule "(\/vendor\/)" - [F]
         RewriteRule "(\/node_modules\/)" - [F]
@@ -190,6 +189,9 @@ function main() {
         RewriteRule "(composer\.json)" - [F]
         RewriteRule "(\.lock)" - [F]
         RewriteRule "(\/environment.xml)" - [F]
+        <Directory "MOODLE_DOCUMENT_ROOT_DIR_PATH">
+                Options -Indexes
+        </Directory>
         RewriteRule "(\/install.xml)" - [F]
         RewriteRule "(\/README)" - [F]
         RewriteRule "(\/readme)" - [F]
