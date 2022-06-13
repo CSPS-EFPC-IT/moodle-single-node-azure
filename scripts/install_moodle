@@ -196,7 +196,9 @@ function main() {
         RewriteRule "(\/fixtures\/)" - [F]
 EOF
   moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
-  printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+  # Since file redirection is done with less privileged account, tee command must be used instead of ">" operator.
+  # See https://www.baeldung.com/linux/redirect-output-permission-denied for details.
+  printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" | sudo tee "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}" > /dev/null
 
   utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
 
