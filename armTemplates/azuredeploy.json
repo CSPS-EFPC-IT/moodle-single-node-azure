@@ -67,7 +67,6 @@
                 "description": "The size of data storage allocated to the database in MB."
             }
         },
-
         "dataDiskSizeGB" : {
             "type": "int",
             "minValue": 31,
@@ -81,6 +80,13 @@
             "metadata":
             {
                 "description": "A comma separated list of source IP addresses (in CIDR notation) that must NOT access to the solution."
+            }
+        },
+        "deploymentTimestamp" : {
+            "type": "int",
+            "defaultValue": "[int(utcNow('ddHHmmss'))]",
+            "metadata": {
+                "description": "The deployment timestamp. Determines whether the Virtual Machine Custom Script extension is rerun. Default value will have the Virtual Machine Custom Script extension rerun at each ARM template deployment. Ref.: https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux#property-value-details"
             }
         },
         "environmentName": {
@@ -1119,7 +1125,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "timestamp": 1
+                    "timestamp": "[parameters('deploymentTimestamp')]"
                 },
                 "protectedSettings": {
                     "fileUris": [
@@ -1129,7 +1135,7 @@
                         "[concat(parameters('fileRepositoryUri'),'/scripts/install_moodle')]",
                         "[concat(parameters('fileRepositoryUri'),'/scripts/setup_web_server')]"
                     ],
-                    "commandToExecute": "[concat('sudo ./setup_web_server', ' --data_disk_size ', parameters('dataDiskSizeGB'), 'G', ' --db_server_admin_password ', parameters('databaseAdminPassword'), ' --db_server_admin_username ', parameters('databaseAdminUsername'), ' --db_server_fqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' --db_server_name ', variables('databaseName'), ' --moodle_admin_email ', parameters('moodleAdminEmail'), ' --moodle_admin_password ', parameters('moodleAdminPassword'),' --moodle_admin_username ', parameters('moodleAdminUsername'),' --moodle_data_mount_point_path ', variables('moodleDataMountPointPath'),' --moodle_db_name ', variables('databaseApplicationDatabaseName'),' --moodle_db_password ', parameters('databaseMoodlePassword'),' --moodle_db_username ', parameters('databaseMoodleUsername'),' --moodle_upgrade_key ', parameters('moodleUpgradeKey'),' --smtp_server_fqdn ', parameters('smtpServerFqdn'),' --smtp_server_port ' , parameters('smtpServerPort'),' --smtp_server_private_ip ', parameters('smtpServerPrivateIp'),' --web_server_admin_email ', parameters('webServerAdminEmail'),' --web_server_fqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' --web_server_reboot_utc_time ', parameters('webServerRebootUtcTime'), ' --web_server_resource_name ', variables('webServerVirtualMachineName'), ' > /var/log/setup_web_server.log 2>&1')]"
+                    "commandToExecute": "[concat('sudo ./setup_web_server', ' --data_disk_size ', parameters('dataDiskSizeGB'), 'G', ' --db_server_admin_password ', parameters('databaseAdminPassword'), ' --db_server_admin_username ', parameters('databaseAdminUsername'), ' --db_server_fqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' --db_server_name ', variables('databaseName'), ' --moodle_admin_email ', parameters('moodleAdminEmail'), ' --moodle_admin_password ', parameters('moodleAdminPassword'),' --moodle_admin_username ', parameters('moodleAdminUsername'),' --moodle_data_mount_point_path ', variables('moodleDataMountPointPath'),' --moodle_db_name ', variables('databaseApplicationDatabaseName'),' --moodle_db_password ', parameters('databaseMoodlePassword'),' --moodle_db_username ', parameters('databaseMoodleUsername'),' --moodle_upgrade_key ', parameters('moodleUpgradeKey'),' --smtp_server_fqdn ', parameters('smtpServerFqdn'),' --smtp_server_port ' , parameters('smtpServerPort'),' --smtp_server_private_ip ', parameters('smtpServerPrivateIp'),' --web_server_admin_email ', parameters('webServerAdminEmail'),' --web_server_fqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' --web_server_reboot_utc_time ', parameters('webServerRebootUtcTime'), ' --web_server_resource_name ', variables('webServerVirtualMachineName'), ' /var/log/setup_web_server.$(date +\"%Y%m%dT%H%M%S\").log 2>&1')]"
                 }
             }
         },
