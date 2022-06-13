@@ -163,7 +163,9 @@ function main() {
   a2enmod rewrite
 
   utils::echo_action "Creating Moodle site configuration from the default site configuration..."
+utils::echo_info "Computing moodle_site_config_file_part_1"
   moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
+utils::echo_info "Computing moodle_site_config_file_part_2"
   read -r -d '' moodle_site_config_file_part_2 << EOF
         # Moodle Specific Configuration
 
@@ -195,11 +197,14 @@ function main() {
         RewriteRule "(\/tests\/behat\/)" - [F]
         RewriteRule "(\/fixtures\/)" - [F]
 EOF
+utils::echo_info "Computing moodle_site_config_file_part_3"
   moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # Since file redirection is done with less privileged account, tee command must be used instead of ">" operator.
   # See https://www.baeldung.com/linux/redirect-output-permission-denied for details.
+utils::echo_info "creating "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
   printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" | sudo tee "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}" > /dev/null
 
+utils::echo_info "Updating "
   utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
 
   utils::echo_action "Disable Default Site..."
