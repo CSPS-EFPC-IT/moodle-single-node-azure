@@ -46,10 +46,12 @@ source ./utils.sh
 #   Writes error messages to STDERR.
 #######################################
 function get_moodle_core() {
+  # Parameters
   local core_tgz_file_url="$1"
   local core_sha256="$2"
   local core_dir_path="$3"
 
+  # Variables
   local core_tgz_file
 
   utils::echo_action "Downloading Moodle core tar file..."
@@ -77,8 +79,13 @@ function get_moodle_core() {
 
 function main() {
 
+  # Variables
+  local core_tgz_file
   local crontab_entry
   local moodle_install_options
+  local moodle_site_config_file_part_1
+  local moodle_site_config_file_part_2
+  local moodle_site_config_file_part_3
   local table_count
 
   utils::set_exit_trap
@@ -155,7 +162,7 @@ function main() {
   utils::harden_apache2 "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
 
   utils::echo_action "Add Moodle Specific Directives to Moodle Site Configuration file ..."
-  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' apache2.conf)"
+  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}")"
   read -r -d '' moodle_site_config_file_part_2 << EOF
         # Moodle Specific Configuration
 
@@ -187,7 +194,7 @@ function main() {
         RewriteRule "(\/tests\/behat\/)" - [F]
         RewriteRule "(\/fixtures\/)" - [F]
 EOF
-  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' apache2.conf)"
+  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}")"
   printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}"
 
   utils::echo_action "Enabling Rewrite Module..."
