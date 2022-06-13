@@ -5,23 +5,24 @@
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
 # Parameters: all manadatory and must be prefix with "--" on command line.
+
 declare -A parameters=( \
-  [data_disk_size]= \
-  [db_server_admin_password]= \
-  [db_server_admin_username]= \
-  [db_server_fqdn]= \
-  [db_server_name]= \
-  [moodle_admin_email]= \
-  [moodle_admin_password]= \
-  [moodle_admin_username]= \
-  [moodle_data_mount_point_path]= \
-  [moodle_db_name]= \
-  [moodle_db_password]= \
-  [moodle_db_username]= \
-  [moodle_upgrade_key]= \
-  [smtp_server_fqdn]= \
-  [smtp_server_private_ip]= \
-  [web_server_fqdn]= )
+  [data_disk_size]="" \
+  [db_server_admin_password]="" \
+  [db_server_admin_username]="" \
+  [db_server_fqdn]="" \
+  [db_server_name]="" \
+  [moodle_admin_email]="" \
+  [moodle_admin_password]="" \
+  [moodle_admin_username]="" \
+  [moodle_data_mount_point_path]="" \
+  [moodle_db_name]="" \
+  [moodle_db_password]="" \
+  [moodle_db_username]="" \
+  [moodle_upgrade_key]="" \
+  [smtp_server_fqdn]="" \
+  [smtp_server_private_ip]="" \
+  [web_server_fqdn]="" )
 
 # Constants
 readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
@@ -56,7 +57,7 @@ function get_moodle_core() {
   local core_tgz_file
 
   utils::echo_action "Downloading Moodle core tar file..."
-  core_tgz_file="$(basename ${core_tgz_file_url})"
+  core_tgz_file="$(basename "${core_tgz_file_url}")"
   wget "${core_tgz_file_url}" -O "${core_tgz_file}"
   utils::echo_info "Done."
 
@@ -74,7 +75,7 @@ function get_moodle_core() {
   fi
 
   utils::echo_action "Extracting moodle tgz file..."
-  tar zxf "${core_tgz_file}" -C "$(dirname ${core_dir_path})"
+  tar zxf "${core_tgz_file}" -C "$(dirname "${core_dir_path}")"
   utils::echo_info "Done."
 }
 
@@ -201,7 +202,7 @@ utils::echo_info "Computing moodle_site_config_file_part_3"
   moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # Since file redirection is done with less privileged account, tee command must be used instead of ">" operator.
   # See https://www.baeldung.com/linux/redirect-output-permission-denied for details.
-utils::echo_info "creating "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+utils::echo_info "creating ${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
   printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" | sudo tee "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}" > /dev/null
 
 utils::echo_info "Updating "
@@ -338,6 +339,7 @@ EOF
 
   # No need to test for existing values since the file is always new.
   utils::echo_action "Adding SSL Proxy setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  # shellcheck disable=SC2154
   sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
   utils::echo_info "Done."
 
