@@ -174,7 +174,7 @@ function main() {
         # Enable the slash arguments function
         AcceptPathInfo On
 
-        # Handle 40x Errors
+        # Handle 40x errors
         # This sends all missing files to moodle to render nicely, see MDL-56041
         ErrorDocument 404 /error/index.php
         # This sends any 403 from apache through to the same page, but also
