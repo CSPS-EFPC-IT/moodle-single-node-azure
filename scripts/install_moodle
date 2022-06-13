@@ -25,7 +25,8 @@ declare -A parameters=( \
 
 # Constants
 readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
-readonly APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH="/etc/apache2/sites-enabled/000-default.conf"
+readonly APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH="/etc/apache2/sites-available/000-default.conf"
+readonly APACHE2_MOODLE_SITE_CONFIG_FILE_PATH="/etc/apache2/sites-available/moodle.conf"
 readonly APACHE2_USER="www-data"
 readonly MOODLE_DOCUMENT_ROOT_DIR_PATH="/var/www/html/moodle"
 readonly MOODLE_LOCAL_CACHE_DIR_PATH="/var/www/html/moodlelocalcache"
@@ -156,13 +157,13 @@ function main() {
 
   #############################################################################
 
-  utils::echo_title "Update Apache2 Configuration"
+  utils::echo_title "Configure Apache2"
 
-  utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}"
-  utils::harden_apache2 "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
+  utils::echo_action "Enabling Rewrite Module..."
+  a2enmod rewrite
 
-  utils::echo_action "Add Moodle Specific Directives to Moodle Site Configuration file ..."
-  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}")"
+  utils::echo_action "Creating Moodle site configuration from the default site configuration..."
+  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   read -r -d '' moodle_site_config_file_part_2 << EOF
         # Moodle Specific Configuration
 
@@ -194,11 +195,18 @@ function main() {
         RewriteRule "(\/tests\/behat\/)" - [F]
         RewriteRule "(\/fixtures\/)" - [F]
 EOF
-  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}")"
-  printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}"
+  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
+  printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
 
-  utils::echo_action "Enabling Rewrite Module..."
-  a2enmod rewrite
+  utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+
+  utils::echo_action "Disable Default Site..."
+  a2dissite "$(basename "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH%.*}")"
+
+  utils::echo_action "Enabling Moodle Site..."
+  a2ensite "$(basename "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH%.*}")"
+
+  utils::harden_apache2 "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
 
   utils::echo_action "Restarting Apache2..."
   service apache2 restart
