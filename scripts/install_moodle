@@ -371,11 +371,11 @@ EOF
 
   utils::echo_action "Setting up Moodle Crontab..."
   crontab_entry="* * * * * sudo -u ${APACHE2_USER} php ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/cron.php > /dev/null"
-  if [[ -z "$(crontab -l | grep --fixed-strings "${crontab_entry}")" ]]; then
+  if crontab -l | grep -q --fixed-strings "${crontab_entry}"; then
+    utils::echo_info "Skipped: crontab already set up."
+  else
     crontab -l | { cat; echo "${crontab_entry}"; } | crontab -
     utils::echo_info "Done."
-  else
-    utils::echo_info "Skipped: crontab already set up."
   fi
 
   #############################################################################
