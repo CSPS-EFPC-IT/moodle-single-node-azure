@@ -167,7 +167,8 @@ function main() {
 utils::echo_info "Computing moodle_site_config_file_part_1"
   moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
 utils::echo_info "Computing moodle_site_config_file_part_2"
-  read -r -d '' moodle_site_config_file_part_2 << EOF
+  # shellcheck disable=SC2016
+  moodle_site_config_file_part_2='
         # Moodle Specific Configuration
 
         # This sends all missing files to moodle to render nicely, see MDL-56041
@@ -178,7 +179,7 @@ utils::echo_info "Computing moodle_site_config_file_part_2"
         ErrorDocument 403 /error/index.php?code=404
 
         # Prevent directory listing
-        <Directory "${MOODLE_DOCUMENT_ROOT_DIR_PATH}">
+        <Directory "MOODLE_DOCUMENT_ROOT_DIR_PATH">
                 Options -Indexes
         </Directory>
 
@@ -196,14 +197,15 @@ utils::echo_info "Computing moodle_site_config_file_part_2"
         RewriteRule "(\/upgrade\.txt)" - [F]
         RewriteRule "(phpunit\.xml\.dist)" - [F]
         RewriteRule "(\/tests\/behat\/)" - [F]
-        RewriteRule "(\/fixtures\/)" - [F]
-EOF
+        RewriteRule "(\/fixtures\/)" - [F]'
+utils::echo_info "Injecting in moodle_site_config_file_part_2"
+  moodle_site_config_file_part_2="${moodle_site_config_file_part_2/MOODLE_DOCUMENT_ROOT_DIR_PATH/${MOODLE_DOCUMENT_ROOT_DIR_PATH}}"
 utils::echo_info "Computing moodle_site_config_file_part_3"
   moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # Since file redirection is done with less privileged account, tee command must be used instead of ">" operator.
   # See https://www.baeldung.com/linux/redirect-output-permission-denied for details.
 utils::echo_info "creating ${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
-  printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" | sudo tee "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}" > /dev/null
+  printf '%s\n\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
 
 utils::echo_info "Updating "
   utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
