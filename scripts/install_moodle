@@ -168,8 +168,10 @@ function main() {
   moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # shellcheck disable=SC2016
   moodle_site_config_file_part_2='
+        #
         # Moodle Specific Configuration
         # Ref.: https://docs.moodle.org/311/en/Apache
+        #
 
         # Enable the slash arguments function
         AcceptPathInfo On
