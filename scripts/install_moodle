@@ -154,6 +154,45 @@ function main() {
   utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}"
   utils::harden_apache2 "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
 
+  utils::echo_action "Add Moodle Specific Directives to Moodle Site Configuration file ..."
+  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' apache2.conf)"
+  read -r -d '' moodle_site_config_file_part_2 << EOF
+        # Moodle Specific Configuration
+
+        # This sends all missing files to moodle to render nicely, see MDL-56041
+        ErrorDocument 404 /error/index.php
+
+        # This sends any 403 from apache through to the same page, but also
+        # overrides the http status with 404 instead for better security.
+        ErrorDocument 403 /error/index.php?code=404
+
+        # Prevent directory listing
+        <Directory "${MOODLE_DOCUMENT_ROOT_DIR_PATH}">
+                Options -Indexes
+        </Directory>
+
+        RewriteEngine On
+        RewriteRule "(\/vendor\/)" - [F]
+        RewriteRule "(\/node_modules\/)" - [F]
+        RewriteRule "(^|/)\.(?!well-known\/)" - [F]
+        RewriteRule "(composer\.json)" - [F]
+        RewriteRule "(\.lock)" - [F]
+        RewriteRule "(\/environment.xml)" - [F]
+        RewriteRule "(\/install.xml)" - [F]
+        RewriteRule "(\/README)" - [F]
+        RewriteRule "(\/readme)" - [F]
+        RewriteRule "(\/moodle_readme)" - [F]
+        RewriteRule "(\/upgrade\.txt)" - [F]
+        RewriteRule "(phpunit\.xml\.dist)" - [F]
+        RewriteRule "(\/tests\/behat\/)" - [F]
+        RewriteRule "(\/fixtures\/)" - [F]
+EOF
+  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' apache2.conf)"
+  printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}"
+
+  utils::echo_action "Enabling Rewrite Module..."
+  a2enmod rewrite
+
   utils::echo_action "Restarting Apache2..."
   service apache2 restart
   utils::echo_info "Done."
