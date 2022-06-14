@@ -5,27 +5,29 @@
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
 # Parameters: all manadatory and must be prefix with "--" on command line.
+
 declare -A parameters=( \
-  [data_disk_size]= \
-  [db_server_admin_password]= \
-  [db_server_admin_username]= \
-  [db_server_fqdn]= \
-  [db_server_name]= \
-  [moodle_admin_email]= \
-  [moodle_admin_password]= \
-  [moodle_admin_username]= \
-  [moodle_data_mount_point_path]= \
-  [moodle_db_name]= \
-  [moodle_db_password]= \
-  [moodle_db_username]= \
-  [moodle_upgrade_key]= \
-  [smtp_server_fqdn]= \
-  [smtp_server_private_ip]= \
-  [web_server_fqdn]= )
+  [data_disk_size]="" \
+  [db_server_admin_password]="" \
+  [db_server_admin_username]="" \
+  [db_server_fqdn]="" \
+  [db_server_name]="" \
+  [moodle_admin_email]="" \
+  [moodle_admin_password]="" \
+  [moodle_admin_username]="" \
+  [moodle_data_mount_point_path]="" \
+  [moodle_db_name]="" \
+  [moodle_db_password]="" \
+  [moodle_db_username]="" \
+  [moodle_upgrade_key]="" \
+  [smtp_server_fqdn]="" \
+  [smtp_server_private_ip]="" \
+  [web_server_fqdn]="" )
 
 # Constants
 readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
-readonly APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH="/etc/apache2/sites-enabled/000-default.conf"
+readonly APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH="/etc/apache2/sites-available/000-default.conf"
+readonly APACHE2_MOODLE_SITE_CONFIG_FILE_PATH="/etc/apache2/sites-available/moodle.conf"
 readonly APACHE2_USER="www-data"
 readonly MOODLE_DOCUMENT_ROOT_DIR_PATH="/var/www/html/moodle"
 readonly MOODLE_LOCAL_CACHE_DIR_PATH="/var/www/html/moodlelocalcache"
@@ -46,14 +48,16 @@ source ./utils.sh
 #   Writes error messages to STDERR.
 #######################################
 function get_moodle_core() {
+  # Parameters
   local core_tgz_file_url="$1"
   local core_sha256="$2"
   local core_dir_path="$3"
 
+  # Variables
   local core_tgz_file
 
   utils::echo_action "Downloading Moodle core tar file..."
-  core_tgz_file="$(basename ${core_tgz_file_url})"
+  core_tgz_file="$(basename "${core_tgz_file_url}")"
   wget "${core_tgz_file_url}" -O "${core_tgz_file}"
   utils::echo_info "Done."
 
@@ -71,14 +75,19 @@ function get_moodle_core() {
   fi
 
   utils::echo_action "Extracting moodle tgz file..."
-  tar zxf "${core_tgz_file}" -C "$(dirname ${core_dir_path})"
+  tar zxf "${core_tgz_file}" -C "$(dirname "${core_dir_path}")"
   utils::echo_info "Done."
 }
 
 function main() {
 
+  # Variables
+  local core_tgz_file
   local crontab_entry
   local moodle_install_options
+  local moodle_site_config_file_part_1
+  local moodle_site_config_file_part_2
+  local moodle_site_config_file_part_3
   local table_count
 
   utils::set_exit_trap
@@ -149,9 +158,61 @@ function main() {
 
   #############################################################################
 
-  utils::echo_title "Update Apache2 Configuration"
+  utils::echo_title "Configure Apache2"
 
-  utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_SITE_ENABLED_DEFAULT_FILE_PATH}"
+  utils::echo_action "Enabling Rewrite Module..."
+  a2enmod rewrite
+
+  utils::echo_action "Creating Moodle site configuration from the default site configuration..."
+
+  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
+  # shellcheck disable=SC2016
+  moodle_site_config_file_part_2='
+        #
+        # Moodle Specific Configuration
+        # Ref.: https://docs.moodle.org/311/en/Apache
+        #
+
+        # Enable the slash arguments function
+        AcceptPathInfo On
+
+        # Handle 40x errors
+        # This sends all missing files to moodle to render nicely, see MDL-56041
+        ErrorDocument 404 /error/index.php
+        # This sends any 403 from apache through to the same page, but also
+        # overrides the http status with 404 instead for better security.
+        ErrorDocument 403 /error/index.php?code=404
+
+        # Hide internal paths
+        RewriteEngine On
+        RewriteRule "(\/vendor\/)" - [F]
+        RewriteRule "(\/node_modules\/)" - [F]
+        RewriteRule "(^|/)\.(?!well-known\/)" - [F]
+        RewriteRule "(composer\.json)" - [F]
+        RewriteRule "(\.lock)" - [F]
+        RewriteRule "(\/environment.xml)" - [F]
+        <Directory "MOODLE_DOCUMENT_ROOT_DIR_PATH">
+                Options -Indexes
+        </Directory>
+        RewriteRule "(\/install.xml)" - [F]
+        RewriteRule "(\/README)" - [F]
+        RewriteRule "(\/readme)" - [F]
+        RewriteRule "(\/moodle_readme)" - [F]
+        RewriteRule "(\/upgrade\.txt)" - [F]
+        RewriteRule "(phpunit\.xml\.dist)" - [F]
+        RewriteRule "(\/tests\/behat\/)" - [F]
+        RewriteRule "(\/fixtures\/)" - [F]'
+  moodle_site_config_file_part_2="${moodle_site_config_file_part_2/MOODLE_DOCUMENT_ROOT_DIR_PATH/${MOODLE_DOCUMENT_ROOT_DIR_PATH}}"
+  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
+  printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+  utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+
+  utils::echo_action "Disabling Default Site..."
+  a2dissite "$(basename "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH%.*}")"
+
+  utils::echo_action "Enabling Moodle Site..."
+  a2ensite "$(basename "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH%.*}")"
+
   utils::harden_apache2 "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
 
   utils::echo_action "Restarting Apache2..."
@@ -277,6 +338,7 @@ EOF
 
   # No need to test for existing values since the file is always new.
   utils::echo_action "Adding SSL Proxy setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  # shellcheck disable=SC2154
   sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
   utils::echo_info "Done."
 
@@ -308,11 +370,11 @@ EOF
 
   utils::echo_action "Setting up Moodle Crontab..."
   crontab_entry="* * * * * sudo -u ${APACHE2_USER} php ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/cron.php > /dev/null"
-  if [[ -z "$(crontab -l | grep --fixed-strings "${crontab_entry}")" ]]; then
+  if crontab -l | grep -q --fixed-strings "${crontab_entry}"; then
+    utils::echo_info "Skipped: crontab already set up."
+  else
     crontab -l | { cat; echo "${crontab_entry}"; } | crontab -
     utils::echo_info "Done."
-  else
-    utils::echo_info "Skipped: crontab already set up."
   fi
 
   #############################################################################
