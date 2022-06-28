@@ -127,7 +127,6 @@ function main() {
     clamav \
     ghostscript \
     graphviz \
-    php-sodium \
     php7.4-curl \
     php7.4-gd \
     php7.4-intl \
