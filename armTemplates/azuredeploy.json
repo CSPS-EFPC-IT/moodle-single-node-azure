@@ -126,6 +126,13 @@
                 "description": "The name of the Azure Location where resources will be created."
             }
         },
+        "logAnalyticsWorkspaceRetentionPeriod": {
+            "type": "int",
+            "defaultValue": 365,
+            "metadata": {
+                "description": "The data retention period for the Log Analytics Workspace resource."
+            }
+        },
         "moodleAdminEmail": {
             "type": "string",
             "metadata": {
@@ -278,6 +285,7 @@
         "gatewaySubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/27')]",
         "gatewaySubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-AG-SN')]",
         "moodleDataMountPointPath": "/moodledata",
+        "logAnalyticsWorkspaceName": "[concat(variables('resourceNamePrefix'), '-LAW')]",
         "recoveryServiceVaultBackupPoliciesDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultBackupPolicies'), 64)]",
         "recoveryServiceVaultDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVault'), 64)]",
         "recoveryServiceVaultProtectedItemsDeploymentName": "[take(concat(deployment().name, '_', 'recoveryServiceVaultProtectedItems'), 64)]",
@@ -295,6 +303,27 @@
         "webServerVirtualMachineOsDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-OS-Disk')]"
     },
     "resources": [
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2021-12-01-preview",
+            "name": "[variables('logAnalyticsWorkspaceName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "pergb2018"
+                },
+                "retentionInDays": "[parameters('logAnalyticsWorkspaceRetentionPeriod')]",
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                },
+                "workspaceCapping": {
+                    "dailyQuotaGb": -1
+                },
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+            }
+        },
         {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
@@ -733,6 +762,44 @@
                 }
             }
         },
+        {
+            "type": "Microsoft.Insights/diagnosticSettings",
+            "apiVersion": "2021-05-01-preview",
+            "name": "local-postgresql-logging",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/applicationGateways', variables('gatewayName'))]"
+            ],
+            "scope": "[concat('Microsoft.Network/applicationGateways', '/', variables('gatewayName'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "ApplicationGatewayAccessLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ApplicationGatewayPerformanceLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ApplicationGatewayFirewallLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    }
+                ],
+                "workspaceId": "[resourceId('microsoft.operationalinsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
+            }
+        },
 
         {
             "type": "Microsoft.Network/networkSecurityGroups",
@@ -935,6 +1002,104 @@
             "properties": {
                 "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]",
                 "ignoreMissingVnetServiceEndpoint": false
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/log_connections')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "ON",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/log_disconnections')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "ON",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/log_line_prefix')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "Timestamp: %t | Username: %u | Database: %d | Client IP: %r | Session ID: %c",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/log_statement')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "MOD",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
+            "apiVersion": "2017-12-01",
+            "name": "[concat(variables('databaseName'), '/logging_collector')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+            ],
+            "properties": {
+                "value": "OFF",
+                "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.Insights/diagnosticSettings",
+            "apiVersion": "2021-05-01-preview",
+            "name": "local-postgresql-logging",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]",
+            ],
+            "scope": "[concat('Microsoft.DBforPostgreSQL/servers', '/', variables('databaseName'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "PostgreSQLLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "QueryStoreRuntimeStatistics",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "QueryStoreWaitStatistics",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    }
+                ],
+                "workspaceId": "[resourceId('microsoft.operationalinsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
             }
         },
 
