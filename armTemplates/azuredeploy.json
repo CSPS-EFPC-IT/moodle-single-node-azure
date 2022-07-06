@@ -717,7 +717,7 @@
                                     "actionSet": {
                                         "requestHeaderConfigurations": [
                                             {
-                                                "headerName": "add_x_forwarded_for_proxy",
+                                                "headerName": "X-Forwarded-For",
                                                 "headerValue": "{var_add_x_forwarded_for_proxy}"
                                             }
                                         ],
