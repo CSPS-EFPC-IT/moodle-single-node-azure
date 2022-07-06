@@ -1,113 +1,114 @@
 {
-  "tasks": [
-      {
-          "environment": {},
-          "displayName": "Azure CLI ",
-          "alwaysRun": false,
-          "continueOnError": false,
-          "condition": "succeeded()",
-          "enabled": true,
-          "timeoutInMinutes": 0,
-          "inputs": {
-              "connectedServiceNameARM": "$(serviceConnectionName)",
-              "scriptType": "bash",
-              "scriptLocation": "inlineScript",
-              "scriptPath": "",
-              "inlineScript": "echo \"Deleting all resources except the KeyVault, the User Assigned Managed Identity and the Application Gateway Public IP.\"\n\nvmIds=$(az vm list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${vmIds}\" ]; then\n   echo \"Deleting Virtual Machine...\"\n   az vm delete --yes --ids ${vmIds}\nelse\n   echo \"No Virtual Machine Found.\"\nfi\n\ndiskIds=$(az disk  list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${diskIds}\" ]; then\n   echo \"Deleting Disks...\"\n   az disk delete --yes --ids ${diskIds}\nelse\n   echo \"No Disk Found.\"\nfi\n\nnetworkInterfaceCardIds=$(az network nic list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${networkInterfaceCardIds}\" ]; then\n   echo \"Deleting Network Interface Card...\"\n   az network nic delete --ids ${networkInterfaceCardIds}\nelse\n   echo \"No Network Interface Card Found.\"\nfi\n\nstorageAccountIds=$(az storage account list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${storageAccountIds}\" ]; then\n   echo \"Deleting Storage Account...\" \n   az storage account delete --yes --ids ${storageAccountIds}\nelse\n   echo \"No Storage Account found.\"\nfi\n\npostgresServerIds=$(az postgres server list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${postgresServerIds}\" ]; then\n   echo \"Deleting Postgres Server...\"\n   az postgres server delete --yes --ids ${postgresServerIds}\nelse\n   echo \"No Postgres Server Found.\"\nfi\n\nbastionName=$(az network bastion list --subscription $(subscriptionId) --resource-group $(resourceGroupName) --query \"[].name\" --output tsv)\nif [ ! -z \"${bastionName}\" ]; then\n   echo \"Deleting Bastion...\"\n   az network bastion delete --subscription $(subscriptionId) --resource-group $(resourceGroupName)  --name ${bastionName}\nelse\n   echo \"No Bastion Found.\"\nfi\n\napplicationGatewayIds=$(az network application-gateway list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${applicationGatewayIds}\" ]; then\n   echo \"Deleting Application Gateway...\"\n   az network application-gateway delete --ids ${applicationGatewayIds}\nelse\n   echo \"No Application Gateway Found.\"\nfi\n\nvirtualNetworkIds=$(az network vnet list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${virtualNetworkIds}\" ]; then\n   echo \"Deleting Virtual Network...\"\n   az network vnet delete --ids ${virtualNetworkIds}\nelse\n   echo \"No Virtual Network found.\"\nfi\n\nnetworkSecurityGroupIds=$(az network nsg list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${networkSecurityGroupIds}\" ]; then\n   echo \"Deleting Network Security Group...\"\n   az network nsg delete --ids ${networkSecurityGroupIds}\nelse\n   echo \"No Network Security Group Found.\"\nfi\n\npublicIpIds=$(az network public-ip list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[?contains(name,'-BH-')].id\" --output tsv)\nif [ ! -z \"${publicIpIds}\" ]; then\n   echo \"Deleting Public IP...\"\n   az network public-ip delete --ids ${publicIpIds}\nelse\n   echo \"No Public Ip Found.\"\nfi\n\nrecoveryServiceVaultIds=$(az backup vault list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${recoveryServiceVaultIds}\" ]; then\n   echo \"Disabling Recovery Service Vault Soft Delete feature...\"\n   az backup vault backup-properties set --soft-delete-feature-state Disable --ids ${recoveryServiceVaultIds}\n\n   echo \"Deleting backup item...\"\n   recoveryServiceVaultName=$(az backup vault list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].name\" --output tsv)\n   backupItemIds=$(az backup item list --resource-group \"$(resourceGroupName)\" --vault-name \"${recoveryServiceVaultName}\" --query \"[].id\" --output tsv;)\n   az backup protection disable --delete-backup-data true --ids ${backupItemIds} --yes ;   \n\n   echo \"Deleting Recovery Service Vault...\"\n   az backup vault delete --force --yes --ids ${recoveryServiceVaultIds}\nelse\n   echo \"No Recovery Service Vault Found.\"\nfi",
-              "scriptArguments": "",
-              "powerShellErrorActionPreference": "stop",
-              "addSpnToEnvironment": "false",
-              "useGlobalConfig": "false",
-              "cwd": "",
-              "failOnStandardError": "false",
-              "powerShellIgnoreLASTEXITCODE": "false"
-          },
-          "task": {
-              "id": "46e4be58-730b-4389-8a2f-ea10b3e5e815",
-              "versionSpec": "2.*",
-              "definitionType": "task"
-          }
-      }
-  ],
-  "runsOn": [
-      "Agent",
-      "DeploymentGroup"
-  ],
-  "revision": 9,
-  "createdBy": {
-      "displayName": "Patrick Messier",
-      "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
-      "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
-  },
-  "createdOn": "2020-10-31T00:18:55.270Z",
-  "modifiedBy": {
-      "displayName": "Patrick Messier",
-      "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
-      "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
-  },
-  "modifiedOn": "2021-08-05T17:56:43.320Z",
-  "comment": "Remove DEBUG log messages.",
-  "id": "a9f57de6-ea19-4993-a250-d42fb038bf6b",
-  "name": "Tear Down Moodle Single Node",
-  "version": {
-      "major": 2,
-      "minor": 0,
-      "patch": 0,
-      "isTest": false
-  },
-  "iconUrl": "https://cdn.vsassets.io/v/M176_20201022.3/_content/icon-meta-task.png",
-  "friendlyName": "Tear Down Moodle Single Node",
-  "description": "",
-  "category": "Deploy",
-  "definitionType": "metaTask",
-  "author": "Patrick Messier",
-  "demands": [],
-  "groups": [],
-  "inputs": [
-      {
-          "aliases": [],
-          "options": {},
-          "properties": {},
-          "name": "resourceGroupName",
-          "label": "resourceGroupName",
-          "defaultValue": "$(resourceGroupName)",
-          "required": true,
-          "type": "string",
-          "helpMarkDown": "",
-          "groupName": ""
-      },
-      {
-          "aliases": [],
-          "options": {},
-          "properties": {
-              "EndpointFilterRule": ""
-          },
-          "name": "serviceConnectionName",
-          "label": "serviceConnectionName",
-          "defaultValue": "$(serviceConnectionName)",
-          "required": true,
-          "type": "connectedService:AzureRM",
-          "helpMarkDown": "Select an Azure Resource Manager service connection for the deployment",
-          "groupName": ""
-      },
-      {
-          "aliases": [],
-          "options": {},
-          "properties": {},
-          "name": "subscriptionId",
-          "label": "subscriptionId",
-          "defaultValue": "$(subscriptionId)",
-          "required": true,
-          "type": "string",
-          "helpMarkDown": "",
-          "groupName": ""
-      }
-  ],
-  "satisfies": [],
-  "sourceDefinitions": [],
-  "dataSourceBindings": [],
-  "instanceNameFormat": "Task group: Tear Down Moodle Single Node $(resourceGroupName)",
-  "preJobExecution": {},
-  "execution": {},
-  "postJobExecution": {}
+    "tasks": [
+        {
+            "environment": {},
+            "displayName": "Azure CLI ",
+            "alwaysRun": false,
+            "continueOnError": false,
+            "condition": "succeeded()",
+            "enabled": true,
+            "timeoutInMinutes": 0,
+            "retryCountOnTaskFailure": 0,
+            "inputs": {
+                "connectedServiceNameARM": "$(serviceConnectionName)",
+                "scriptType": "bash",
+                "scriptLocation": "inlineScript",
+                "scriptPath": "",
+                "inlineScript": "echo \"Deleting all resources except the KeyVault, the User Assigned Managed Identity and the Application Gateway Public IP.\"\n\nvmIds=$(az vm list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${vmIds}\" ]; then\n   echo \"Deleting Virtual Machine...\"\n   az vm delete --yes --ids ${vmIds}\nelse\n   echo \"No Virtual Machine Found.\"\nfi\n\ndiskIds=$(az disk  list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${diskIds}\" ]; then\n   echo \"Deleting Disks...\"\n   az disk delete --yes --ids ${diskIds}\nelse\n   echo \"No Disk Found.\"\nfi\n\nnetworkInterfaceCardIds=$(az network nic list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${networkInterfaceCardIds}\" ]; then\n   echo \"Deleting Network Interface Card...\"\n   az network nic delete --ids ${networkInterfaceCardIds}\nelse\n   echo \"No Network Interface Card Found.\"\nfi\n\nstorageAccountIds=$(az storage account list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${storageAccountIds}\" ]; then\n   echo \"Deleting Storage Account...\" \n   az storage account delete --yes --ids ${storageAccountIds}\nelse\n   echo \"No Storage Account found.\"\nfi\n\npostgresServerIds=$(az postgres server list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${postgresServerIds}\" ]; then\n   echo \"Deleting Postgres Server...\"\n   az postgres server delete --yes --ids ${postgresServerIds}\nelse\n   echo \"No Postgres Server Found.\"\nfi\n\nbastionName=$(az network bastion list --subscription $(subscriptionId) --resource-group $(resourceGroupName) --query \"[].name\" --output tsv)\nif [ ! -z \"${bastionName}\" ]; then\n   echo \"Deleting Bastion...\"\n   az network bastion delete --subscription $(subscriptionId) --resource-group $(resourceGroupName)  --name ${bastionName}\nelse\n   echo \"No Bastion Found.\"\nfi\n\napplicationGatewayIds=$(az network application-gateway list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${applicationGatewayIds}\" ]; then\n   echo \"Deleting Application Gateway...\"\n   az network application-gateway delete --ids ${applicationGatewayIds}\nelse\n   echo \"No Application Gateway Found.\"\nfi\n\nvirtualNetworkIds=$(az network vnet list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${virtualNetworkIds}\" ]; then\n   echo \"Deleting Virtual Network...\"\n   az network vnet delete --ids ${virtualNetworkIds}\nelse\n   echo \"No Virtual Network found.\"\nfi\n\nnetworkSecurityGroupIds=$(az network nsg list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${networkSecurityGroupIds}\" ]; then\n   echo \"Deleting Network Security Group...\"\n   az network nsg delete --ids ${networkSecurityGroupIds}\nelse\n   echo \"No Network Security Group Found.\"\nfi\n\npublicIpIds=$(az network public-ip list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[?contains(name,'-BH-')].id\" --output tsv)\nif [ ! -z \"${publicIpIds}\" ]; then\n   echo \"Deleting Public IP...\"\n   az network public-ip delete --ids ${publicIpIds}\nelse\n   echo \"No Public Ip Found.\"\nfi\n\nrecoveryServiceVaultIds=$(az backup vault list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].id\" --output tsv)\nif [ ! -z \"${recoveryServiceVaultIds}\" ]; then\n   echo \"Disabling Recovery Service Vault Soft Delete feature...\"\n   az backup vault backup-properties set --soft-delete-feature-state Disable --ids ${recoveryServiceVaultIds}\n\n   echo \"Deleting backup item...\"\n   recoveryServiceVaultName=$(az backup vault list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].name\" --output tsv)\n   backupItemIds=$(az backup item list --resource-group \"$(resourceGroupName)\" --vault-name \"${recoveryServiceVaultName}\" --query \"[].id\" --output tsv;)\n   az backup protection disable --delete-backup-data true --ids ${backupItemIds} --yes ;   \n\n   echo \"Deleting Recovery Service Vault...\"\n   az backup vault delete --force --yes --ids ${recoveryServiceVaultIds}\nelse\n   echo \"No Recovery Service Vault Found.\"\nfi\n\nlawName=$(az monitor log-analytics workspace list --resource-group $(resourceGroupName) --subscription $(subscriptionId) --query \"[].name\" --output tsv)\nif [ ! -z \"${lawName}\" ]; then\n   echo \"Deleting Log Analytics Workspace...\"\n   az monitor log-analytics workspace delete --resource-group $(resourceGroupName) --workspace-name \"${lawName}\" --force \"true\" --yes\nelse\n   echo \"No Log Analytics Workspace Found.\"\nfi",
+                "scriptArguments": "",
+                "powerShellErrorActionPreference": "stop",
+                "addSpnToEnvironment": "false",
+                "useGlobalConfig": "false",
+                "cwd": "",
+                "failOnStandardError": "false",
+                "powerShellIgnoreLASTEXITCODE": "false"
+            },
+            "task": {
+                "id": "46e4be58-730b-4389-8a2f-ea10b3e5e815",
+                "versionSpec": "2.*",
+                "definitionType": "task"
+            }
+        }
+    ],
+    "runsOn": [
+        "Agent",
+        "DeploymentGroup"
+    ],
+    "revision": 10,
+    "createdBy": {
+        "displayName": "Patrick Messier",
+        "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
+        "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
+    },
+    "createdOn": "2020-10-31T00:18:55.270Z",
+    "modifiedBy": {
+        "displayName": "Patrick Messier",
+        "id": "9d7984b5-5f92-6bd6-bfea-23da0d70f9a6",
+        "uniqueName": "Patrick.Messier@csps-efpc.gc.ca"
+    },
+    "modifiedOn": "2022-07-06T17:49:35.893Z",
+    "comment": "Add suppression of Log Analytics Workspace.",
+    "id": "a9f57de6-ea19-4993-a250-d42fb038bf6b",
+    "name": "Tear Down Moodle Single Node",
+    "version": {
+        "major": 2,
+        "minor": 0,
+        "patch": 0,
+        "isTest": false
+    },
+    "iconUrl": "https://cdn.vsassets.io/v/M176_20201022.3/_content/icon-meta-task.png",
+    "friendlyName": "Tear Down Moodle Single Node",
+    "description": "",
+    "category": "Deploy",
+    "definitionType": "metaTask",
+    "author": "Patrick Messier",
+    "demands": [],
+    "groups": [],
+    "inputs": [
+        {
+            "aliases": [],
+            "options": {},
+            "properties": {},
+            "name": "resourceGroupName",
+            "label": "resourceGroupName",
+            "defaultValue": "$(resourceGroupName)",
+            "required": true,
+            "type": "string",
+            "helpMarkDown": "",
+            "groupName": ""
+        },
+        {
+            "aliases": [],
+            "options": {},
+            "properties": {
+                "EndpointFilterRule": ""
+            },
+            "name": "serviceConnectionName",
+            "label": "serviceConnectionName",
+            "defaultValue": "$(serviceConnectionName)",
+            "required": true,
+            "type": "connectedService:AzureRM",
+            "helpMarkDown": "Select an Azure Resource Manager service connection for the deployment",
+            "groupName": ""
+        },
+        {
+            "aliases": [],
+            "options": {},
+            "properties": {},
+            "name": "subscriptionId",
+            "label": "subscriptionId",
+            "defaultValue": "$(subscriptionId)",
+            "required": true,
+            "type": "string",
+            "helpMarkDown": "",
+            "groupName": ""
+        }
+    ],
+    "satisfies": [],
+    "sourceDefinitions": [],
+    "dataSourceBindings": [],
+    "instanceNameFormat": "Task group: Tear Down Moodle Single Node $(resourceGroupName)",
+    "preJobExecution": {},
+    "execution": {},
+    "postJobExecution": {}
 }
