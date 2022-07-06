@@ -1069,7 +1069,7 @@
             "apiVersion": "2021-05-01-preview",
             "name": "local-postgresql-logging",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]",
+                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
             ],
             "scope": "[concat('Microsoft.DBforPostgreSQL/servers', '/', variables('databaseName'))]",
             "properties": {
