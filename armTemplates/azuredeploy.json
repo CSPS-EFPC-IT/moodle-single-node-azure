@@ -779,22 +779,6 @@
                             "days": 0,
                             "enabled": false
                         }
-                    },
-                    {
-                        "category": "ApplicationGatewayPerformanceLog",
-                        "enabled": true,
-                        "retentionPolicy": {
-                            "days": 0,
-                            "enabled": false
-                        }
-                    },
-                    {
-                        "category": "ApplicationGatewayFirewallLog",
-                        "enabled": true,
-                        "retentionPolicy": {
-                            "days": 0,
-                            "enabled": false
-                        }
                     }
                 ],
                 "workspaceId": "[resourceId('microsoft.operationalinsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
@@ -1076,22 +1060,6 @@
                 "logs": [
                     {
                         "category": "PostgreSQLLogs",
-                        "enabled": true,
-                        "retentionPolicy": {
-                            "days": 0,
-                            "enabled": false
-                        }
-                    },
-                    {
-                        "category": "QueryStoreRuntimeStatistics",
-                        "enabled": true,
-                        "retentionPolicy": {
-                            "days": 0,
-                            "enabled": false
-                        }
-                    },
-                    {
-                        "category": "QueryStoreWaitStatistics",
                         "enabled": true,
                         "retentionPolicy": {
                             "days": 0,
