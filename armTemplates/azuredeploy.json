@@ -765,7 +765,7 @@
         {
             "type": "Microsoft.Insights/diagnosticSettings",
             "apiVersion": "2021-05-01-preview",
-            "name": "local-application-gateway-logging",
+            "name": "local-logging",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/applicationGateways', variables('gatewayName'))]"
             ],
@@ -1051,7 +1051,7 @@
         {
             "type": "Microsoft.Insights/diagnosticSettings",
             "apiVersion": "2021-05-01-preview",
-            "name": "local-postgresql-logging",
+            "name": "local-logging",
             "dependsOn": [
                 "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
             ],
