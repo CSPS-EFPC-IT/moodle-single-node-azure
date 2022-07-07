@@ -6,26 +6,28 @@
 
 # Parameters: all manadatory and must be prefix with "--" on command line.
 declare -A parameters=( \
-  [data_disk_size]= \
-  [db_server_admin_password]= \
-  [db_server_admin_username]= \
-  [db_server_fqdn]= \
-  [db_server_name]= \
-  [moodle_admin_email]= \
-  [moodle_admin_password]= \
-  [moodle_admin_username]= \
-  [moodle_data_mount_point_path]= \
-  [moodle_db_name]= \
-  [moodle_db_password]= \
-  [moodle_db_username]= \
-  [moodle_upgrade_key]= \
-  [smtp_server_fqdn]= \
-  [smtp_server_port]= \
-  [smtp_server_private_ip]= \
-  [web_server_admin_email]= \
-  [web_server_fqdn]= \
-  [web_server_reboot_utc_time]= \
-  [web_server_resource_name]= )
+  [data_disk_size]="" \
+  [db_server_admin_password]="" \
+  [db_server_admin_username]="" \
+  [db_server_fqdn]="" \
+  [db_server_name]="" \
+  [moodle_admin_email]="" \
+  [moodle_admin_password]="" \
+  [moodle_admin_username]="" \
+  [moodle_data_mount_point_path]="" \
+  [moodle_db_name]="" \
+  [moodle_db_password]="" \
+  [moodle_db_username]="" \
+  [moodle_upgrade_key]="" \
+  [proxy_ip_address_range]="" \
+  [smtp_server_fqdn]="" \
+  [smtp_server_port]="" \
+  [smtp_server_private_ip]="" \
+  [web_server_admin_email]="" \
+  [web_server_fqdn]="" \
+  [web_server_reboot_utc_time]="" \
+  [web_server_resource_name]="" \
+)
 
   # Functions
 source ./utils.sh
@@ -51,7 +53,7 @@ function main() {
     --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
     --smtp_server_port "${parameters[smtp_server_port]}"
 
-  utils::echo_title "Install Moodle and Client Requested Plugins"
+  utils::echo_title "Install Moodle core"
   ./install_moodle \
     --data_disk_size "${parameters[data_disk_size]}" \
     --db_server_admin_password "${parameters[db_server_admin_password]}" \
@@ -66,6 +68,7 @@ function main() {
     --moodle_db_password "${parameters[moodle_db_password]}" \
     --moodle_db_username "${parameters[moodle_db_username]}" \
     --moodle_upgrade_key "${parameters[moodle_upgrade_key]}" \
+    --proxy_ip_address_range "${parameters[proxy_ip_address_range]}" \
     --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
     --smtp_server_private_ip "${parameters[smtp_server_private_ip]}" \
     --web_server_fqdn "${parameters[web_server_fqdn]}"

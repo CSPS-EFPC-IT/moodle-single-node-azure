@@ -20,9 +20,11 @@ declare -A parameters=( \
   [moodle_db_password]="" \
   [moodle_db_username]="" \
   [moodle_upgrade_key]="" \
+  [proxy_ip_address_range]="" \
   [smtp_server_fqdn]="" \
   [smtp_server_private_ip]="" \
-  [web_server_fqdn]="" )
+  [web_server_fqdn]="" \
+)
 
 # Constants
 readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
@@ -163,11 +165,18 @@ function main() {
   utils::echo_action "Enabling Rewrite Module..."
   a2enmod rewrite
 
+  utils::echo_action "Enabling RemoteIp Module..."
+  a2enmod remoteip
+
   utils::echo_action "Creating Moodle site configuration from the default site configuration..."
 
   moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # shellcheck disable=SC2016
   moodle_site_config_file_part_2='
+        # Propagate true Client IP since running behind Proxy.
+        RemoteIPHeader X-Forwarded-For
+        RemoteIPInternalProxy REMOTE_IP_INTERNAL_PROXY
+
         #
         # Moodle Specific Configuration
         # Ref.: https://docs.moodle.org/311/en/Apache
@@ -203,6 +212,7 @@ function main() {
         RewriteRule "(\/tests\/behat\/)" - [F]
         RewriteRule "(\/fixtures\/)" - [F]'
   moodle_site_config_file_part_2="${moodle_site_config_file_part_2/MOODLE_DOCUMENT_ROOT_DIR_PATH/${MOODLE_DOCUMENT_ROOT_DIR_PATH}}"
+  moodle_site_config_file_part_2="${moodle_site_config_file_part_2/REMOTE_IP_INTERNAL_PROXY/${parameters[proxy_ip_address_range]}}"
   moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
   utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
