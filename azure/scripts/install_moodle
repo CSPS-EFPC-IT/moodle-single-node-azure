@@ -1,0 +1,377 @@
+#!/bin/bash
+#
+# Install Moodle 3.11.7 without any additional plugins on Ubuntu 18.04.
+# This script must be run as root (ex.: sudo sh [script_name])
+# Style Guide: https://google.github.io/styleguide/shellguide.html
+
+# Parameters: all manadatory and must be prefix with "--" on command line.
+
+declare -A parameters=( \
+  [data_disk_size]="" \
+  [db_server_admin_password]="" \
+  [db_server_admin_username]="" \
+  [db_server_fqdn]="" \
+  [db_server_name]="" \
+  [moodle_admin_email]="" \
+  [moodle_admin_password]="" \
+  [moodle_admin_username]="" \
+  [moodle_data_mount_point_path]="" \
+  [moodle_db_name]="" \
+  [moodle_db_password]="" \
+  [moodle_db_username]="" \
+  [moodle_upgrade_key]="" \
+  [proxy_ip_address_range]="" \
+  [web_server_fqdn]="" \
+)
+
+# Constants
+readonly APACHE2_CONF_ENABLED_SECURITY_FILE_PATH="/etc/apache2/conf-enabled/security.conf"
+readonly APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH="/etc/apache2/sites-available/000-default.conf"
+readonly APACHE2_MOODLE_SITE_CONFIG_FILE_PATH="/etc/apache2/sites-available/moodle.conf"
+readonly APACHE2_USER="www-data"
+readonly MOODLE_DOCUMENT_ROOT_DIR_PATH="/var/www/html/moodle"
+readonly MOODLE_LOCAL_CACHE_DIR_PATH="/var/www/html/moodlelocalcache"
+readonly MOODLE_TABLE_PREFIX="mdl_" # IMPORTANT: Changing this value will break the ability to upgrade an existing environment.
+readonly PHP_INI_FILE_PATH="/etc/php/7.4/apache2/php.ini"
+
+# Functions
+# shellcheck disable=SC1091 # Libraries are imported from another project.
+source ./apache2.sh ./logger.sh ./os.sh ./php.sh ./postgresql.sh ./utils.sh
+
+#######################################
+# Get and extract Moodle core files. Previously extracted files are deleted.
+# Arguments:
+#   1) URL of the Moodle TAR/GZIP file to download.
+#   2) Sha256 hash code of the Moodle TAR/GZIP file to download.
+#   3) Moodle installation directory path.
+# Outputs:
+#   Writes normal log messages to STDOUT.
+#   Writes error messages to STDERR.
+#######################################
+function get_moodle_core() {
+  # Parameters
+  local core_tgz_file_url="$1"
+  local core_sha256="$2"
+  local core_dir_path="$3"
+
+  # Variables
+  local core_tgz_file
+
+  logger::action "Downloading Moodle core tar file..."
+  core_tgz_file="$(basename "${core_tgz_file_url}")"
+  wget "${core_tgz_file_url}" -O "${core_tgz_file}"
+  logger::info "Done."
+
+  logger::action "Verifying downloaded file integrity..."
+  if ! echo "SHA256(${core_tgz_file})= ${core_sha256}" | sha256sum --check; then
+    logger::error "Downloaded file corrupted. Aborting."
+    exit 1
+  fi
+  logger::info "Done."
+
+  if [[ -d "${core_dir_path}" ]]; then
+    logger::action "Deleting existing Moodle installation: ${core_dir_path}..."
+    rm -rf "${core_dir_path}"
+    logger::info "Done."
+  fi
+
+  logger::action "Extracting moodle tgz file..."
+  tar zxf "${core_tgz_file}" -C "$(dirname "${core_dir_path}")"
+  logger::info "Done."
+}
+
+function main() {
+
+  # Variables
+  local core_tgz_file
+  local crontab_entry
+  local moodle_optional_install_options
+  local moodle_site_config_file_part_1
+  local moodle_site_config_file_part_2
+  local moodle_site_config_file_part_3
+  local table_count
+
+  utils::set_exit_trap
+  logger::title "Start of $0"
+
+  #############################################################################
+
+  logger::title "Parse Input Parameters"
+  utils::parse_parameters "$@"
+
+  #############################################################################
+
+  logger::title "Install Tools"
+  logger::action "Installing postgres client, php client and unzip packages..."
+  apt-get install --yes --quiet \
+    php-cli \
+    postgresql-client-12 \
+    unzip
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Install Moodle Dependencies"
+
+  logger::action "Installing apache2 and redis packages..."
+  apt-get install --yes --quiet \
+    apache2 \
+    libapache2-mod-php \
+    redis
+  logger::info "Done."
+
+  logger::action "Installing php packages..."
+  apt-get install --yes --quiet \
+    aspell \
+    clamav \
+    ghostscript \
+    graphviz \
+    php7.4-curl \
+    php7.4-gd \
+    php7.4-intl \
+    php7.4-ldap \
+    php7.4-mbstring \
+    php7.4-pgsql \
+    php7.4-pspell \
+    php7.4-redis \
+    php7.4-soap \
+    php7.4-xml \
+    php7.4-xmlrpc \
+    php7.4-zip
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Update PHP Configuration"
+
+  php::update_config_file "upload_max_filesize" "2048M" "${PHP_INI_FILE_PATH}"
+  php::update_config_file "post_max_size" "2048M" "${PHP_INI_FILE_PATH}"
+  php::update_config_file "max_input_vars" "5000" "${PHP_INI_FILE_PATH}"
+
+  #############################################################################
+
+  logger::title "Configure Apache2"
+
+  logger::action "Enabling Rewrite Module..."
+  a2enmod rewrite
+
+  logger::action "Enabling RemoteIp Module..."
+  a2enmod remoteip
+
+  logger::action "Creating Moodle site configuration from the default site configuration..."
+
+  moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
+  # shellcheck disable=SC2016
+  moodle_site_config_file_part_2='
+        # Propagate true Client IP since running behind Proxy.
+        RemoteIPHeader X-Forwarded-For
+        RemoteIPInternalProxy REMOTE_IP_INTERNAL_PROXY
+
+        #
+        # Moodle Specific Configuration
+        # Ref.: https://docs.moodle.org/311/en/Apache
+        #
+
+        # Enable the slash arguments function
+        AcceptPathInfo On
+
+        # Handle 40x errors
+        # This sends all missing files to moodle to render nicely, see MDL-56041
+        ErrorDocument 404 /error/index.php
+        # This sends any 403 from apache through to the same page, but also
+        # overrides the http status with 404 instead for better security.
+        ErrorDocument 403 /error/index.php?code=404
+
+        # Hide internal paths
+        RewriteEngine On
+        RewriteRule "(\/vendor\/)" - [F]
+        RewriteRule "(\/node_modules\/)" - [F]
+        RewriteRule "(^|/)\.(?!well-known\/)" - [F]
+        RewriteRule "(composer\.json)" - [F]
+        RewriteRule "(\.lock)" - [F]
+        RewriteRule "(\/environment.xml)" - [F]
+        <Directory "MOODLE_DOCUMENT_ROOT_DIR_PATH">
+                Options -Indexes
+        </Directory>
+        RewriteRule "(\/install.xml)" - [F]
+        RewriteRule "(\/README)" - [F]
+        RewriteRule "(\/readme)" - [F]
+        RewriteRule "(\/moodle_readme)" - [F]
+        RewriteRule "(\/upgrade\.txt)" - [F]
+        RewriteRule "(phpunit\.xml\.dist)" - [F]
+        RewriteRule "(\/tests\/behat\/)" - [F]
+        RewriteRule "(\/fixtures\/)" - [F]'
+  moodle_site_config_file_part_2="${moodle_site_config_file_part_2/MOODLE_DOCUMENT_ROOT_DIR_PATH/${MOODLE_DOCUMENT_ROOT_DIR_PATH}}"
+  moodle_site_config_file_part_2="${moodle_site_config_file_part_2/REMOTE_IP_INTERNAL_PROXY/${parameters[proxy_ip_address_range]}}"
+  moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
+  printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+  apache2::update_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+
+  logger::action "Disabling Default Site..."
+  a2dissite "$(basename "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH%.*}")"
+
+  logger::action "Enabling Moodle Site..."
+  a2ensite "$(basename "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH%.*}")"
+
+  apache2::harden "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
+
+  logger::action "Restarting Apache2..."
+  service apache2 restart
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Setup Moodle Database and Credentials"
+
+  postgresql::create_database_and_credentials \
+    "${parameters[db_server_fqdn]}" \
+    "${parameters[db_server_admin_username]}@${parameters[db_server_name]}" \
+    "${parameters[db_server_admin_password]}" \
+    "${parameters[moodle_db_username]}" \
+    "${parameters[moodle_db_password]}" \
+    "${parameters[moodle_db_name]}"
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Mount Moodle Data Disk"
+
+  os::mount_data_disk_by_size \
+    "${parameters[data_disk_size]}" \
+    "${parameters[moodle_data_mount_point_path]}"
+
+  logger::action "Setting permissions ..."
+  chown -R "${APACHE2_USER}:root" "${parameters[moodle_data_mount_point_path]}"
+  chmod -R 775 "${parameters[moodle_data_mount_point_path]}"
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Create Moodle Local Cache directory"
+
+  if [[ -d "${MOODLE_LOCAL_CACHE_DIR_PATH}" ]]; then
+    logger::action "Deleting old ${MOODLE_LOCAL_CACHE_DIR_PATH} folder..."
+    rm -rf "${MOODLE_LOCAL_CACHE_DIR_PATH}"
+    logger::info "Done."
+  fi
+
+  logger::action "Creating new ${MOODLE_LOCAL_CACHE_DIR_PATH} folder with proper ownership..."
+  install -o "${APACHE2_USER}" -d "${MOODLE_LOCAL_CACHE_DIR_PATH}"
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Get Moodle Core"
+
+  # Ref.: https://download.moodle.org/releases/supported/
+  get_moodle_core \
+    "https://download.moodle.org/download.php/direct/stable311/moodle-3.11.7.tgz" \
+    "c38a7d76c7b806fc1cbacee7fd835b1f8f9932d01332fc45cc4c5b7a8107c940" \
+    "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
+
+  logger::action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
+  chown -R "${APACHE2_USER}:root" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Run Moodle Installer"
+
+  moodle_optional_install_options=()
+
+  logger::action "Assessing whether Moodle installer should skip database setup..."
+  # If moodle database tables already exist then
+  # add the "--skip-database" option to the install script.
+  export PGPASSWORD="${parameters[db_server_admin_password]}"
+  table_count=$(
+    psql \
+      "host=${parameters[db_server_fqdn]} port=5432 user=${parameters[db_server_admin_username]}@${parameters[db_server_name]} dbname=${parameters[moodle_db_name]} sslmode=require" \
+      --tuples-only \
+      --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodle_db_name]}' and table_name like '${MOODLE_TABLE_PREFIX}%'" \
+    )
+  if (( "${table_count}" == 0 )); then # Use arithmetic expansion operator ((...)) to convert string into integer.
+    logger::info "Moodle tables NOT found in database. Database must be setup as part of the install."
+  else
+    logger::info "Moodle tables found in database. Database setup must be skipped."
+    moodle_optional_install_options+=("--skip-database")
+  fi
+  logger::info "Done."
+
+  logger::action "Running Moodle installation script..."
+  sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/install.php" \
+    --adminemail="${parameters[moodle_admin_email]}" \
+    --adminpass="${parameters[moodle_admin_password]}" \
+    --adminuser="${parameters[moodle_admin_username]}" \
+    --agree-license \
+    --chmod=2777 \
+    --dataroot="${parameters[moodle_data_mount_point_path]}/" \
+    --dbhost="${parameters[db_server_fqdn]}" \
+    --dbname="${parameters[moodle_db_name]}" \
+    --dbpass="${parameters[moodle_db_password]}" \
+    --dbport=5432 \
+    --dbtype=pgsql \
+    --dbuser="${parameters[moodle_db_username]}@${parameters[db_server_name]}" \
+    --fullname="Moodle" \
+    --lang=en \
+    --non-interactive \
+    --prefix="${MOODLE_TABLE_PREFIX}" \
+    --shortname="Moodle" \
+    --summary="Welcome - Bienvenue" \
+    --upgradekey="${parameters[moodle_upgrade_key]}" \
+    --wwwroot="https://${parameters[web_server_fqdn]}/" \
+    "${moodle_optional_install_options[@]}"
+
+  logger::info "Done."
+
+  #############################################################################
+
+  logger::title "Moodle Post Installation Process"
+
+  # No need to test for existing values since the file is always new.
+  logger::action "Adding SSL Proxy setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  # shellcheck disable=SC2016
+  sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  logger::info "Done."
+
+  logger::action "Adding Local Cache Directory setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  sed -i "/^\$CFG->dataroot.*/a \$CFG->localcachedir\t= '${MOODLE_LOCAL_CACHE_DIR_PATH}';" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  logger::info "Done."
+
+  logger::action "Adding default timezone setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  logger::info "Done."
+
+  # Security Check - Executable paths.
+  logger::action "Adding directive to prevent executable paths to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  sed -i "/^\$CFG->upgradekey.*/a \$CFG->preventexecpath = true;" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  logger::info "Done."
+
+  # Security Check - Writable config.php.
+  logger::action "Prevent Moodle processes from updating ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  chmod u-w "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
+  logger::info "Done."
+
+  logger::action "Upgrade moodle database to match new Moodle core and/or plugin version..."
+  sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/upgrade.php" --non-interactive
+  logger::info "Done."
+
+  logger::action "Purging all Moodle Caches..."
+  sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/purge_caches.php"
+  logger::info "Done."
+
+  logger::action "Setting up Moodle Crontab..."
+  crontab_entry="* * * * * sudo -u ${APACHE2_USER} php ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/cron.php > /dev/null"
+  if crontab -l | grep -q --fixed-strings "${crontab_entry}"; then
+    logger::info "Skipped: crontab already set up."
+  else
+    crontab -l | { cat; echo "${crontab_entry}"; } | crontab -
+    logger::info "Done."
+  fi
+
+  #############################################################################
+
+  logger::title "End of $0"
+  utils::unset_exit_trap
+}
+
+main "$@"
