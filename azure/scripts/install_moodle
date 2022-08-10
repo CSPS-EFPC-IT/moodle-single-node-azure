@@ -147,6 +147,7 @@ function main() {
   php::update_config_file "upload_max_filesize" "2048M" "${PHP_INI_FILE_PATH}"
   php::update_config_file "post_max_size" "2048M" "${PHP_INI_FILE_PATH}"
   php::update_config_file "max_input_vars" "5000" "${PHP_INI_FILE_PATH}"
+  logger::info "Done."
 
   #############################################################################
 
