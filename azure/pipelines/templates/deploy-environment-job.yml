@@ -1,21 +1,23 @@
 parameters:
 - name: env
   type: string
+- name: site
+  type: string
 
 variables:
-- group: openLearning-moodleSingleNode-global-clear
+- group: ${{ parameters.site }}-moodleSingleNode-global-clear
 - ${{ if eq(parameters.env, 'dev') }}:
   - group: common-dev-secret
-  - group: openLearning-moodleSingleNode-dev-clear
-  - group: openLearning-moodleSingleNode-dev-secret
+  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-dev-secret
 - ${{ if eq(parameters.env, 'staging') }}:
   - group: common-staging-secret
-  - group: openLearning-moodleSingleNode-staging-clear
-  - group: openLearning-moodleSingleNode-staging-secret
+  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-staging-secret
 - ${{ if eq(parameters.env, 'prod') }}:
   - group: common-prod-secret
-  - group: openLearning-moodleSingleNode-prod-clear
-  - group: openLearning-moodleSingleNode-prod-secret
+  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-prod-secret
 
 jobs:
 - deployment: deployResourcesJob
