@@ -36,7 +36,7 @@ jobs:
         deploy:
           steps:
 
-          - checkout: self # Single repo: files will be downloaded to ${Build.SourcesDirectory} folder.
+          # - checkout: self # Single repo: files will be downloaded to ${Build.SourcesDirectory} folder.
 
           - task: Bash@3
             displayName: 'DEBUG'
