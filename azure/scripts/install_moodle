@@ -35,8 +35,20 @@ readonly MOODLE_TABLE_PREFIX="mdl_" # IMPORTANT: Changing this value will break 
 readonly PHP_INI_FILE_PATH="/etc/php/7.4/apache2/php.ini"
 
 # Functions
-# shellcheck disable=SC1091 # Libraries are imported from another project.
-source ./apache2.sh ./logger.sh ./os.sh ./php.sh ./postgresql.sh ./utils.sh
+
+# All libraries not available at build time.
+# shellcheck source=/dev/null
+source ./apache2.sh
+# shellcheck source=/dev/null
+source ./logger.sh
+# shellcheck source=/dev/null
+source ./os.sh
+# shellcheck source=/dev/null
+source ./php.sh
+# shellcheck source=/dev/null
+source ./postgresql.sh
+# shellcheck source=/dev/null
+source ./utils.sh
 
 #######################################
 # Get and extract Moodle core files. Previously extracted files are deleted.

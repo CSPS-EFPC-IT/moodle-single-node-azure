@@ -33,8 +33,11 @@ declare -A parameters=( \
 
 # Functions
 
-# shellcheck disable=SC1091 # Libraries are imported from another project.
-source ./logger.sh ./utils.sh
+# All libraries not available at build time.
+# shellcheck source=/dev/null
+source ./logger.sh
+# shellcheck source=/dev/null
+source ./utils.sh
 
 function main() {
   utils::set_exit_trap
