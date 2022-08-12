@@ -2,13 +2,13 @@ parameters:
 - name: env
   type: string
 
-resources:
-  repositories:
-  - repository: moodle
-    type: github
-    name: CSPS-EFPC-IT/moodle-single-node-azure
-    ref: issue-507
-    endpoint: CSPS-EFPC-IT
+# resources:
+#   repositories:
+#   - repository: moodle
+#     type: github
+#     name: CSPS-EFPC-IT/moodle-single-node-azure
+#     ref: issue-507
+#     endpoint: CSPS-EFPC-IT
 
 variables:
 - group: openLearning-moodleSingleNode-global-clear
@@ -48,54 +48,54 @@ jobs:
                 ls -al
                 ls -al azure/arm-templates/deploy-resources.json
 
-          - task: AzureResourceManagerTemplateDeployment@3
-            displayName: 'Deploy Resources'
-            inputs:
-              deploymentScope: 'Resource Group'
-              azureResourceManagerConnection: '$(serviceConnectionName)'
-              subscriptionId: '$(subscriptionId)'
-              action: 'Create Or Update Resource Group'
-              resourceGroupName: '$(resourceGroupName)'
-              location: '$(location)'
-              templateLocation: 'Linked artifact'
-              csmFile: 'azure/arm-templates/deploy-resources.json'
-              overrideParameters: >-
-                -armTemplateRepoRawFilesBaseUrl "$(armTemplateRepoRawFilesBaseUrl)"
-                -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
-                -currentProjectRepoRawFilesBaseUrl "$(currentProjectRepoRawFilesBaseUrl)"
-                -customApplicationFqdn "$(customApplicationFqdn)"
-                -dataDiskSizeGB $(dataDiskSizeGB)
-                -databaseAdminPassword "$(databaseAdminPassword)"
-                -databaseAdminUsername "$(databaseAdminUsername)"
-                -databaseBackupRetentionDays $(databaseBackupRetentionDays)
-                -databaseCapacity $(databaseCapacity)
-                -databaseMoodlePassword "$(databaseMoodlePassword)"
-                -databaseMoodleUsername "$(databaseMoodleUsername)"
-                -databaseStorageMb $(databaseStorageMb)
-                -deniedIpAddresses "$(deniedIpAddresses)"
-                -environmentName "$(environmentName)"
-                -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
-                -gatewayUserAssignedIdentity "$(gatewayUserAssignedIdentity)"
-                -genericShellScriptsRepoRawFilesBaseUrl "$(genericShellScriptsRepoRawFilesBaseUrl)"
-                -location "$(location)"
-                -logAnalyticsWorkspaceRetentionPeriod $(logAnalyticsWorkspaceRetentionPeriod)
-                -moodleAdminEmail "$(moodleAdminEmail)"
-                -moodleAdminPassword "$(moodleAdminPassword)"
-                -moodleAdminUsername "$(moodleAdminUsername)"
-                -moodleUpgradeKey "$(moodleUpgradeKey)"
-                -projectShortName "$(projectShortName)"
-                -resourceTags $(resourceTags)
-                -smtpServerFqdn "$(smtpServerFqdn)"
-                -smtpServerFromAddress "$(smtpServerFromAddress)"
-                -smtpServerPassword "$(smtpServerPassword)"
-                -smtpServerPort $(smtpServerPort)
-                -smtpServerUsername "$(smtpServerUsername)"
-                -virtualMachineTags $(virtualMachineTags)
-                -virtualNetworkAddressBase "$(virtualNetworkAddressBase)"
-                -webServerAdminEmail "$(webServerAdminEmail)"
-                -webServerAdminPassword "$(webServerAdminPassword)"
-                -webServerAdminUsername "$(webServerAdminUsername)"
-                -webServerRebootUtcTime "$(webServerRebootUtcTime)"
-              deploymentMode: 'Incremental'
-              deploymentName: '$(projectShortName)-resources_$(Build.BuildNumber)'
+          # - task: AzureResourceManagerTemplateDeployment@3
+          #   displayName: 'Deploy Resources'
+          #   inputs:
+          #     deploymentScope: 'Resource Group'
+          #     azureResourceManagerConnection: '$(serviceConnectionName)'
+          #     subscriptionId: '$(subscriptionId)'
+          #     action: 'Create Or Update Resource Group'
+          #     resourceGroupName: '$(resourceGroupName)'
+          #     location: '$(location)'
+          #     templateLocation: 'Linked artifact'
+          #     csmFile: 'azure/arm-templates/deploy-resources.json'
+          #     overrideParameters: >-
+          #       -armTemplateRepoRawFilesBaseUrl "$(armTemplateRepoRawFilesBaseUrl)"
+          #       -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
+          #       -currentProjectRepoRawFilesBaseUrl "$(currentProjectRepoRawFilesBaseUrl)"
+          #       -customApplicationFqdn "$(customApplicationFqdn)"
+          #       -dataDiskSizeGB $(dataDiskSizeGB)
+          #       -databaseAdminPassword "$(databaseAdminPassword)"
+          #       -databaseAdminUsername "$(databaseAdminUsername)"
+          #       -databaseBackupRetentionDays $(databaseBackupRetentionDays)
+          #       -databaseCapacity $(databaseCapacity)
+          #       -databaseMoodlePassword "$(databaseMoodlePassword)"
+          #       -databaseMoodleUsername "$(databaseMoodleUsername)"
+          #       -databaseStorageMb $(databaseStorageMb)
+          #       -deniedIpAddresses "$(deniedIpAddresses)"
+          #       -environmentName "$(environmentName)"
+          #       -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
+          #       -gatewayUserAssignedIdentity "$(gatewayUserAssignedIdentity)"
+          #       -genericShellScriptsRepoRawFilesBaseUrl "$(genericShellScriptsRepoRawFilesBaseUrl)"
+          #       -location "$(location)"
+          #       -logAnalyticsWorkspaceRetentionPeriod $(logAnalyticsWorkspaceRetentionPeriod)
+          #       -moodleAdminEmail "$(moodleAdminEmail)"
+          #       -moodleAdminPassword "$(moodleAdminPassword)"
+          #       -moodleAdminUsername "$(moodleAdminUsername)"
+          #       -moodleUpgradeKey "$(moodleUpgradeKey)"
+          #       -projectShortName "$(projectShortName)"
+          #       -resourceTags $(resourceTags)
+          #       -smtpServerFqdn "$(smtpServerFqdn)"
+          #       -smtpServerFromAddress "$(smtpServerFromAddress)"
+          #       -smtpServerPassword "$(smtpServerPassword)"
+          #       -smtpServerPort $(smtpServerPort)
+          #       -smtpServerUsername "$(smtpServerUsername)"
+          #       -virtualMachineTags $(virtualMachineTags)
+          #       -virtualNetworkAddressBase "$(virtualNetworkAddressBase)"
+          #       -webServerAdminEmail "$(webServerAdminEmail)"
+          #       -webServerAdminPassword "$(webServerAdminPassword)"
+          #       -webServerAdminUsername "$(webServerAdminUsername)"
+          #       -webServerRebootUtcTime "$(webServerRebootUtcTime)"
+          #     deploymentMode: 'Incremental'
+          #     deploymentName: '$(projectShortName)-resources_$(Build.BuildNumber)'
 
