@@ -33,7 +33,7 @@
             }
         },
         "databaseAdminUsername": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The username to use in order to manage the database server."
             }
@@ -152,7 +152,7 @@
             }
         },
         "moodleAdminUsername": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The username of the Moodle Administrator account."
             }
@@ -191,7 +191,7 @@
             }
         },
         "smtpServerPassword": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The SMTP server account password."
             }
@@ -203,7 +203,7 @@
             }
         },
         "smtpServerUsername": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The SMTP server account username."
             }
@@ -234,7 +234,7 @@
             }
         },
         "webServerAdminUsername": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The Web server administrator's username."
             }
