@@ -2,12 +2,13 @@ parameters:
 - name: env
   type: string
 
-resources:
-  repositories:
-  - repository: moodle
-    type: github
-    name: CSPS-EFPC-IT/moodle-single-node-azure
-    endpoint: CSPS-EFPC-IT
+# resources:
+#   repositories:
+#   - repository: moodle
+#     type: github
+#     name: CSPS-EFPC-IT/moodle-single-node-azure
+#     ref: issue-507
+#     endpoint: CSPS-EFPC-IT
 
 variables:
 - group: openLearning-moodleSingleNode-global-clear
@@ -35,7 +36,7 @@ jobs:
         deploy:
           steps:
 
-          - checkout: moodle # Single repo: files will be downloaded to ${Build.SourcesDirectory}/moodle-single-node-azure folder.
+          # - checkout: moodle # Single repo: files will be downloaded to ${Build.SourcesDirectory}/moodle-single-node-azure folder.
 
           - task: Bash@3
             displayName: 'DEBUG'
@@ -56,7 +57,7 @@ jobs:
               resourceGroupName: '$(resourceGroupName)'
               location: '$(location)'
               templateLocation: 'Linked artifact'
-              csmFile: 'moodle-single-node-azure/azure/arm-templates/deploy-reources.json'
+              csmFile: 'azure/arm-templates/deploy-reources.json'
               overrideParameters: >-
                 -armTemplateRepoRawFilesBaseUrl "$(armTemplateRepoRawFilesBaseUrl)"
                 -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
