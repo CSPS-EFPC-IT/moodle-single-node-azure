@@ -36,7 +36,7 @@ jobs:
         deploy:
           steps:
 
-          # - checkout: moodle # Single repo: files will be downloaded to ${Build.SourcesDirectory}/moodle-single-node-azure folder.
+          - checkout: self # Single repo: files will be downloaded to ${Build.SourcesDirectory}/moodle-single-node-azure folder.
 
           - task: Bash@3
             displayName: 'DEBUG'
