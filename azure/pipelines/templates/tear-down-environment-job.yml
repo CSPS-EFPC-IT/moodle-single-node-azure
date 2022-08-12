@@ -1,14 +1,16 @@
 parameters:
 - name: env
   type: string
+- name: site
+  type: string
 
 variables:
 - ${{ if eq(parameters.env, 'dev') }}:
-  - group: openLearning-moodleSingleNode-dev-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
 - ${{ if eq(parameters.env, 'staging') }}:
-  - group: openLearning-moodleSingleNode-staging-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
 - ${{ if eq(parameters.env, 'prod') }}:
-  - group: openLearning-moodleSingleNode-prod-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
 
 jobs:
 - deployment: deployResourcesJob
@@ -22,16 +24,6 @@ jobs:
           steps:
 
           - checkout: self # To force checkout since project resides in github repo.
-
-          - script: |
-              pwd
-              whoami
-              ls -al
-              ls -al azure
-              ls -al /home/vsts/work/1/s/azure/scripts
-              ls -al /home/vsts/work/1/s/azure/scripts/tear_down_environment.sh
-              # chmod ugo+x /home/vsts/work/1/s/azure/scripts/tear_down_environment.sh
-              # ls -al /home/vsts/work/1/s/azure/scripts/tear_down_environment.sh
 
           - task: AzureCLI@2
             displayName: 'Tear Down Environment'
