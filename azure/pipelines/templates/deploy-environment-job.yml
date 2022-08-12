@@ -46,6 +46,7 @@ jobs:
                 echo "current directory = $(pwd)"
                 echo "content is"
                 ls -al
+                ls -al azure/arm-templates/deploy-resources.json
 
           - task: AzureResourceManagerTemplateDeployment@3
             displayName: 'Deploy Resources'
