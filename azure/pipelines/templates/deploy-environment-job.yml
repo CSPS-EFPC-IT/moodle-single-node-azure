@@ -2,13 +2,13 @@ parameters:
 - name: env
   type: string
 
-resources:
-  repositories:
-  - repository: moodle
-    type: github
-    name: CSPS-EFPC-IT/moodle-single-node-azure
-    ref: issue-507
-    endpoint: CSPS-EFPC-IT
+# resources:
+#   repositories:
+#   - repository: moodle
+#     type: github
+#     name: CSPS-EFPC-IT/moodle-single-node-azure
+#     ref: issue-507
+#     endpoint: CSPS-EFPC-IT
 
 variables:
 - group: openLearning-moodleSingleNode-global-clear
