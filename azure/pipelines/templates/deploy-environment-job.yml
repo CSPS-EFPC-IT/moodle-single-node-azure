@@ -30,16 +30,6 @@ jobs:
 
           - checkout: self # To force checkout since project resides in github repo.
 
-          - task: Bash@3
-            displayName: 'DEBUG'
-            inputs:
-              targetType: 'inline'
-              script: |
-                echo "current directory = $(pwd)"
-                echo "content is"
-                ls -al
-                ls -al azure/arm-templates/deploy-resources.json
-
           - task: AzureResourceManagerTemplateDeployment@3
             displayName: 'Deploy Resources'
             inputs:
