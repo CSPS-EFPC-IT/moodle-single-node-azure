@@ -9,7 +9,7 @@
             }
         },
         "corporateGatewayIpAddress": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The Outbound IP address of the corporate network gateway."
             }
