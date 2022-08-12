@@ -1,2 +1,2 @@
-azuredeploy.parameters.*.json
-!azuredeploy.parameters.example.json
+deploy-resources.parameters.*.json
+!deploy-resources.parameters.example.json
