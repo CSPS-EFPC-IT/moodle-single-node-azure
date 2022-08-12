@@ -60,7 +60,7 @@
             }
         },
         "databaseMoodleUsername": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The Moodle application database account username."
             }
