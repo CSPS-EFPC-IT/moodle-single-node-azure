@@ -31,6 +31,7 @@ jobs:
               ls -al /home/vsts/work/1/s/azure/scripts
               ls -al /home/vsts/work/1/s/azure/scripts/tear_down_environment
               chmod ugo+x /home/vsts/work/1/s/azure/scripts/tear_down_environment
+              ls -al /home/vsts/work/1/s/azure/scripts/tear_down_environment
 
           - task: AzureCLI@2
             displayName: 'Tear Down Environment'
