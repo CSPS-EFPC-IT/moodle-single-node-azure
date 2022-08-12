@@ -36,7 +36,7 @@ jobs:
         deploy:
           steps:
 
-          - checkout: moodle # Single repo: files will be downloaded to ${Build.SourcesDirectory} folder.
+          # - checkout: moodle # Single repo: files will be downloaded to ${Build.SourcesDirectory} folder.
 
           - task: Bash@3
             displayName: 'DEBUG'
@@ -57,7 +57,7 @@ jobs:
               resourceGroupName: '$(resourceGroupName)'
               location: '$(location)'
               templateLocation: 'Linked artifact'
-              csmFile: 'azure/arm-templates/deploy-reources.json'
+              csmFile: 'azure/arm-templates/deploy-resources.json'
               overrideParameters: >-
                 -armTemplateRepoRawFilesBaseUrl "$(armTemplateRepoRawFilesBaseUrl)"
                 -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
