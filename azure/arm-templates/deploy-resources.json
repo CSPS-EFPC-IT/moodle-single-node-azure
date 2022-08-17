@@ -604,8 +604,8 @@
             "type": "Microsoft.Network/applicationGateways",
             "apiVersion": "2019-11-01",
             "name": "[variables('gatewayName')]",
-            "location": "[parameters('location')]",
             "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
                 "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIpName'))]"
@@ -1074,11 +1074,12 @@
             "apiVersion": "2020-06-01",
             "name": "[variables('webServerVirtualMachineName')]",
             "tags": "[union(parameters('resourceTags'), parameters('virtualMachineTags'))]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks', variables('webServerVirtualMachineDataDiskName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('webServerVirtualMachineNetworkInterfaceCardName'))]"
             ],
-            "location": "[parameters('location')]",
+
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "Standard_DS2_v2"
@@ -1137,8 +1138,8 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('webServerVirtualMachineName'),'/', variables('webServerVirtualMachineSetupExtensionName'))]",
             "apiVersion": "2020-06-01",
+            "name": "[concat(variables('webServerVirtualMachineName'),'/', variables('webServerVirtualMachineSetupExtensionName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
@@ -1174,11 +1175,12 @@
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
             "name": "[variables('diagnosticStorageAccountName')]",
+            "tags": "[parameters('resourceTags')]",
+            "location": "[parameters('location')]",
+            "comments": "Storage Account firewall must be turned off for Guest Metrics to work as per the following reference: https://docs.microsoft.com/en-ca/azure/azure-monitor/platform/metrics-troubleshoot#cannot-pick-guest-os-namespace-and-metrics",
             "dependsOn":[
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
             ],
-            "tags": "[parameters('resourceTags')]",
-            "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard_LRS",
                 "tier": "Standard"
@@ -1187,8 +1189,6 @@
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
                 "allowBlobPublicAccess": true,
-                // Storage Account firewall must be turned off for Guest Metrics to work as per the following reference:
-                // https://docs.microsoft.com/en-ca/azure/azure-monitor/platform/metrics-troubleshoot#cannot-pick-guest-os-namespace-and-metrics
                 "networkAcls": {
                     "bypass": "AzureServices",
                     "virtualNetworkRules": [
