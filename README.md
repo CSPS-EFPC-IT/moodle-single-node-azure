@@ -1,5 +1,5 @@
 # moodle-single-node-azure
-Deploys a single Moodle stack on Azure Cloud.
+Deploys Moodle on a signle node on Azure Cloud.
 
 # Description
 This project deploys the following Azure resources:
@@ -10,27 +10,29 @@ This project deploys the following Azure resources:
 - Postgres Database
 - Recovery Service Vault and its Daily Backup Policy and Protected Item (VM backup)
 - Bastion and its Public IP
+- Log Analytics Workspace (for database, Application Gateway logs)
+- Storage Accounts (for Web Server metrics)
 
 And installs the following software (up to their latest available patch level for the linux distro) on the virtual machine:
-- Ubuntu 18.04
-- Postgres client 10
+- Ubuntu 20.04
+- Postgres client 12
 - Unzip 6.00
-- PHP Client 7.2
+- PHP Client 7.4
 - Apache2 2.4
-- Redis 4.0
-- PHP 7.2 modules
-  - php7.2-pspell
-  - php7.2-curl
-  - php7.2-gd
-  - php7.2-intl
-  - php7.2-pgsql
-  - php7.2-xml
-  - php7.2-xmlrpc
-  - php7.2-ldap
-  - php7.2-zip
-  - php7.2-soap
-  - php7.2-mbstring
-  - php7.2-redis
+- Redis 5.0
+- PHP 7.4 modules
+  - php7.4-curl
+  - php7.4-gd
+  - php7.4-intl
+  - php7.4-ldap
+  - php7.4-mbstring
+  - php7.4-pgsql
+  - php7.4-pspell
+  - php7.4-redis
+  - php7.4-soap
+  - php7.4-xml
+  - php7.4-xmlrpc
+  - php7.4-zip
 
 # Prerequisites
 ## Tools
