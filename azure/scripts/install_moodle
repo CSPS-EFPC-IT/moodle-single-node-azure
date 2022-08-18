@@ -21,8 +21,6 @@ declare -A parameters=( \
   [moodle_db_username]="" \
   [moodle_upgrade_key]="" \
   [proxy_ip_address_range]="" \
-  [smtp_server_fqdn]="" \
-  [smtp_server_private_ip]="" \
   [web_server_fqdn]="" \
 )
 
@@ -37,6 +35,19 @@ readonly MOODLE_TABLE_PREFIX="mdl_" # IMPORTANT: Changing this value will break 
 readonly PHP_INI_FILE_PATH="/etc/php/7.4/apache2/php.ini"
 
 # Functions
+
+# All libraries not available at build time.
+# shellcheck source=/dev/null
+source ./apache2.sh
+# shellcheck source=/dev/null
+source ./logger.sh
+# shellcheck source=/dev/null
+source ./os.sh
+# shellcheck source=/dev/null
+source ./php.sh
+# shellcheck source=/dev/null
+source ./postgresql.sh
+# shellcheck source=/dev/null
 source ./utils.sh
 
 #######################################
@@ -58,27 +69,27 @@ function get_moodle_core() {
   # Variables
   local core_tgz_file
 
-  utils::echo_action "Downloading Moodle core tar file..."
+  logger::action "Downloading Moodle core tar file..."
   core_tgz_file="$(basename "${core_tgz_file_url}")"
   wget "${core_tgz_file_url}" -O "${core_tgz_file}"
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Verifying downloaded file integrity..."
+  logger::action "Verifying downloaded file integrity..."
   if ! echo "SHA256(${core_tgz_file})= ${core_sha256}" | sha256sum --check; then
-    utils::echo_error "Downloaded file corrupted. Aborting."
+    logger::error "Downloaded file corrupted. Aborting."
     exit 1
   fi
-  utils::echo_info "Done."
+  logger::info "Done."
 
   if [[ -d "${core_dir_path}" ]]; then
-    utils::echo_action "Deleting existing Moodle installation: ${core_dir_path}..."
+    logger::action "Deleting existing Moodle installation: ${core_dir_path}..."
     rm -rf "${core_dir_path}"
-    utils::echo_info "Done."
+    logger::info "Done."
   fi
 
-  utils::echo_action "Extracting moodle tgz file..."
+  logger::action "Extracting moodle tgz file..."
   tar zxf "${core_tgz_file}" -C "$(dirname "${core_dir_path}")"
-  utils::echo_info "Done."
+  logger::info "Done."
 }
 
 function main() {
@@ -86,42 +97,42 @@ function main() {
   # Variables
   local core_tgz_file
   local crontab_entry
-  local moodle_install_options
+  local moodle_optional_install_options
   local moodle_site_config_file_part_1
   local moodle_site_config_file_part_2
   local moodle_site_config_file_part_3
   local table_count
 
   utils::set_exit_trap
-  utils::echo_title "Start of $0"
+  logger::title "Start of $0"
 
   #############################################################################
 
-  utils::echo_title "Parse Input Parameters"
+  logger::title "Parse Input Parameters"
   utils::parse_parameters "$@"
 
   #############################################################################
 
-  utils::echo_title "Install Tools"
-  utils::echo_action "Installing postgres client, php client and unzip packages..."
+  logger::title "Install Tools"
+  logger::action "Installing postgres client, php client and unzip packages..."
   apt-get install --yes --quiet \
     php-cli \
     postgresql-client-12 \
     unzip
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Install Moodle Dependencies"
+  logger::title "Install Moodle Dependencies"
 
-  utils::echo_action "Installing apache2 and redis packages..."
+  logger::action "Installing apache2 and redis packages..."
   apt-get install --yes --quiet \
     apache2 \
     libapache2-mod-php \
     redis
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Installing php packages..."
+  logger::action "Installing php packages..."
   apt-get install --yes --quiet \
     aspell \
     clamav \
@@ -139,36 +150,28 @@ function main() {
     php7.4-xml \
     php7.4-xmlrpc \
     php7.4-zip
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Setup SMTP Server"
+  logger::title "Update PHP Configuration"
 
-  utils::add_hosts_file_entry \
-    "${parameters[smtp_server_private_ip]}" \
-    "${parameters[smtp_server_fqdn]}" \
-    "Redirect SMTP Server FQDN to Private IP Address."
-
-  #############################################################################
-
-  utils::echo_title "Update PHP Configuration"
-
-  utils::update_php_config_file "upload_max_filesize" "2048M" "${PHP_INI_FILE_PATH}"
-  utils::update_php_config_file "post_max_size" "2048M" "${PHP_INI_FILE_PATH}"
-  utils::update_php_config_file "max_input_vars" "5000" "${PHP_INI_FILE_PATH}"
+  php::update_config_file "upload_max_filesize" "2048M" "${PHP_INI_FILE_PATH}"
+  php::update_config_file "post_max_size" "2048M" "${PHP_INI_FILE_PATH}"
+  php::update_config_file "max_input_vars" "5000" "${PHP_INI_FILE_PATH}"
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Configure Apache2"
+  logger::title "Configure Apache2"
 
-  utils::echo_action "Enabling Rewrite Module..."
+  logger::action "Enabling Rewrite Module..."
   a2enmod rewrite
 
-  utils::echo_action "Enabling RemoteIp Module..."
+  logger::action "Enabling RemoteIp Module..."
   a2enmod remoteip
 
-  utils::echo_action "Creating Moodle site configuration from the default site configuration..."
+  logger::action "Creating Moodle site configuration from the default site configuration..."
 
   moodle_site_config_file_part_1="$(sed -n '\|^</VirtualHost>|q;p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   # shellcheck disable=SC2016
@@ -215,72 +218,63 @@ function main() {
   moodle_site_config_file_part_2="${moodle_site_config_file_part_2/REMOTE_IP_INTERNAL_PROXY/${parameters[proxy_ip_address_range]}}"
   moodle_site_config_file_part_3="$(sed -n '\|^</VirtualHost>|,$p' "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH}")"
   printf '%s\n\t%s\n%s\n' "${moodle_site_config_file_part_1}" "${moodle_site_config_file_part_2}" "${moodle_site_config_file_part_3}" > "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
-  utils::update_apache2_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
+  apache2::update_config_file "DocumentRoot" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}" "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH}"
 
-  utils::echo_action "Disabling Default Site..."
+  logger::action "Disabling Default Site..."
   a2dissite "$(basename "${APACHE2_DEFAULT_SITE_CONFIG_FILE_PATH%.*}")"
 
-  utils::echo_action "Enabling Moodle Site..."
+  logger::action "Enabling Moodle Site..."
   a2ensite "$(basename "${APACHE2_MOODLE_SITE_CONFIG_FILE_PATH%.*}")"
 
-  utils::harden_apache2 "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
+  apache2::harden "${APACHE2_CONF_ENABLED_SECURITY_FILE_PATH}"
 
-  utils::echo_action "Restarting Apache2..."
+  logger::action "Restarting Apache2..."
   service apache2 restart
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Create Moodle Database User"
+  logger::title "Setup Moodle Database and Credentials"
 
-  utils::echo_action "Creating and granting privileges to database user ${parameters[moodle_db_username]}..."
-  export PGPASSWORD="${parameters[db_server_admin_password]}"
-  psql "host=${parameters[db_server_fqdn]} port=5432 dbname=postgres user=${parameters[db_server_admin_username]}@${parameters[db_server_name]} sslmode=require" << EOF
-DO \$\$
-BEGIN
-  IF EXISTS ( SELECT FROM pg_catalog.pg_roles WHERE rolname='${parameters[moodle_db_username]}' ) THEN
-    RAISE WARNING 'Skipped: user ${parameters[moodle_db_username]} already exists.';
-  ELSE
-    CREATE USER ${parameters[moodle_db_username]} WITH ENCRYPTED PASSWORD '${parameters[moodle_db_password]}';
-    GRANT ALL PRIVILEGES ON DATABASE ${parameters[moodle_db_name]} TO ${parameters[moodle_db_username]};
-    RAISE INFO 'User ${parameters[moodle_db_username]} created.';
-  END IF;
-END
-\$\$;
-EOF
-  unset PGPASSWORD
-  utils::echo_info "Done."
+  postgresql::create_database_and_credentials \
+    "${parameters[db_server_fqdn]}" \
+    "${parameters[db_server_admin_username]}@${parameters[db_server_name]}" \
+    "${parameters[db_server_admin_password]}" \
+    "${parameters[moodle_db_username]}" \
+    "${parameters[moodle_db_password]}" \
+    "${parameters[moodle_db_name]}"
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Mount Moodle Data Disk"
+  logger::title "Mount Moodle Data Disk"
 
-  utils::mount_data_disk_by_size \
+  os::mount_data_disk_by_size \
     "${parameters[data_disk_size]}" \
     "${parameters[moodle_data_mount_point_path]}"
 
-  utils::echo_action "Setting permissions ..."
+  logger::action "Setting permissions ..."
   chown -R "${APACHE2_USER}:root" "${parameters[moodle_data_mount_point_path]}"
   chmod -R 775 "${parameters[moodle_data_mount_point_path]}"
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Create Moodle Local Cache directory"
+  logger::title "Create Moodle Local Cache directory"
 
   if [[ -d "${MOODLE_LOCAL_CACHE_DIR_PATH}" ]]; then
-    utils::echo_action "Deleting old ${MOODLE_LOCAL_CACHE_DIR_PATH} folder..."
+    logger::action "Deleting old ${MOODLE_LOCAL_CACHE_DIR_PATH} folder..."
     rm -rf "${MOODLE_LOCAL_CACHE_DIR_PATH}"
-    utils::echo_info "Done."
+    logger::info "Done."
   fi
 
-  utils::echo_action "Creating new ${MOODLE_LOCAL_CACHE_DIR_PATH} folder with proper ownership..."
+  logger::action "Creating new ${MOODLE_LOCAL_CACHE_DIR_PATH} folder with proper ownership..."
   install -o "${APACHE2_USER}" -d "${MOODLE_LOCAL_CACHE_DIR_PATH}"
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Get Moodle Core"
+  logger::title "Get Moodle Core"
 
   # Ref.: https://download.moodle.org/releases/supported/
   get_moodle_core \
@@ -288,17 +282,17 @@ EOF
     "c38a7d76c7b806fc1cbacee7fd835b1f8f9932d01332fc45cc4c5b7a8107c940" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
-  utils::echo_action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
+  logger::action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
   chown -R "${APACHE2_USER}:root" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Run Moodle Installer"
+  logger::title "Run Moodle Installer"
 
-  moodle_install_options=""
+  moodle_optional_install_options=()
 
-  utils::echo_action "Assessing whether Moodle installer should skip database setup..."
+  logger::action "Assessing whether Moodle installer should skip database setup..."
   # If moodle database tables already exist then
   # add the "--skip-database" option to the install script.
   export PGPASSWORD="${parameters[db_server_admin_password]}"
@@ -309,14 +303,14 @@ EOF
       --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodle_db_name]}' and table_name like '${MOODLE_TABLE_PREFIX}%'" \
     )
   if (( "${table_count}" == 0 )); then # Use arithmetic expansion operator ((...)) to convert string into integer.
-    utils::echo_info "Moodle tables NOT found in database. Database must be setup as part of the install."
+    logger::info "Moodle tables NOT found in database. Database must be setup as part of the install."
   else
-    utils::echo_info "Moodle tables found in database. Database setup must be skipped."
-    moodle_install_options="${moodle_install_options} --skip-database"
+    logger::info "Moodle tables found in database. Database setup must be skipped."
+    moodle_optional_install_options+=("--skip-database")
   fi
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Running Moodle installation script..."
+  logger::action "Running Moodle installation script..."
   sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/install.php" \
     --adminemail="${parameters[moodle_admin_email]}" \
     --adminpass="${parameters[moodle_admin_password]}" \
@@ -338,58 +332,58 @@ EOF
     --summary="Welcome - Bienvenue" \
     --upgradekey="${parameters[moodle_upgrade_key]}" \
     --wwwroot="https://${parameters[web_server_fqdn]}/" \
-    ${moodle_install_options}
+    "${moodle_optional_install_options[@]}"
 
-  utils::echo_info "Done."
+  logger::info "Done."
 
   #############################################################################
 
-  utils::echo_title "Moodle Post Installation Process"
+  logger::title "Moodle Post Installation Process"
 
   # No need to test for existing values since the file is always new.
-  utils::echo_action "Adding SSL Proxy setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
-  # shellcheck disable=SC2154
+  logger::action "Adding SSL Proxy setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  # shellcheck disable=SC2016
   sed -i '/^\$CFG->wwwroot.*/a \$CFG->sslproxy\t= true;' "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Adding Local Cache Directory setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  logger::action "Adding Local Cache Directory setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
   sed -i "/^\$CFG->dataroot.*/a \$CFG->localcachedir\t= '${MOODLE_LOCAL_CACHE_DIR_PATH}';" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Adding default timezone setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  logger::action "Adding default timezone setting to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
   sed -i "/^\$CFG->upgradekey.*/a date_default_timezone_set('America/Toronto');" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
-  utils::echo_info "Done."
+  logger::info "Done."
 
   # Security Check - Executable paths.
-  utils::echo_action "Adding directive to prevent executable paths to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  logger::action "Adding directive to prevent executable paths to ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
   sed -i "/^\$CFG->upgradekey.*/a \$CFG->preventexecpath = true;" "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
-  utils::echo_info "Done."
+  logger::info "Done."
 
   # Security Check - Writable config.php.
-  utils::echo_action "Prevent Moodle processes from updating ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
+  logger::action "Prevent Moodle processes from updating ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php file..."
   chmod u-w "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/config.php"
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Upgrade moodle database to match new Moodle core and/or plugin version..."
+  logger::action "Upgrade moodle database to match new Moodle core and/or plugin version..."
   sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/upgrade.php" --non-interactive
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Purging all Moodle Caches..."
+  logger::action "Purging all Moodle Caches..."
   sudo -u "${APACHE2_USER}" /usr/bin/php "${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/purge_caches.php"
-  utils::echo_info "Done."
+  logger::info "Done."
 
-  utils::echo_action "Setting up Moodle Crontab..."
+  logger::action "Setting up Moodle Crontab..."
   crontab_entry="* * * * * sudo -u ${APACHE2_USER} php ${MOODLE_DOCUMENT_ROOT_DIR_PATH}/admin/cli/cron.php > /dev/null"
   if crontab -l | grep -q --fixed-strings "${crontab_entry}"; then
-    utils::echo_info "Skipped: crontab already set up."
+    logger::info "Skipped: crontab already set up."
   else
     crontab -l | { cat; echo "${crontab_entry}"; } | crontab -
-    utils::echo_info "Done."
+    logger::info "Done."
   fi
 
   #############################################################################
 
-  utils::echo_title "End of $0"
+  logger::title "End of $0"
   utils::unset_exit_trap
 }
 

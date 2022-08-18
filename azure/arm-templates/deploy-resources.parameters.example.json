@@ -2,14 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "armTemplateRepoBaseUrl": {
+        "armTemplateRepoRawFilesBaseUrl": {
             "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/SysAdmins-ARMTemplates/master"
         },
         "corporateGatewayIpAddress": {
             "value": "255.255.255.255"
         },
+        "currentProjectRepoRawFilesBaseUrl": {
+            "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/moodle-single-node-azure/master"
+        },
         "customApplicationFqdn": {
             "value": "my.custom.app.domain"
+        },
+        "dataDiskSizeGB": {
+            "value": 32
         },
         "databaseAdminPassword": {
             "value": "myAdminPassword"
@@ -32,28 +38,31 @@
         "databaseStorageMb": {
             "value": 102400
         },
-        "dataDiskSizeGB" : {
-            "value": 32
-        },
-        "deniedIpAddresses" : {
+        "deniedIpAddresses": {
             "value": "10.10.10.10/32"
+        },
+        "deploymentTimestamp": {
+            "value": 0
         },
         "environmentName": {
             "value": "myEnv"
         },
-        "fileRepositoryUri": {
-            "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/moodle-single-node-azure/master"
-        },
         "gatewaySslCertificateUri": {
-            "value": "[Your specific value here]"
+            "value": "https://my-keyvault-name.vault.azure.net/secrets/my-cert-name/111111111111111111111111"
         },
         "gatewayUserAssignedIdentity": {
             "value": {
                 "/subscriptions/mySubcriptionId/resourceGroups/myResourceGroupName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myUami": {}
             }
         },
+        "genericShellScriptsRepoRawFilesBaseUrl": {
+            "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/generic-shell-scripts/main"
+        },
         "location": {
-            "value": "myLocation"
+            "value": "Canada east"
+        },
+        "logAnalyticsWorkspaceRetentionPeriod": {
+            "value": 365
         },
         "moodleAdminEmail": {
             "value": "myAdmin@my.domain"
@@ -77,13 +86,19 @@
             }
         },
         "smtpServerFqdn": {
-            "value": "my.smtp.domain"
+            "value": "smtp.my.domain"
+        },
+        "smtpServerFromAddress": {
+            "value": "my-from-addresse@my.domain"
+        },
+        "smtpServerPassword": {
+            "value": "mySmtpServerPassword"
         },
         "smtpServerPort": {
             "value": 587
         },
-        "smtpServerPrivateIp": {
-            "value": "255.255.255.255"
+        "smtpServerUsername": {
+            "value": "mySmtpServerUsername"
         },
         "virtualMachineTags": {
             "value": {
@@ -95,13 +110,13 @@
             "value": "255.255.255"
         },
         "webServerAdminEmail": {
-            "value": "myadmin@domain"
+            "value": "myadmin@my.domain"
         },
         "webServerAdminPassword": {
-            "value": "myAdminPassword"
+            "value": "myWebServerAdminPassword"
         },
         "webServerAdminUsername": {
-            "value": "myAdminUsername"
+            "value": "myWebServerAdminUsername"
         },
         "webServerRebootUtcTime": {
             "value": "02:00"

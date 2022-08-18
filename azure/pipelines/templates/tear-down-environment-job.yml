@@ -1,0 +1,36 @@
+parameters:
+- name: env
+  type: string
+- name: site
+  type: string
+
+variables:
+- ${{ if eq(parameters.env, 'dev') }}:
+  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
+- ${{ if eq(parameters.env, 'staging') }}:
+  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
+- ${{ if eq(parameters.env, 'prod') }}:
+  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
+
+jobs:
+- deployment: deployResourcesJob
+  displayName: 'Deploy Environment Job'
+  pool:
+    vmImage: ubuntu-20.04
+  environment: '$(resourceGroupName)'
+  strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - checkout: self # To force checkout since project resides in github repo.
+
+          - task: AzureCLI@2
+            displayName: 'Tear Down Environment'
+            inputs:
+              azureSubscription: '$(serviceConnectionName)'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: 'azure/scripts/tear_down_environment.sh'
+              arguments: >-
+                --resource-group-name "$(resourceGroupName)"

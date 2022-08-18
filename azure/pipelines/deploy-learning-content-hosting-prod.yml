@@ -1,0 +1,7 @@
+trigger: none
+
+extends:
+  template: templates/deploy-environment-job.yml
+  parameters:
+    env: 'prod'
+    site: 'learningContentHosting'

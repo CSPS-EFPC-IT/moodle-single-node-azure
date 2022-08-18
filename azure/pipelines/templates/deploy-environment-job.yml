@@ -1,0 +1,85 @@
+parameters:
+- name: env
+  type: string
+- name: site
+  type: string
+
+variables:
+- group: ${{ parameters.site }}-moodleSingleNode-global-clear
+- ${{ if eq(parameters.env, 'dev') }}:
+  - group: common-dev-secret
+  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-dev-secret
+- ${{ if eq(parameters.env, 'staging') }}:
+  - group: common-staging-secret
+  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-staging-secret
+- ${{ if eq(parameters.env, 'prod') }}:
+  - group: common-prod-secret
+  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
+  - group: ${{ parameters.site }}-moodleSingleNode-prod-secret
+
+jobs:
+- deployment: deployResourcesJob
+  displayName: 'Deploy Environment Job'
+  pool:
+    vmImage: ubuntu-20.04
+  environment: '$(resourceGroupName)'
+  strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - checkout: self # To force checkout since project resides in github repo.
+
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: 'Deploy Resources'
+            inputs:
+              deploymentScope: 'Resource Group'
+              azureResourceManagerConnection: '$(serviceConnectionName)'
+              subscriptionId: '$(subscriptionId)'
+              action: 'Create Or Update Resource Group'
+              resourceGroupName: '$(resourceGroupName)'
+              location: '$(location)'
+              templateLocation: 'Linked artifact'
+              csmFile: 'azure/arm-templates/deploy-resources.json'
+              overrideParameters: >-
+                -armTemplateRepoRawFilesBaseUrl "$(armTemplateRepoRawFilesBaseUrl)"
+                -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
+                -currentProjectRepoRawFilesBaseUrl "$(currentProjectRepoRawFilesBaseUrl)"
+                -customApplicationFqdn "$(customApplicationFqdn)"
+                -dataDiskSizeGB $(dataDiskSizeGB)
+                -databaseAdminPassword "$(databaseAdminPassword)"
+                -databaseAdminUsername "$(databaseAdminUsername)"
+                -databaseBackupRetentionDays $(databaseBackupRetentionDays)
+                -databaseCapacity $(databaseCapacity)
+                -databaseMoodlePassword "$(databaseMoodlePassword)"
+                -databaseMoodleUsername "$(databaseMoodleUsername)"
+                -databaseStorageMb $(databaseStorageMb)
+                -deniedIpAddresses "$(deniedIpAddresses)"
+                -environmentName "$(environmentName)"
+                -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
+                -gatewayUserAssignedIdentity "$(gatewayUserAssignedIdentity)"
+                -genericShellScriptsRepoRawFilesBaseUrl "$(genericShellScriptsRepoRawFilesBaseUrl)"
+                -location "$(location)"
+                -logAnalyticsWorkspaceRetentionPeriod $(logAnalyticsWorkspaceRetentionPeriod)
+                -moodleAdminEmail "$(moodleAdminEmail)"
+                -moodleAdminPassword "$(moodleAdminPassword)"
+                -moodleAdminUsername "$(moodleAdminUsername)"
+                -moodleUpgradeKey "$(moodleUpgradeKey)"
+                -projectShortName "$(projectShortName)"
+                -resourceTags $(resourceTags)
+                -smtpServerFqdn "$(smtpServerFqdn)"
+                -smtpServerFromAddress "$(smtpServerFromAddress)"
+                -smtpServerPassword "$(smtpServerPassword)"
+                -smtpServerPort $(smtpServerPort)
+                -smtpServerUsername "$(smtpServerUsername)"
+                -virtualMachineTags $(virtualMachineTags)
+                -virtualNetworkAddressBase "$(virtualNetworkAddressBase)"
+                -webServerAdminEmail "$(webServerAdminEmail)"
+                -webServerAdminPassword "$(webServerAdminPassword)"
+                -webServerAdminUsername "$(webServerAdminUsername)"
+                -webServerRebootUtcTime "$(webServerRebootUtcTime)"
+              deploymentMode: 'Incremental'
+              deploymentName: '$(projectShortName)-resources_$(Build.BuildNumber)'
+

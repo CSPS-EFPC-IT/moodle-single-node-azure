@@ -4,7 +4,7 @@
 # This script must be run as root (ex.: sudo sh ./[script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
-# Parameters: all manadatory and must be prefix with "--" on command line.
+# Parameters: all manadatory and must be prefixed with "--" on command line.
 declare -A parameters=( \
   [data_disk_size]="" \
   [db_server_admin_password]="" \
@@ -21,39 +21,49 @@ declare -A parameters=( \
   [moodle_upgrade_key]="" \
   [proxy_ip_address_range]="" \
   [smtp_server_fqdn]="" \
+  [smtp_server_from_address]="" \
+  [smtp_server_password]="" \
   [smtp_server_port]="" \
-  [smtp_server_private_ip]="" \
+  [smtp_server_username]="" \
   [web_server_admin_email]="" \
   [web_server_fqdn]="" \
   [web_server_reboot_utc_time]="" \
   [web_server_resource_name]="" \
 )
 
-  # Functions
+# Functions
+
+# All libraries not available at build time.
+# shellcheck source=/dev/null
+source ./logger.sh
+# shellcheck source=/dev/null
 source ./utils.sh
 
 function main() {
   utils::set_exit_trap
-  utils::echo_title "Start of $0"
+  logger::title "Start of $0"
 
   #############################################################################
 
-  utils::echo_title "Parse Input Parameters"
+  logger::title "Parse Input Parameters"
   utils::parse_parameters "$@"
 
-  utils::echo_title "Upgrade Server and Removes Unused Packages"
+  logger::title "Upgrade Server and Remove Unused Packages"
   ./upgrade_server
 
-  utils::echo_title "Install Unattended Upgrade Tools"
+  logger::title "Install Unattended Upgrade Tools"
   ./install_unattended_upgrade_tools \
     --server_admin_email "${parameters[web_server_admin_email]}" \
     --server_fqdn "${parameters[web_server_fqdn]}" \
     --server_reboot_utc_time "${parameters[web_server_reboot_utc_time]}" \
     --server_resource_name "${parameters[web_server_resource_name]}" \
     --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
-    --smtp_server_port "${parameters[smtp_server_port]}"
+    --smtp_server_from_address "${parameters[smtp_server_from_address]}" \
+    --smtp_server_password "${parameters[smtp_server_password]}" \
+    --smtp_server_port "${parameters[smtp_server_port]}" \
+    --smtp_server_username "${parameters[smtp_server_username]}"
 
-  utils::echo_title "Install Moodle core"
+  logger::title "Install Moodle core"
   ./install_moodle \
     --data_disk_size "${parameters[data_disk_size]}" \
     --db_server_admin_password "${parameters[db_server_admin_password]}" \
@@ -69,20 +79,18 @@ function main() {
     --moodle_db_username "${parameters[moodle_db_username]}" \
     --moodle_upgrade_key "${parameters[moodle_upgrade_key]}" \
     --proxy_ip_address_range "${parameters[proxy_ip_address_range]}" \
-    --smtp_server_fqdn "${parameters[smtp_server_fqdn]}" \
-    --smtp_server_private_ip "${parameters[smtp_server_private_ip]}" \
     --web_server_fqdn "${parameters[web_server_fqdn]}"
 
-  utils::echo_title "Install Linux Diagnostic Extension Prerequisites"
+  logger::title "Install Linux Diagnostic Extension Prerequisites"
   # Ref.: https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/diagnostics-linux-v3
-  utils::echo_action "Installing python2..."
+  logger::action "Installing python2..."
   sudo apt install -y python2
-  utils::echo_action "Updating python link..."
+  logger::action "Updating python link..."
   sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
 
   #############################################################################
 
-  utils::echo_title "End of $0"
+  logger::title "End of $0"
   utils::unset_exit_trap
 }
 
