@@ -267,7 +267,7 @@ function main() {
     echo "No Recovery Service Vault Found."
   fi
 
-  # Deleting Log Anaytics Workspaces, if any.
+  # Deleting Log Analytics Workspaces, if any.
   log_analytics_workspace_names="$(az monitor log-analytics workspace list \
       --output tsv \
       --query "[].name" \

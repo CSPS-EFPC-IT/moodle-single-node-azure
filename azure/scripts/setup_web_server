@@ -48,7 +48,7 @@ function main() {
   logger::title "Parse Input Parameters"
   utils::parse_parameters "$@"
 
-  logger::title "Upgrade Server and Removes Unused Packages"
+  logger::title "Upgrade Server and Remove Unused Packages"
   ./upgrade_server
 
   logger::title "Install Unattended Upgrade Tools"
