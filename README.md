@@ -57,14 +57,22 @@ And installs the following software (up to their latest available patch level fo
 
 # Usage
 1. Clone this projet.
-1. Create a new file named *armTemplates/azureDeploy.parameters.json* based on the *armTemplates/azureDeploy.parameters.example.json* file.
-1. Edit the new _azureDeploy.parameters.json_ file to your liking.
-1. Authenticate your Azure Client to your Azure subscription by running the `az login` command and following the instructions.
-1. Adapt and run the following commands (on linux):\
-`deploymentName="MoodleManualDeployment"`\
-`resourceGroupName="[Your resource Group name]"`\
-`templateFile="armTemplate/azureDeploy.json"`\
-`parameterFile="armTemplates/azureDeploy.parameters.json"`\
-`az deployment group create --name $deploymentName --resource-group $resourceGroupName --template-file $templateFile --parameter @$parameterFile --verbose`
+1. Create a new file named _azure/arm-templates/deploy-resources.parameters.json_ based on the _azure/arm-templates/deploy-resources.parameters.example.json_ file.
+1. Edit the new _deploy-resources.parameters.json_ file to your liking.
+1. Authenticate your Azure Client to your Azure subscription by running the `az login` command.
+1. Adapt and run the following commands from a bash shell (linux):
+    ```
+    deployment_name="MoodleManualDeployment"
+    parameter_file="azure/arm-templates/deploy-resources.parameters.json"
+    resource_group_name="[Your resource Group name]"
+    template_file="azure/arm-template/deploy-resources.json"
+
+    az deployment group create \
+      --name "${deployment_name}" \
+      --parameter @"${parameter_file}" \
+      --resource-group "${resource_group_name}" \
+      --template-file "${template_file}" \
+      --verbose
+    ```
 
 Enjoy!
