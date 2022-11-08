@@ -27,14 +27,17 @@ function main() {
   local bastion_names
   local disk_ids
   local index
+  local link_vnet_names
   local log_analytics_workspace_names
   local network_interface_card_ids
   local network_security_group_ids
   local postgres_server_ids
+  local private_dns_zone_names
   local public_ip_ids
   local recovery_service_vault_ids
-  local recovery_service_vault_names
+  local recovery_service_vault_name
   local storage_account_ids
+  local subindex
   local virtual_network_ids
   local vm_ids
 
@@ -167,27 +170,6 @@ function main() {
     done
   fi
 
-  echo "Deleting Private DNS Zones, if any..."
-  private_dns_zone_names="$(az network private-dns zone list \
-      --output tsv \
-      --query "[].name" \
-      --resource-group "${parameters[--resource-group-name]}"
-    )"
-  if [ -z "${private_dns_zone_names}" ]; then
-    echo "No Private DNS Zones Found. Skipping."
-  else
-    index=0
-    for private_dns_zone_name in ${private_dns_zone_names}; do
-      ((++index))
-      echo "(${index}) Deleting ${private_dns_zone_name}..."
-      az network private-dns zone delete \
-        --name "${private_dns_zone_name}" \
-        --output none \
-        --resource-group "${parameters[--resource-group-name]}" \
-        --yes
-    done
-  fi
-
   echo "Deleting Bastion Service, if any..."
   bastion_names="$(az network bastion list \
       --output tsv \
@@ -224,6 +206,52 @@ function main() {
       az network application-gateway delete \
         --ids "${application_gateway_id}" \
         --output none
+    done
+  fi
+
+  echo "Deleting Private DNS Zones, if any..."
+  private_dns_zone_names="$(az network private-dns zone list \
+      --output tsv \
+      --query "[].name" \
+      --resource-group "${parameters[--resource-group-name]}"
+    )"
+  if [ -z "${private_dns_zone_names}" ]; then
+    echo "No Private DNS Zones Found. Skipping."
+  else
+    index=0
+    for private_dns_zone_name in ${private_dns_zone_names}; do
+      ((++index))
+      echo "(${index}) Processing ${private_dns_zone_name}..."
+
+      echo "(${index}) Deleting Link VNet, if any..."
+      link_vnet_names="$(az network private-dns link vnet list \
+          --output tsv \
+          --query "[].name" \
+          --resource-group "${parameters[--resource-group-name]}" \
+          --zone-name "${private_dns_zone_name}" \
+        )"
+      if [ -z "${link_vnet_names}" ]; then
+        echo "(${index}) No Link Vnet Found. Skipping."
+      else
+        subindex=0
+        for link_vnet_name in ${link_vnet_names}; do
+          ((++subindex))
+          echo "(${index}.${subindex}) Deleting Link Vnet ${link_vnet_name}..."
+          az network private-dns link vnet delete \
+            --name "${link_vnet_name}" \
+            --output none \
+            --resource-group "${parameters[--resource-group-name]}" \
+            --yes \
+            --zone-name "${private_dns_zone_name}"
+        done
+      fi
+
+      echo "(${index}) Deleting the Private DNS Zone..."
+      az network private-dns zone delete \
+        --name "${private_dns_zone_name}" \
+        --output none \
+        --resource-group "${parameters[--resource-group-name]}" \
+        --yes
     done
   fi
 
