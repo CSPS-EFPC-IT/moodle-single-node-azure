@@ -386,8 +386,8 @@
         "dataSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.64/27')]",
         "dataSubnetName": "[concat(variables('resourceNamePrefix'), '-DATA-SN')]",
         "databaseServerApiVersion": "2021-06-01",
-        "databaseServerName": "[concat(variables('resourceNamePrefix'), '-DB')]",
-        "databaseServerPrivateDnsZoneName": "[toLower(concat(variables('databaseServerName'), '.private.postgres.database.azure.com'))]",
+        "databaseServerName": "[toLower(concat(variables('resourceNamePrefix'), '-DB'))]",
+        "databaseServerPrivateDnsZoneName": "[concat(variables('databaseServerName'), '.private.postgres.database.azure.com')]",
         "diagnosticStorageAccountName": "[concat(variables('storageAccountNamePrefix'), 'diagsa')]",
         "diagnosticStorageAccountSasProperties": {
             "signedServices": "bt",
