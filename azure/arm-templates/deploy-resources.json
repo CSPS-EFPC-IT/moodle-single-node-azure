@@ -26,53 +26,149 @@
                 "description": "The custom fully qualified domain name for this moodle instance."
             }
         },
-        "databaseAdminPassword": {
+        "databaseServerAdministratorLogin": {
             "type": "securestring",
+            "defaultValue": "",
             "metadata": {
-                "description": "The password to use in order to manage the database server."
+                "description": "The database server administrator's username."
             }
         },
-        "databaseAdminUsername": {
+        "databaseServerAdministratorLoginPassword": {
             "type": "securestring",
+            "defaultValue": "",
             "metadata": {
-                "description": "The username to use in order to manage the database server."
+                "description": "The database server administrator's password."
             }
         },
-        "databaseBackupRetentionDays": {
+        "databaseServerBackupRetentionDays": {
             "type": "int",
             "minValue": 7,
             "maxValue": 35,
+            "defaultValue": 7,
             "metadata": {
                 "description": "The database backup retention period in days."
             }
         },
-        "databaseCapacity": {
+        "databaseServerConfigurationByteaOutput": {
+            "type": "string",
+            "defaultValue": "ESCAPE",
+            "allowedValues": [
+                "ESCAPE",
+                "HEX"
+            ],
+            "metadata": {
+                "description": "The value of the database server's parameter \"bytea_output\"."
+            }
+        },
+        "databaseServerConfigurationLogConnections":{
+            "type": "string",
+            "defaultValue": "ON",
+            "allowedValues": [
+                "ON",
+                "OFF"
+            ],
+            "metadata": {
+                "description": "The value of the database server's parameter \"log_connections\"."
+            }
+        },
+        "databaseServerConfigurationLogDisconnections":{
+            "type": "string",
+            "defaultValue": "ON",
+            "allowedValues": [
+                "ON",
+                "OFF"
+            ],
+            "metadata": {
+                "description": "The value of the database server's parameter \"log_disconnections\"."
+            }
+        },
+        "databaseServerConfigurationLogLinePrefix": {
+            "type": "string",
+            "defaultValue": "Timestamp: %t | Username: %u | Database: %d | Client IP: %r | Session ID: %c",
+            "metadata": {
+                "description": "The value of the database server's parameter \"log_line_prefix\"."
+            }
+        },
+        "databaseServerConfigurationLogStatement": {
+            "type": "string",
+            "defaultValue": "ALL",
+            "allowedValues": [
+                "NONE",
+                "DDL",
+                "MOD",
+                "ALL"
+            ],
+            "metadata": {
+                "description": "The value of the database server's parameter \"log_statement\"."
+            }
+        },
+        "databaseServerGeoRedundantBackup":{
+            "type": "string",
+            "defaultValue": "Disabled",
+            "allowedValues": [
+                "Disabled",
+                "Enabled"
+            ],
+            "metadata": {
+                "description": "Whether or not geo redundant backup is enabled."
+            }
+        },
+        "databaseServerHighAvailabilityMode":  {
+            "type": "string",
+            "defaultValue": "Disabled",
+            "allowedValues": [
+                "Disabled",
+                "SameZone",
+                "ZoneRedundant"
+            ],
+            "metadata": {
+                "description": "The high availability mode for the database server."
+            }
+        },
+        "databaseServerSkuName": {
+            "type": "string",
+            "defaultValue": "Standard_D2ds_v4",
+            "metadata": {
+                "description": "The name of the sku for the database server's virtual machine."
+            }
+        },
+        "databaseServerSkuTier": {
+            "type": "string",
+            "allowedValues": [
+                "Burstable",
+                "GeneralPurpose",
+                "MemoryOptimized"
+            ],
+            "defaultValue": "GeneralPurpose",
+            "metadata": {
+                "description": "The tier of the particular SKU."
+            }
+        },
+        "databaseServerStandbyAvailabilityZone": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The availability zone of the standby database server."
+            }
+        },
+        "databaseServerStorageSizeGB": {
             "type": "int",
-            "allowedValues": [2, 4, 8, 16, 32, 64],
+            "minValue": 32,
+            "maxValue": 16384,
+            "defaultValue": 64,
             "metadata": {
-                "description": "The number of vCPUs allocated to the database."
+                "description": "The size of data storage allocated to the database in GB."
             }
         },
-        "databaseMoodlePassword": {
-            "type": "securestring",
+        "databaseServerVersion": {
+            "type": "string",
+            "defaultValue": "14",
+            "allowedValues": [ "11", "12", "13", "14" ],
             "metadata": {
-                "description": "The Moodle application database account password."
+                "description": "The version of the postgreSQL Server to deploy, if any."
             }
         },
-        "databaseMoodleUsername": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The Moodle application database account username."
-            }
-        },
-        "databaseStorageMb": {
-            "type": "int",
-            "minValue": 102400,
-            "maxValue": 16777216,
-            "metadata": {
-                "description": "The size of data storage allocated to the database in MB."
-            }
-        },
+
         "dataDiskSizeGB" : {
             "type": "int",
             "minValue": 31,
@@ -155,6 +251,18 @@
             "type": "securestring",
             "metadata": {
                 "description": "The username of the Moodle Administrator account."
+            }
+        },
+        "moodleDatabasePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Moodle database server account's password."
+            }
+        },
+        "moodleDatabaseUsername": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Moodle database server account's username."
             }
         },
         "moodleUpgradeKey": {
@@ -266,6 +374,7 @@
         }
     ],
     "variables": {
+        "moodleDatabaseName": "[tolower(custom.cleanName(parameters('projectShortName')))]",
         "applicationNetworkSecurityGroupName": "[concat(variables('resourceNamePrefix'), '-PAZ-APP-NSG')]",
         "applicationSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.32/27')]",
         "applicationSubnetName": "[concat(variables('resourceNamePrefix'), '-PAZ-APP-SN')]",
@@ -273,8 +382,12 @@
         "bastionPublicIpName": "[concat(variables('bastionName'), '-PublicIP')]",
         "bastionSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.128/27')]",
         "bastionSubnetName": "AzureBastionSubnet",
-        "databaseApplicationDatabaseName": "[tolower(custom.cleanName(parameters('projectShortName')))]",
-        "databaseName": "[concat(variables('resourceNamePrefix'), '-DB')]",
+        "dataNetworkSecurityGroupName": "[concat(variables('resourceNamePrefix'), '-DATA-NSG')]",
+        "dataSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.64/27')]",
+        "dataSubnetName": "[concat(variables('resourceNamePrefix'), '-DATA-SN')]",
+        "databaseServerApiVersion": "2021-06-01",
+        "databaseServerName": "[concat(variables('resourceNamePrefix'), '-DB')]",
+        "databaseServerPrivateDnsZoneName": "[toLower(concat(variables('databaseServerName'), '.private.postgres.database.azure.com'))]",
         "diagnosticStorageAccountName": "[concat(variables('storageAccountNamePrefix'), 'diagsa')]",
         "diagnosticStorageAccountSasProperties": {
             "signedServices": "bt",
@@ -467,6 +580,57 @@
             }
         },
         {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-11-01",
+            "name": "[variables('dataNetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Deny_CustomExclusion_Any_Any_Inbound",
+                        "properties": {
+                            "access": "Deny",
+                            "description": "Custom security rule.",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "*",
+                            "direction": "Inbound",
+                            "priority": 500,
+                            "protocol": "*",
+                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddresses'),',')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "[concat('Allow_PostgreSQL_TCP_5432_Inbound')]",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "[variables('dataSubnetAddressPrefix')]",
+                            "destinationPortRange": "5432",
+                            "direction": "Inbound",
+                            "priority": 1000,
+                            "protocol": "TCP",
+                            "sourceAddressPrefix": "[variables('applicationSubnetAddressPrefix')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "Deny_AllOther_Inbound",
+                        "properties": {
+                            "access": "Deny",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "*",
+                            "direction": "Inbound",
+                            "priority": 4096,
+                            "protocol": "*",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
             "name": "[variables('virtualNetworkName')]",
@@ -474,7 +638,8 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('gatewayNetworkSecurityGroupName'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('applicationNetworkSecurityGroupName'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('applicationNetworkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('dataNetworkSecurityGroupName'))]"
             ],
             "properties": {
                 "addressSpace": {
@@ -515,12 +680,6 @@
                             },
                             "serviceEndpoints": [
                                 {
-                                    "service": "Microsoft.Sql",
-                                    "locations": [
-                                        "[parameters('location')]"
-                                    ]
-                                },
-                                {
                                     "service": "Microsoft.Storage",
                                     "locations": [
                                         "[parameters('location')]"
@@ -531,7 +690,30 @@
                             "privateEndpointNetworkPolicies": "Enabled",
                             "privateLinkServiceNetworkPolicies": "Enabled"
                         }
+                    },
+                    {
+                        "name": "[variables('dataSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('dataSubnetAddressPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('dataNetworkSecurityGroupName'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [
+                                {
+                                    "name": "Microsoft.DBforPostgreSQL.flexibleServers",
+                                    "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('dataSubnetName')), '/delegations/Microsoft.DBforPostgreSQL.flexibleServers')]",
+                                    "properties": {
+                                        "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers"
+                                    },
+                                    "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
                     }
+
                 ],
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
@@ -915,126 +1097,146 @@
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers",
-            "apiVersion": "2017-12-01",
-            "name": "[variables('databaseName')]",
-            "tags": "[parameters('resourceTags')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "[concat('GP_Gen5_', parameters('databaseCapacity'))]",
-                "tier": "GeneralPurpose",
-                "family": "Gen5",
-                "capacity": "[parameters('databaseCapacity')]"
-            },
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[variables('databaseServerPrivateDnsZoneName')]",
+            "location": "global",
+            "tags": {},
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2020-06-01",
+            "name": "[concat(variables('databaseServerPrivateDnsZoneName'), '/', variables('virtualNetworkName'))]",
+            "dependsOn":[
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('databaseServerPrivateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "location": "global",
             "properties": {
-                "storageProfile": {
-                    "storageMB": "[parameters('databaseStorageMb')]",
-                    "backupRetentionDays": "[parameters('databaseBackupRetentionDays')]",
-                    "geoRedundantBackup": "Disabled",
-                    "storageAutogrow": "Enabled"
+                "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
                 },
-                "version": "10",
-                "sslEnforcement": "Enabled",
-                "minimalTlsVersion": "TLS1_2",
-                "createMode": "Default",
-                "administratorLogin": "[parameters('databaseAdminUsername')]",
-                "administratorLoginPassword": "[parameters('databaseAdminPassword')]"
+                "registrationEnabled": false
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/databases",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/', variables('databaseApplicationDatabaseName'))]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[variables('databaseServerName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('databaseServerPrivateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
+            "sku": {
+                "name": "[parameters('databaseServerSkuName')]",
+                "tier": "[parameters('databaseServerSkuTier')]"
+            },
+            "properties": {
+                "version": "[parameters('databaseServerVersion')]",
+                "administratorLogin": "[parameters('databaseServerAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('databaseServerAdministratorLoginPassword')]",
+                "Network": {
+                    "delegatedSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('dataSubnetName'))]",
+                    "privateDnsZoneArmResourceId": "[resourceId('Microsoft.Network/privateDnsZones', variables('databaseServerPrivateDnsZoneName'))]"
+                },
+                "Storage": {
+                    "storageSizeGB": "[parameters('databaseServerStorageSizeGB')]"
+                },
+                "Backup": {
+                    "backupRetentionDays": "[parameters('databaseServerBackupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('databaseServerGeoRedundantBackup')]"
+                },
+                "highAvailability": {
+                    "mode": "[parameters('databaseServerHighAvailabilityMode')]",
+                    "standbyAvailabilityZone": "[parameters('databaseServerStandbyAvailabilityZone')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/', variables('moodleDatabaseName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('databaseServerName'))]"
             ],
             "properties": {
                 "charset": "UTF8",
-                "collation": "English_United States.1252"
+                "collation": "en_US.utf8"
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/virtualNetworkRules",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/', variables('applicationSubnetName'))]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/bytea_output')]",
+            "comments": "To avoid deployment failure, it is recommended to deploy one flexible server configuration at a time. Hence, you will find a dependency chain between all configuration settings. Undocumented constraint based on Azure Support feedback.",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('databaseServerName'))]"
             ],
             "properties": {
-                "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('applicationSubnetName'))]",
-                "ignoreMissingVnetServiceEndpoint": false
-            }
-        },
-        {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/log_connections')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
-            ],
-            "properties": {
-                "value": "ON",
+                "value": "[parameters('databaseServerConfigurationByteaOutput')]",
                 "source": "user-override"
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/log_disconnections')]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/log_connections')]",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'bytea_output')]"
             ],
             "properties": {
-                "value": "ON",
+                "value": "[parameters('databaseServerConfigurationLogConnections')]",
                 "source": "user-override"
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/log_line_prefix')]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/log_disconnections')]",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'log_connections')]"
             ],
             "properties": {
-                "value": "Timestamp: %t | Username: %u | Database: %d | Client IP: %r | Session ID: %c",
+                "value": "[parameters('databaseServerConfigurationLogDisconnections')]",
                 "source": "user-override"
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/log_statement')]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/log_line_prefix')]",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'log_disconnections')]"
             ],
             "properties": {
-                "value": "MOD",
+                "value": "[parameters('databaseServerConfigurationLogLinePrefix')]",
                 "source": "user-override"
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers/configurations",
-            "apiVersion": "2017-12-01",
-            "name": "[concat(variables('databaseName'), '/logging_collector')]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/log_statement')]",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'log_line_prefix')]"
             ],
             "properties": {
-                "value": "OFF",
+                "value": "[parameters('databaseServerConfigurationLogStatement')]",
                 "source": "user-override"
             }
         },
         {
             "type": "Microsoft.Insights/diagnosticSettings",
             "apiVersion": "2021-05-01-preview",
-            "name": "local-logging",
+            "name": "local-postgresql-logging",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/servers', variables('databaseName'))]",
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('databaseServerName'))]",
                 "[resourceId('microsoft.operationalinsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
             ],
-            "scope": "[concat('Microsoft.DBforPostgreSQL/servers', '/', variables('databaseName'))]",
+            "scope": "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('databaseServerName'))]",
             "properties": {
                 "logs": [
                     {
@@ -1143,8 +1345,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
-                "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseName'), variables('databaseApplicationDatabaseName') )]",
-                "[resourceId('Microsoft.DBforPostgreSQL/servers/virtualNetworkRules', variables('databaseName'), variables('applicationSubnetName'))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseServerName'), variables('moodleDatabaseName') )]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -1167,7 +1368,7 @@
                         "[concat(parameters('currentProjectRepoRawFilesBaseUrl'),'/azure/scripts/install_moodle')]",
                         "[concat(parameters('currentProjectRepoRawFilesBaseUrl'),'/azure/scripts/setup_web_server')]"
                     ],
-                    "commandToExecute": "[concat('sudo ./setup_web_server', ' --data_disk_size ', parameters('dataDiskSizeGB'), 'G', ' --db_server_admin_password ', parameters('databaseAdminPassword'), ' --db_server_admin_username ', parameters('databaseAdminUsername'), ' --db_server_fqdn ', reference(variables('databaseName')).fullyQualifiedDomainName, ' --db_server_name ', variables('databaseName'), ' --moodle_admin_email ', parameters('moodleAdminEmail'), ' --moodle_admin_password ', parameters('moodleAdminPassword'), ' --moodle_admin_username ', parameters('moodleAdminUsername'), ' --moodle_data_mount_point_path ', variables('moodleDataMountPointPath'), ' --moodle_db_name ', variables('databaseApplicationDatabaseName'), ' --moodle_db_password ', parameters('databaseMoodlePassword'), ' --moodle_db_username ', parameters('databaseMoodleUsername'), ' --moodle_upgrade_key ', parameters('moodleUpgradeKey'), ' --proxy_ip_address_range ', variables('gatewaySubnetAddressPrefix'), ' --smtp_server_fqdn ', parameters('smtpServerFqdn'), ' --smtp_server_from_address ', parameters('smtpServerFromAddress'), ' --smtp_server_password ', parameters('smtpServerPassword'), ' --smtp_server_port ', parameters('smtpServerPort'), ' --smtp_server_username ', parameters('smtpServerUsername'), ' --web_server_admin_email ', parameters('webServerAdminEmail'), ' --web_server_fqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' --web_server_reboot_utc_time ', parameters('webServerRebootUtcTime'), ' --web_server_resource_name ', variables('webServerVirtualMachineName'), ' > /var/log/setup_web_server.$(date +\"%Y%m%dT%H%M%S\").log 2>&1')]"
+                    "commandToExecute": "[concat('sudo ./setup_web_server', ' --data_disk_size ', parameters('dataDiskSizeGB'), 'G', ' --db_server_admin_password ', parameters('databaseServerAdministratorLoginPassword'), ' --db_server_admin_username ', parameters('databaseServerAdministratorLogin'), ' --db_server_fqdn ', reference(variables('databaseServerName')).fullyQualifiedDomainName, ' --db_server_name ', variables('databaseServerName'), ' --moodle_admin_email ', parameters('moodleAdminEmail'), ' --moodle_admin_password ', parameters('moodleAdminPassword'), ' --moodle_admin_username ', parameters('moodleAdminUsername'), ' --moodle_data_mount_point_path ', variables('moodleDataMountPointPath'), ' --moodle_db_name ', variables('moodleDatabaseName'), ' --moodle_db_password ', parameters('moodleDatabasePassword'), ' --moodle_db_username ', parameters('moodleDatabaseUsername'), ' --moodle_upgrade_key ', parameters('moodleUpgradeKey'), ' --proxy_ip_address_range ', variables('gatewaySubnetAddressPrefix'), ' --smtp_server_fqdn ', parameters('smtpServerFqdn'), ' --smtp_server_from_address ', parameters('smtpServerFromAddress'), ' --smtp_server_password ', parameters('smtpServerPassword'), ' --smtp_server_port ', parameters('smtpServerPort'), ' --smtp_server_username ', parameters('smtpServerUsername'), ' --web_server_admin_email ', parameters('webServerAdminEmail'), ' --web_server_fqdn ', if(empty(parameters('customApplicationFqdn')), reference(variables('gatewayPublicIpName')).dnsSettings.fqdn, parameters('customApplicationFqdn')), ' --web_server_reboot_utc_time ', parameters('webServerRebootUtcTime'), ' --web_server_resource_name ', variables('webServerVirtualMachineName'), ' > /var/log/setup_web_server.$(date +\"%Y%m%dT%H%M%S\").log 2>&1')]"
                 }
             }
         },

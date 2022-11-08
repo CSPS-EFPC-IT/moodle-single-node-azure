@@ -48,14 +48,16 @@ jobs:
                 -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
                 -currentProjectRepoRawFilesBaseUrl "$(currentProjectRepoRawFilesBaseUrl)"
                 -customApplicationFqdn "$(customApplicationFqdn)"
+                -databaseServerAdministratorLogin "$(databaseServerAdminUsername)"
+                -databaseServerAdministratorLoginPassword "$(databaseServerAdminPassword)"
+                -databaseServerBackupRetentionDays $(databaseServerBackupRetentionDays)
+                -databaseServerGeoRedundantBackup "$(databaseServerGeoRedundantBackup)"
+                -databaseServerHighAvailabilityMode "$(databaseServerHighAvailabilityMode)"
+                -databaseServerSkuName "$(databaseServerSkuName)"
+                -databaseServerSkuTier "$(databaseServerSkuTier)"
+                -databaseServerStandbyAvailabilityZone "$(databaseServerStandbyAvailabilityZone)"
+                -databaseServerStorageSizeGB "$(databaseServerStorageSizeGB)"
                 -dataDiskSizeGB $(dataDiskSizeGB)
-                -databaseAdminPassword "$(databaseAdminPassword)"
-                -databaseAdminUsername "$(databaseAdminUsername)"
-                -databaseBackupRetentionDays $(databaseBackupRetentionDays)
-                -databaseCapacity $(databaseCapacity)
-                -databaseMoodlePassword "$(databaseMoodlePassword)"
-                -databaseMoodleUsername "$(databaseMoodleUsername)"
-                -databaseStorageMb $(databaseStorageMb)
                 -deniedIpAddresses "$(deniedIpAddresses)"
                 -environmentName "$(environmentName)"
                 -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
@@ -66,7 +68,8 @@ jobs:
                 -moodleAdminEmail "$(moodleAdminEmail)"
                 -moodleAdminPassword "$(moodleAdminPassword)"
                 -moodleAdminUsername "$(moodleAdminUsername)"
-                -moodleUpgradeKey "$(moodleUpgradeKey)"
+                -moodleDatabasePassword "$(databaseMoodlePassword)"
+                -moodleDatabaseUsername "$(databaseMoodleUsername)"                -moodleUpgradeKey "$(moodleUpgradeKey)"
                 -projectShortName "$(projectShortName)"
                 -resourceTags $(resourceTags)
                 -smtpServerFqdn "$(smtpServerFqdn)"
