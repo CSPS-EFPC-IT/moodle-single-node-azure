@@ -183,7 +183,8 @@ function main() {
       az network private-dns zone delete \
         --name "${private_dns_zone_name}" \
         --output none \
-        --resource-group "${parameters[--resource-group-name]}"
+        --resource-group "${parameters[--resource-group-name]}" \
+        --yes
     done
   fi
 
