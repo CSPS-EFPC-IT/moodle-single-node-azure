@@ -298,7 +298,7 @@ function main() {
   export PGPASSWORD="${parameters[db_server_admin_password]}"
   table_count=$(
     psql \
-      "host=${parameters[db_server_fqdn]} port=5432 user=${parameters[db_server_admin_username]}@${parameters[db_server_name]} dbname=${parameters[moodle_db_name]} sslmode=require" \
+      "host=${parameters[db_server_fqdn]} port=5432 user=${parameters[db_server_admin_username]} dbname=${parameters[moodle_db_name]} sslmode=require" \
       --tuples-only \
       --command="select count(*) from information_schema.tables where table_catalog='${parameters[moodle_db_name]}' and table_name like '${MOODLE_TABLE_PREFIX}%'" \
     )
