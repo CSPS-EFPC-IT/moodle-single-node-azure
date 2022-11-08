@@ -1345,7 +1345,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('webServerVirtualMachineName'))]",
-                "[resourceId('Microsoft.DBforPostgreSQL/servers/databases', variables('databaseServerName'), variables('moodleDatabaseName') )]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', variables('databaseServerName'), variables('moodleDatabaseName') )]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
