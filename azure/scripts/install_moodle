@@ -323,7 +323,7 @@ function main() {
     --dbpass="${parameters[moodle_db_password]}" \
     --dbport=5432 \
     --dbtype=pgsql \
-    --dbuser="${parameters[moodle_db_username]}@${parameters[db_server_name]}" \
+    --dbuser="${parameters[moodle_db_username]}" \
     --fullname="Moodle" \
     --lang=en \
     --non-interactive \
