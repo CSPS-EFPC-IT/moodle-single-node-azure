@@ -1156,18 +1156,6 @@
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
-            "apiVersion": "[variables('databaseServerApiVersion')]",
-            "name": "[concat(variables('databaseServerName'), '/', variables('moodleDatabaseName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('databaseServerName'))]"
-            ],
-            "properties": {
-                "charset": "UTF8",
-                "collation": "en_US.utf8"
-            }
-        },
-        {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
             "apiVersion": "[variables('databaseServerApiVersion')]",
             "name": "[concat(variables('databaseServerName'), '/bytea_output')]",
@@ -1183,33 +1171,9 @@
         {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
             "apiVersion": "[variables('databaseServerApiVersion')]",
-            "name": "[concat(variables('databaseServerName'), '/log_connections')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'bytea_output')]"
-            ],
-            "properties": {
-                "value": "[parameters('databaseServerConfigurationLogConnections')]",
-                "source": "user-override"
-            }
-        },
-        {
-            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
-            "apiVersion": "[variables('databaseServerApiVersion')]",
-            "name": "[concat(variables('databaseServerName'), '/log_disconnections')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'log_connections')]"
-            ],
-            "properties": {
-                "value": "[parameters('databaseServerConfigurationLogDisconnections')]",
-                "source": "user-override"
-            }
-        },
-        {
-            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
-            "apiVersion": "[variables('databaseServerApiVersion')]",
             "name": "[concat(variables('databaseServerName'), '/log_line_prefix')]",
             "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'log_disconnections')]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/configurations', variables('databaseServerName'), 'bytea_output')]"
             ],
             "properties": {
                 "value": "[parameters('databaseServerConfigurationLogLinePrefix')]",
@@ -1226,6 +1190,18 @@
             "properties": {
                 "value": "[parameters('databaseServerConfigurationLogStatement')]",
                 "source": "user-override"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+            "apiVersion": "[variables('databaseServerApiVersion')]",
+            "name": "[concat(variables('databaseServerName'), '/', variables('moodleDatabaseName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('databaseServerName'))]"
+            ],
+            "properties": {
+                "charset": "UTF8",
+                "collation": "en_US.utf8"
             }
         },
         {
