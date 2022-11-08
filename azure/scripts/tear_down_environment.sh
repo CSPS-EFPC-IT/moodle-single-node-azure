@@ -223,7 +223,7 @@ function main() {
       ((++index))
       echo "(${index}) Processing ${private_dns_zone_name}..."
 
-      echo "(${index}) Deleting Link VNet, if any..."
+      echo "(${index}) Deleting Link VNets, if any..."
       link_vnet_names="$(az network private-dns link vnet list \
           --output tsv \
           --query "[].name" \
@@ -312,7 +312,7 @@ function main() {
     done
   fi
 
-  echo "Deleting the Recovery Service Vault, if any..."
+  echo "Deleting Recovery Service Vaults, if any..."
   recovery_service_vault_ids="$(az backup vault list \
       --output tsv \
       --query "[].id" \
@@ -332,25 +332,28 @@ function main() {
         --output none \
         --soft-delete-feature-state Disable
 
-      echo "(${index}) Retrieving Backup Items..."
-      recovery_service_vault_name="$(az backup vault list \
-          --output tsv \
-          --query "[?id == '${recovery_service_vault_id}'].name" \
-          --resource-group "${parameters[--resource-group-name]}" \
-        )"
+      echo "(${index}) Retrieving Backup Items, if any..."
       backup_item_ids="$(az backup item list \
           --output tsv \
           --query "[].id" \
           --resource-group "${parameters[--resource-group-name]}" \
-          --vault-name "${recovery_service_vault_name}" \
+          --vault-name "$(basename "${recovery_service_vault_id}")" \
         )"
-
-      echo "(${index}) Disabling Backup Items' protection..."
-      az backup protection disable \
-        --delete-backup-data true \
-        --ids "${backup_item_ids}" \
-        --output none \
-        --yes
+      if [ -z "${backup_item_ids}" ]; then
+        echo "(${index}) No Backup Item found. Skipping."
+      else
+        echo "(${index}) Disabling Backup Item's protection..."
+        subindex=0
+        for backup_item_id in ${backup_item_ids}; do
+          ((++subindex))
+          echo "(${index}.${subindex}) Processing ${backup_item_id}..."
+          az backup protection disable \
+            --delete-backup-data true \
+            --ids "${backup_item_id}" \
+            --output none \
+            --yes
+        done
+      fi
 
       echo "(${index}) Deleting Recovery Service Vault..."
       az backup vault delete \
