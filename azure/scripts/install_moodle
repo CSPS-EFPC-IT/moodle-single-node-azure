@@ -238,7 +238,7 @@ function main() {
 
   postgresql::create_database_and_credentials \
     "${parameters[db_server_fqdn]}" \
-    "${parameters[db_server_admin_username]}@${parameters[db_server_name]}" \
+    "${parameters[db_server_admin_username]}" \
     "${parameters[db_server_admin_password]}" \
     "${parameters[moodle_db_username]}" \
     "${parameters[moodle_db_password]}" \
