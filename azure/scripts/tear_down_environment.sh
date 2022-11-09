@@ -244,6 +244,9 @@ function main() {
             --yes \
             --zone-name "${private_dns_zone_name}"
         done
+        # Workaround to prevent Private DNS Zone deletion failures.
+        # Wait a little while for the link vnets to be deleted.
+        sleep 30
       fi
 
       echo "(${index}) Deleting the Private DNS Zone..."
