@@ -69,7 +69,8 @@ jobs:
                 -moodleAdminPassword "$(moodleAdminPassword)"
                 -moodleAdminUsername "$(moodleAdminUsername)"
                 -moodleDatabasePassword "$(databaseMoodlePassword)"
-                -moodleDatabaseUsername "$(databaseMoodleUsername)"                -moodleUpgradeKey "$(moodleUpgradeKey)"
+                -moodleDatabaseUsername "$(databaseMoodleUsername)"
+                -moodleUpgradeKey "$(moodleUpgradeKey)"
                 -projectShortName "$(projectShortName)"
                 -resourceTags $(resourceTags)
                 -smtpServerFqdn "$(smtpServerFqdn)"
