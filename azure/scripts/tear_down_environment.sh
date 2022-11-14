@@ -26,14 +26,18 @@ function main() {
   local backup_item_ids
   local bastion_names
   local disk_ids
+  local index
+  local link_vnet_names
   local log_analytics_workspace_names
   local network_interface_card_ids
   local network_security_group_ids
   local postgres_server_ids
+  local private_dns_zone_names
   local public_ip_ids
   local recovery_service_vault_ids
-  local recovery_service_vault_names
+  local recovery_service_vault_name
   local storage_account_ids
+  local subindex
   local virtual_network_ids
   local vm_ids
 
@@ -67,215 +71,315 @@ function main() {
     echo "Input parameter value: ${key} = \"${parameters[${key}]}\"."
   done
 
-  # Deleting Virtual Machines, if any.
+  echo "Deleting Virtual Machines, if any..."
   vm_ids="$(az vm list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${vm_ids}" ]; then
-    echo "Deleting Virtual Machines..."
-    az vm delete \
-      --ids "${vm_ids}" \
-      --output none \
-      --yes
+  if [ -z "${vm_ids}" ]; then
+    echo "No Virtual Machine Found. Skipping."
   else
-    echo "No Virtual Machine Found."
+    index=0
+    for vm_id in ${vm_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${vm_id}..."
+      az vm delete \
+        --ids "${vm_id}" \
+        --output none \
+        --yes
+    done
   fi
 
-  # Deleting disks, if any.
+  echo "Deleting Disks, if any..."
   disk_ids="$(az disk list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${disk_ids}" ]; then
-    echo "Deleting Disks..."
-    az disk delete \
-      --ids "${disk_ids}" \
-      --output none \
-      --yes
+  if [ -z "${disk_ids}" ]; then
+    echo "No Disk Found. Skipping."
   else
-    echo "No Disk Found."
+    index=0
+    for disk_id in ${disk_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${disk_id}..."
+      az disk delete \
+        --ids "${disk_id}" \
+        --output none \
+        --yes
+    done
   fi
 
-  # Deleting Network Cards, if any.
+  echo "Deleting Network Interface Cards, if any..."
   network_interface_card_ids="$(az network nic list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${network_interface_card_ids}" ]; then
-    echo "Deleting Network Interface Cards..."
-    az network nic delete \
-      --ids "${network_interface_card_ids}" \
-      --output none
+  if [ -z "${network_interface_card_ids}" ]; then
+    echo "No Network Interface Card Found. Skipping."
   else
-    echo "No Network Interface Card Found."
+    index=0
+    for network_interface_card_id in ${network_interface_card_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${network_interface_card_id}..."
+      az network nic delete \
+        --ids "${network_interface_card_id}" \
+        --output none
+    done
   fi
 
-  # Deleting Storage Accounts, if any.
+  echo "Deleting Storage Accounts, if any..."
   storage_account_ids="$(az storage account list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${storage_account_ids}" ]; then
-    echo "Deleting Storage Accounts..."
-    az storage account delete \
-      --ids "${storage_account_ids}" \
-      --output none \
-      --yes
+  if [ -z "${storage_account_ids}" ]; then
+    echo "No Storage Account found. Skipping."
   else
-    echo "No Storage Account found."
+    index=0
+    for storage_account_id in ${storage_account_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${storage_account_id}..."
+      az storage account delete \
+        --ids "${storage_account_id}" \
+        --output none \
+        --yes
+    done
   fi
 
-  # Deleting Postgres Database, if any.
-  postgres_server_ids="$(az postgres server list \
+  echo "Deleting Postgres Server, if any..."
+  postgres_server_ids="$(az postgres flexible-server list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${postgres_server_ids}" ]; then
-    echo "Deleting Postgres Servers..."
-    az postgres server delete \
-      --ids "${postgres_server_ids}" \
-      --output none \
-      --yes
+  if [ -z "${postgres_server_ids}" ]; then
+    echo "No Postgres Server Found. Skipping."
   else
-    echo "No Postgres Server Found."
+    index=0
+    for postgres_server_id in ${postgres_server_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${postgres_server_id}..."
+      az postgres flexible-server delete \
+        --ids "${postgres_server_id}" \
+        --output none \
+        --yes
+    done
   fi
 
-  # Deleting Bastion Service, if any.
+  echo "Deleting Bastion Service, if any..."
   bastion_names="$(az network bastion list \
       --output tsv \
       --query "[].name" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${bastion_names}" ]; then
-    echo "Deleting Bastion Services..."
+  if [ -z "${bastion_names}" ]; then
+    echo "No Bastion Service Found. Skipping."
+  else
+    index=0
     for bastion_name in ${bastion_names}; do
+      ((++index))
+      echo "(${index}) Deleting ${bastion_name}..."
       az network bastion delete \
         --name "${bastion_name}" \
         --output none \
         --resource-group "${parameters[--resource-group-name]}"
     done
-  else
-    echo "No Bastion Service Found."
   fi
 
-  # Deleting Application Gateways, if any.
+  echo "Deleting Application Gateways, if any..."
   application_gateway_ids="$(az network application-gateway list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${application_gateway_ids}" ]; then
-    echo "Deleting Application Gateways..."
-    az network application-gateway delete \
-      --ids "${application_gateway_ids}" \
-      --output none
+  if [ -z "${application_gateway_ids}" ]; then
+    echo "No Application Gateway Found. Skipping."
   else
-    echo "No Application Gateway Found."
+    index=0
+    for application_gateway_id in ${application_gateway_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${application_gateway_id}..."
+      az network application-gateway delete \
+        --ids "${application_gateway_id}" \
+        --output none
+    done
   fi
 
-  # Deleting Virtual Networks.
+  echo "Deleting Private DNS Zones, if any..."
+  private_dns_zone_names="$(az network private-dns zone list \
+      --output tsv \
+      --query "[].name" \
+      --resource-group "${parameters[--resource-group-name]}"
+    )"
+  if [ -z "${private_dns_zone_names}" ]; then
+    echo "No Private DNS Zones Found. Skipping."
+  else
+    index=0
+    for private_dns_zone_name in ${private_dns_zone_names}; do
+      ((++index))
+      echo "(${index}) Processing ${private_dns_zone_name}..."
+
+      echo "(${index}) Deleting Link VNets, if any..."
+      link_vnet_names="$(az network private-dns link vnet list \
+          --output tsv \
+          --query "[].name" \
+          --resource-group "${parameters[--resource-group-name]}" \
+          --zone-name "${private_dns_zone_name}" \
+        )"
+      if [ -z "${link_vnet_names}" ]; then
+        echo "(${index}) No Link Vnet Found. Skipping."
+      else
+        subindex=0
+        for link_vnet_name in ${link_vnet_names}; do
+          ((++subindex))
+          echo "(${index}.${subindex}) Deleting Link Vnet ${link_vnet_name}..."
+          az network private-dns link vnet delete \
+            --name "${link_vnet_name}" \
+            --output none \
+            --resource-group "${parameters[--resource-group-name]}" \
+            --yes \
+            --zone-name "${private_dns_zone_name}"
+        done
+        # Workaround to prevent Private DNS Zone deletion failures.
+        # Wait a little while for the link vnets to be deleted.
+        sleep 30
+      fi
+
+      echo "(${index}) Deleting the Private DNS Zone..."
+      az network private-dns zone delete \
+        --name "${private_dns_zone_name}" \
+        --output none \
+        --resource-group "${parameters[--resource-group-name]}" \
+        --yes
+    done
+  fi
+
+  echo "Deleting Virtual Networks, if any..."
   virtual_network_ids="$(az network vnet list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${virtual_network_ids}" ]; then
-    echo "Deleting Virtual Networks..."
-    az network vnet delete \
-      --ids "${virtual_network_ids}" \
-      --output none
+  if [ -z "${virtual_network_ids}" ]; then
+    echo "No Virtual Network found. Skipping."
   else
-    echo "No Virtual Network found."
+    index=0
+    for virtual_network_id in ${virtual_network_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${virtual_network_id}..."
+      az network vnet delete \
+        --ids "${virtual_network_id}" \
+        --output none
+    done
   fi
 
-  # Deleting Network Security Groups, if any.
+  echo "Deleting Network Security Groups, if any..."
   network_security_group_ids="$(az network nsg list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${network_security_group_ids}" ]; then
-    echo "Deleting Network Security Groups..."
-    az network nsg delete \
-      --ids "${network_security_group_ids}" \
-      --output none
+  if [ -z "${network_security_group_ids}" ]; then
+    echo "No Network Security Group Found. Skipping."
   else
-    echo "No Network Security Group Found."
+    index=0
+    for network_security_group_id in ${network_security_group_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${network_security_group_id}..."
+      az network nsg delete \
+        --ids "${network_security_group_id}" \
+        --output none
+    done
   fi
 
-  # Deleting Public IPs other then Application Gateway Public IP, if any.
+  echo "Deleting Public IPs other then Application Gateway Public IP, if any..."
   public_ip_ids="$(az network public-ip list \
       --output tsv \
       --query "[?!contains(name,'-AG-')].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${public_ip_ids}" ]; then
-    echo "Deleting Public IPs..."
-    az network public-ip delete \
-      --ids "${public_ip_ids}" \
-      --output none
+  if [ -z "${public_ip_ids}" ]; then
+    echo "No Public Ip Found. Skipping."
   else
-    echo "No Public Ip Found."
+    index=0
+    for public_ip_id in ${public_ip_ids}; do
+      ((++index))
+      echo "(${index}) Deleting ${public_ip_id}..."
+      az network public-ip delete \
+        --ids "${public_ip_id}" \
+        --output none
+    done
   fi
 
-  # Deleting the Recovery Service Vault, if any.
+  echo "Deleting Recovery Service Vaults, if any..."
   recovery_service_vault_ids="$(az backup vault list \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${recovery_service_vault_ids}" ]; then
-    echo "Disabling Recovery Service Vault Soft Delete feature..."
-    az backup vault backup-properties set \
-      --ids "${recovery_service_vault_ids}" \
-      --output none \
-      --soft-delete-feature-state Disable
+  if [ -z "${recovery_service_vault_ids}" ]; then
+    echo "No Recovery Service Vault Found. Skipping."
+  else
+    index=0
+    for recovery_service_vault_id in ${recovery_service_vault_ids}; do
+      ((++index))
+      echo "(${index}) Processing ${recovery_service_vault_id}..."
 
-    echo "Deleting backup items..."
-    recovery_service_vault_names="$(az backup vault list \
-        --output tsv \
-        --query "[].name" \
-        --resource-group "${parameters[--resource-group-name]}" \
-      )"
-    for recovery_service_vault_name in ${recovery_service_vault_names}; do
+      echo "(${index}) Disabling Soft Delete feature..."
+      az backup vault backup-properties set \
+        --ids "${recovery_service_vault_id}" \
+        --output none \
+        --soft-delete-feature-state Disable
+
+      echo "(${index}) Retrieving Backup Items, if any..."
       backup_item_ids="$(az backup item list \
           --output tsv \
           --query "[].id" \
           --resource-group "${parameters[--resource-group-name]}" \
-          --vault-name "${recovery_service_vault_name}" \
+          --vault-name "$(basename "${recovery_service_vault_id}")" \
         )"
-      az backup protection disable \
-        --delete-backup-data true \
-        --ids "${backup_item_ids}" \
+      if [ -z "${backup_item_ids}" ]; then
+        echo "(${index}) No Backup Item found. Skipping."
+      else
+        echo "(${index}) Disabling Backup Item's protection..."
+        subindex=0
+        for backup_item_id in ${backup_item_ids}; do
+          ((++subindex))
+          echo "(${index}.${subindex}) Processing ${backup_item_id}..."
+          az backup protection disable \
+            --delete-backup-data true \
+            --ids "${backup_item_id}" \
+            --output none \
+            --yes
+        done
+      fi
+
+      echo "(${index}) Deleting Recovery Service Vault..."
+      az backup vault delete \
+        --force \
+        --ids "${recovery_service_vault_id}" \
         --output none \
         --yes
     done
-
-    echo "Deleting Recovery Service Vaults..."
-    az backup vault delete \
-      --force \
-      --ids "${recovery_service_vault_ids}" \
-      --output none \
-      --yes
-  else
-    echo "No Recovery Service Vault Found."
   fi
 
-  # Deleting Log Analytics Workspaces, if any.
+  echo "Deleting Log Analytics Workspaces, if any..."
   log_analytics_workspace_names="$(az monitor log-analytics workspace list \
       --output tsv \
       --query "[].name" \
       --resource-group "${parameters[--resource-group-name]}" \
     )"
-  if [ -n "${log_analytics_workspace_names}" ]; then
-    echo "Deleting Log Analytics Workspaces..."
+  if [ -z "${log_analytics_workspace_names}" ]; then
+    echo "No Log Analytics Workspace Found. Skipping."
+  else
+    index=0
     for log_analytics_workspace_name in ${log_analytics_workspace_names}; do
+      ((++index))
+      echo "(${index}) Deleting ${log_analytics_workspace_name}..."
       az monitor log-analytics workspace delete \
         --force "true" \
         --output none \
@@ -283,8 +387,6 @@ function main() {
         --workspace-name "${log_analytics_workspace_name}" \
         --yes
     done
-  else
-    echo "No Log Analytics Workspace Found."
   fi
 }
 
