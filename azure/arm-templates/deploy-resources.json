@@ -153,8 +153,18 @@
         },
         "databaseServerStorageSizeGB": {
             "type": "int",
-            "minValue": 32,
-            "maxValue": 16384,
+            "allowedValues": [
+                32,
+                64,
+                128,
+                256,
+                512,
+                1024,
+                2048,
+                4096,
+                8192,
+                16384
+            ],
             "defaultValue": 64,
             "metadata": {
                 "description": "The size of data storage allocated to the database in GB."
