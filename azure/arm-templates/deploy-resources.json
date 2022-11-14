@@ -60,7 +60,7 @@
                 "description": "The value of the database server's parameter \"bytea_output\"."
             }
         },
-        "databaseServerConfigurationLogConnections":{
+        "databaseServerConfigurationLogConnections": {
             "type": "string",
             "defaultValue": "ON",
             "allowedValues": [
@@ -71,7 +71,7 @@
                 "description": "The value of the database server's parameter \"log_connections\"."
             }
         },
-        "databaseServerConfigurationLogDisconnections":{
+        "databaseServerConfigurationLogDisconnections": {
             "type": "string",
             "defaultValue": "ON",
             "allowedValues": [
@@ -102,7 +102,7 @@
                 "description": "The value of the database server's parameter \"log_statement\"."
             }
         },
-        "databaseServerGeoRedundantBackup":{
+        "databaseServerGeoRedundantBackup": {
             "type": "string",
             "defaultValue": "Disabled",
             "allowedValues": [
@@ -113,7 +113,7 @@
                 "description": "Whether or not geo redundant backup is enabled."
             }
         },
-        "databaseServerHighAvailabilityMode":  {
+        "databaseServerHighAvailabilityMode": {
             "type": "string",
             "defaultValue": "Disabled",
             "allowedValues": [
@@ -173,13 +173,18 @@
         "databaseServerVersion": {
             "type": "string",
             "defaultValue": "14",
-            "allowedValues": [ "11", "12", "13", "14" ],
+            "allowedValues": [
+                "11",
+                "12",
+                "13",
+                "14"
+            ],
             "metadata": {
                 "description": "The version of the postgreSQL Server to deploy, if any."
             }
         },
 
-        "dataDiskSizeGB" : {
+        "dataDiskSizeGB": {
             "type": "int",
             "minValue": 31,
             "metadata": {
@@ -189,12 +194,11 @@
         "deniedIpAddresses": {
             "type": "securestring",
             "defaultValue": "0.0.0.0/32", // An unusable IP address.
-            "metadata":
-            {
+            "metadata": {
                 "description": "A comma separated list of source IP addresses (in CIDR notation) that must NOT access to the solution."
             }
         },
-        "deploymentTimestamp" : {
+        "deploymentTimestamp": {
             "type": "int",
             "defaultValue": "[int(utcNow('ddHHmmss'))]",
             "metadata": {
@@ -402,7 +406,7 @@
         "diagnosticStorageAccountSasProperties": {
             "signedServices": "bt",
             "signedPermission": "acluw",
-            "signedExpiry": "2100-01-01T00:00:00Z",  // Basically, forever.
+            "signedExpiry": "2100-01-01T00:00:00Z", // Basically, forever.
             "signedResourceTypes": "co"
         },
         "gatewayBackendAddressPoolName": "moodle-web-server",
@@ -1118,7 +1122,7 @@
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
             "apiVersion": "2020-06-01",
             "name": "[concat(variables('databaseServerPrivateDnsZoneName'), '/', variables('virtualNetworkName'))]",
-            "dependsOn":[
+            "dependsOn": [
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('databaseServerPrivateDnsZoneName'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
             ],
@@ -1365,7 +1369,7 @@
             "tags": "[parameters('resourceTags')]",
             "location": "[parameters('location')]",
             "comments": "Storage Account firewall must be turned off for Guest Metrics to work as per the following reference: https://docs.microsoft.com/en-ca/azure/azure-monitor/platform/metrics-troubleshoot#cannot-pick-guest-os-namespace-and-metrics",
-            "dependsOn":[
+            "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
             ],
             "sku": {
