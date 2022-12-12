@@ -9,7 +9,7 @@
         "dataDiskSizeGB": { "value": 32 },
         "databaseServerAdministratorLogin": { "value": "mylogin" },
         "databaseServerAdministratorLoginPassword": { "value": "mypassword" },
-        "deniedIpAddresses": { "value": "10.10.10.10/32" },
+        "deniedIpAddressList": { "value": "10.10.10.10/32" },
         "deploymentTimestamp": { "value": 0 },
         "environmentName": { "value": "myEnv" },
         "gatewaySslCertificateUri": { "value": "https://my-keyvault-name.vault.azure.net/secrets/my-cert-name/111111111111111111111111" },
