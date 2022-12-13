@@ -169,7 +169,7 @@
                 "description": "The size of the Moodle Data Disk in giga bytes."
             }
         },
-        "deniedIpAddresses": {
+        "deniedIpAddressList": {
             "type": "securestring",
             "defaultValue": "0.0.0.0/32", // An unusable IP address.
             "metadata": {
@@ -443,7 +443,7 @@
                             "direction": "Inbound",
                             "priority": 500,
                             "protocol": "*",
-                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddresses'),',')]",
+                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddressList'),',')]",
                             "sourcePortRange": "*"
                         }
                     },
@@ -525,7 +525,7 @@
                             "direction": "Inbound",
                             "priority": 500,
                             "protocol": "*",
-                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddresses'),',')]",
+                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddressList'),',')]",
                             "sourcePortRange": "*"
                         }
                     },
@@ -589,7 +589,7 @@
                             "direction": "Inbound",
                             "priority": 500,
                             "protocol": "*",
-                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddresses'),',')]",
+                            "sourceAddressPrefixes": "[split(parameters('deniedIpAddressList'),',')]",
                             "sourcePortRange": "*"
                         }
                     },

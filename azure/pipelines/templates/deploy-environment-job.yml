@@ -58,7 +58,7 @@ jobs:
                 -databaseServerStandbyAvailabilityZone "$(databaseServerStandbyAvailabilityZone)"
                 -databaseServerStorageSizeGB "$(databaseServerStorageSizeGB)"
                 -dataDiskSizeGB $(dataDiskSizeGB)
-                -deniedIpAddresses "$(deniedIpAddresses)"
+                -deniedIpAddressList "$(deniedIpAddressList)"
                 -environmentName "$(environmentName)"
                 -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
                 -gatewayUserAssignedIdentity "$(gatewayUserAssignedIdentity)"
