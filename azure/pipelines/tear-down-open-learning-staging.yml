@@ -4,4 +4,4 @@ extends:
   template: templates/tear-down-environment-job.yml
   parameters:
     env: 'staging'
-    site: 'openLearning'
+    site: 'open-learning'

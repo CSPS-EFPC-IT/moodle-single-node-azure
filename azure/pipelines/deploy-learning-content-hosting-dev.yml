@@ -4,4 +4,4 @@ extends:
   template: templates/deploy-environment-job.yml
   parameters:
     env: 'dev'
-    site: 'learningContentHosting'
+    site: 'learning-content-hosting'

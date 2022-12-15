@@ -1,16 +1,15 @@
 parameters:
 - name: env
   type: string
+  values:
+  - dev
+  - staging
+  - prod
 - name: site
   type: string
 
 variables:
-- ${{ if eq(parameters.env, 'dev') }}:
-  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
-- ${{ if eq(parameters.env, 'staging') }}:
-  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
-- ${{ if eq(parameters.env, 'prod') }}:
-  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
+- group: ${{ parameters.site }}-${{ parameters.env }}-public
 
 jobs:
 - deployment: deployResourcesJob

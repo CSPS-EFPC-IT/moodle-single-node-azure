@@ -1,23 +1,18 @@
 parameters:
 - name: env
   type: string
+  values:
+  - dev
+  - staging
+  - prod
 - name: site
   type: string
 
 variables:
-- group: ${{ parameters.site }}-moodleSingleNode-global-clear
-- ${{ if eq(parameters.env, 'dev') }}:
-  - group: common-dev-secret
-  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
-  - group: ${{ parameters.site }}-moodleSingleNode-dev-secret
-- ${{ if eq(parameters.env, 'staging') }}:
-  - group: common-staging-secret
-  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
-  - group: ${{ parameters.site }}-moodleSingleNode-staging-secret
-- ${{ if eq(parameters.env, 'prod') }}:
-  - group: common-prod-secret
-  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
-  - group: ${{ parameters.site }}-moodleSingleNode-prod-secret
+- group: common-${{ parameters.env }}-secret
+- group: ${{ parameters.site }}-public
+- group: ${{ parameters.site }}-${{ parameters.env }}-public
+- group: ${{ parameters.site }}-${{ parameters.env }}-secret
 
 jobs:
 - deployment: deployResourcesJob

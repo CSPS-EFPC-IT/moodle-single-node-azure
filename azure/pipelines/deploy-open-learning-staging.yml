@@ -4,4 +4,4 @@ extends:
   template: templates/deploy-environment-job.yml
   parameters:
     env: 'staging'
-    site: 'openLearning'
+    site: 'open-learning'
