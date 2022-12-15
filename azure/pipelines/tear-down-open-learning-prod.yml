@@ -4,4 +4,4 @@ extends:
   template: templates/tear-down-environment-job.yml
   parameters:
     env: 'prod'
-    site: 'openLearning'
+    site: 'open-learning'

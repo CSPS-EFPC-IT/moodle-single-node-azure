@@ -5,19 +5,19 @@ parameters:
   type: string
 
 variables:
-- group: ${{ parameters.site }}-moodleSingleNode-global-clear
+- group: ${{ parameters.site }}-public
 - ${{ if eq(parameters.env, 'dev') }}:
   - group: common-dev-secret
-  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
-  - group: ${{ parameters.site }}-moodleSingleNode-dev-secret
+  - group: ${{ parameters.site }}-dev-public
+  - group: ${{ parameters.site }}-dev-secret
 - ${{ if eq(parameters.env, 'staging') }}:
   - group: common-staging-secret
-  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
-  - group: ${{ parameters.site }}-moodleSingleNode-staging-secret
+  - group: ${{ parameters.site }}-staging-public
+  - group: ${{ parameters.site }}-staging-secret
 - ${{ if eq(parameters.env, 'prod') }}:
   - group: common-prod-secret
-  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
-  - group: ${{ parameters.site }}-moodleSingleNode-prod-secret
+  - group: ${{ parameters.site }}-prod-public
+  - group: ${{ parameters.site }}-prod-secret
 
 jobs:
 - deployment: deployResourcesJob

@@ -4,4 +4,4 @@ extends:
   template: templates/tear-down-environment-job.yml
   parameters:
     env: 'staging'
-    site: 'learningContentHosting'
+    site: 'learning-content-hosting'

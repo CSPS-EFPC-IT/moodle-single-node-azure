@@ -6,11 +6,11 @@ parameters:
 
 variables:
 - ${{ if eq(parameters.env, 'dev') }}:
-  - group: ${{ parameters.site }}-moodleSingleNode-dev-clear
+  - group: ${{ parameters.site }}-dev-public
 - ${{ if eq(parameters.env, 'staging') }}:
-  - group: ${{ parameters.site }}-moodleSingleNode-staging-clear
+  - group: ${{ parameters.site }}-staging-public
 - ${{ if eq(parameters.env, 'prod') }}:
-  - group: ${{ parameters.site }}-moodleSingleNode-prod-clear
+  - group: ${{ parameters.site }}-prod-public
 
 jobs:
 - deployment: deployResourcesJob
