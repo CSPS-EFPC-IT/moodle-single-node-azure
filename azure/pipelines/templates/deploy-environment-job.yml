@@ -1,23 +1,18 @@
 parameters:
 - name: env
   type: string
+  values:
+  - dev
+  - staging
+  - prod
 - name: site
   type: string
 
 variables:
+- group: common-${{ parameters.env }}-secret
 - group: ${{ parameters.site }}-public
-- ${{ if eq(parameters.env, 'dev') }}:
-  - group: common-dev-secret
-  - group: ${{ parameters.site }}-dev-public
-  - group: ${{ parameters.site }}-dev-secret
-- ${{ if eq(parameters.env, 'staging') }}:
-  - group: common-staging-secret
-  - group: ${{ parameters.site }}-staging-public
-  - group: ${{ parameters.site }}-staging-secret
-- ${{ if eq(parameters.env, 'prod') }}:
-  - group: common-prod-secret
-  - group: ${{ parameters.site }}-prod-public
-  - group: ${{ parameters.site }}-prod-secret
+- group: ${{ parameters.site }}-${{ parameters.env }}-public
+- group: ${{ parameters.site }}-${{ parameters.env }}-secret
 
 jobs:
 - deployment: deployResourcesJob

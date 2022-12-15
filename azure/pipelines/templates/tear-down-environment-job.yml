@@ -1,16 +1,15 @@
 parameters:
 - name: env
   type: string
+  values:
+  - dev
+  - staging
+  - prod
 - name: site
   type: string
 
 variables:
-- ${{ if eq(parameters.env, 'dev') }}:
-  - group: ${{ parameters.site }}-dev-public
-- ${{ if eq(parameters.env, 'staging') }}:
-  - group: ${{ parameters.site }}-staging-public
-- ${{ if eq(parameters.env, 'prod') }}:
-  - group: ${{ parameters.site }}-prod-public
+- group: ${{ parameters.site }}-${{ parameters.env }}-public
 
 jobs:
 - deployment: deployResourcesJob
