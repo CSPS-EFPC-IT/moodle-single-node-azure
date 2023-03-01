@@ -35,7 +35,7 @@ jobs:
               subscriptionId: '$(subscriptionId)'
               action: 'Create Or Update Resource Group'
               resourceGroupName: '$(resourceGroupName)'
-              location: '$(location)'
+              location: '$(resourceLocation)'
               templateLocation: 'Linked artifact'
               csmFile: 'azure/arm-templates/deploy-resources.json'
               overrideParameters: >-
@@ -57,7 +57,7 @@ jobs:
                 -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
                 -gatewayUserAssignedIdentity "$(gatewayUserAssignedIdentity)"
                 -genericShellScriptsRepoRawFilesBaseUrl "$(genericShellScriptsRepoRawFilesBaseUrl)"
-                -location "$(location)"
+                -resourceLocation "$(resourceLocation)"
                 -logAnalyticsWorkspaceRetentionPeriod $(logAnalyticsWorkspaceRetentionPeriod)
                 -moodleAdminEmail "$(moodleAdminEmail)"
                 -moodleAdminPassword "$(moodleAdminPassword)"
