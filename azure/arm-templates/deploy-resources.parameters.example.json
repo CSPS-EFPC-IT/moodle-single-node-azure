@@ -3,7 +3,6 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "armTemplateRepoRawFilesBaseUrl": { "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/SysAdmins-ARMTemplates/master" },
-        "corporateGatewayIpAddress": { "value": "255.255.255.255" },
         "currentProjectRepoRawFilesBaseUrl": { "value": "https://raw.githubusercontent.com/CSPS-EFPC-IT/moodle-single-node-azure/master" },
         "customApplicationFqdn": { "value": "my.custom.app.domain" },
         "dataDiskSizeGB": { "value": 32 },
@@ -30,6 +29,7 @@
         "smtpServerPassword": { "value": "mySmtpServerPassword" },
         "smtpServerPort": { "value": 587 },
         "smtpServerUsername": { "value": "mySmtpServerUsername" },
+        "storageAccountAllowedIpAddressList": { "value": "255.255.255.255,10.10.10.0/24" },
         "virtualMachineTags": { "value": { "myTagName1": "myTagValue1", "myTagName2": "myTagValue2" } },
         "virtualNetworkAddressBase": { "value": "255.255.255" },
         "webServerAdminEmail": { "value": "myadmin@my.domain" },

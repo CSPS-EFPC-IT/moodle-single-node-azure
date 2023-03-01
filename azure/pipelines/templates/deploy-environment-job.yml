@@ -40,9 +40,9 @@ jobs:
               csmFile: 'azure/arm-templates/deploy-resources.json'
               overrideParameters: >-
                 -armTemplateRepoRawFilesBaseUrl "$(armTemplateRepoRawFilesBaseUrl)"
-                -corporateGatewayIpAddress "$(corporateGatewayIpAddress)"
                 -currentProjectRepoRawFilesBaseUrl "$(currentProjectRepoRawFilesBaseUrl)"
                 -customApplicationFqdn "$(customApplicationFqdn)"
+                -dataDiskSizeGB $(dataDiskSizeGB)
                 -databaseServerAdministratorLogin "$(databaseServerAdminUsername)"
                 -databaseServerAdministratorLoginPassword "$(databaseServerAdminPassword)"
                 -databaseServerBackupRetentionDays $(databaseServerBackupRetentionDays)
@@ -52,7 +52,6 @@ jobs:
                 -databaseServerSkuTier "$(databaseServerSkuTier)"
                 -databaseServerStandbyAvailabilityZone "$(databaseServerStandbyAvailabilityZone)"
                 -databaseServerStorageSizeGB "$(databaseServerStorageSizeGB)"
-                -dataDiskSizeGB $(dataDiskSizeGB)
                 -deniedIpAddressList "$(deniedIpAddressList)"
                 -environmentName "$(environmentName)"
                 -gatewaySslCertificateUri "$(gatewaySslCertificateUri)"
@@ -73,6 +72,7 @@ jobs:
                 -smtpServerPassword "$(smtpServerPassword)"
                 -smtpServerPort $(smtpServerPort)
                 -smtpServerUsername "$(smtpServerUsername)"
+                -storageAccountAllowedIpAddressList "$(corporateGatewayIpAddressList)"
                 -virtualMachineTags $(virtualMachineTags)
                 -virtualNetworkAddressBase "$(virtualNetworkAddressBase)"
                 -webServerAdminEmail "$(webServerAdminEmail)"
