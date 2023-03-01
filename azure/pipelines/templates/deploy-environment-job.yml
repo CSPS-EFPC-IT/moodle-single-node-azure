@@ -80,5 +80,5 @@ jobs:
                 -webServerAdminUsername "$(webServerAdminUsername)"
                 -webServerRebootUtcTime "$(webServerRebootUtcTime)"
               deploymentMode: 'Incremental'
-              deploymentName: '$(projectShortName)-resources_$(Build.BuildNumber)'
+              deploymentName: '$(projectShortName)_deploy-environment_$(Build.BuildNumber)'
 
