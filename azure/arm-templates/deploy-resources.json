@@ -8,12 +8,6 @@
                 "description": "The base URL of the Azure Resource Manager template repository raw files."
             }
         },
-        "corporateGatewayIpAddress": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The Outbound IP address of the corporate network gateway."
-            }
-        },
         "currentProjectRepoRawFilesBaseUrl": {
             "type": "string",
             "metadata": {
@@ -161,7 +155,6 @@
                 "description": "The version of the postgreSQL Server to deploy, if any."
             }
         },
-
         "dataDiskSizeGB": {
             "type": "int",
             "minValue": 31,
@@ -308,6 +301,13 @@
                 "description": "The SMTP server account username."
             }
         },
+        "storageAccountAllowedIpAddressList": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional - A comma separated list of IP addresses (CIDR notation) ALLOWED to access the storage account. Some restrictions apply. See https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal#grant-access-from-an-internet-ip-range for details."
+            }
+        },
         "virtualMachineTags": {
             "type": "object",
             "defaultValue": {},
@@ -412,6 +412,7 @@
         "recoveryServiceVaultDeploymentName": "[take(concat(deployment().name, '_rsv'), 64)]",
         "recoveryServiceVaultProtectedItemsDeploymentName": "[take(concat(deployment().name, '_rsv-pi'), 64)]",
         "resourceNamePrefix": "[concat(parameters('projectShortName'), if(equals(parameters('environmentName'), 'prod'), '', concat('-', toupper(parameters('environmentName')))))]",
+        "storageAccountAllowedIpAddressArray": "[if(empty(parameters('storageAccountAllowedIpAddressList')), createArray(), split(parameters('storageAccountAllowedIpAddressList'), ','))]",
         "storageAccountNamePrefix": "[tolower(concat(custom.cleanName(parameters('projectShortName')), if(equals(parameters('environmentName'), 'prod'), '', take(parameters('environmentName'),4))))]",
         "virtualNetworkAddressPrefix": "[concat(parameters('virtualNetworkAddressBase'), '.0/24')]",
         "virtualNetworkName": "[concat(variables('resourceNamePrefix'), '-VN')]",
@@ -422,7 +423,17 @@
         "webServerVirtualMachineName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-VM')]",
         "webServerVirtualMachineNamePrefix": "[concat(variables('resourceNamePrefix'), '-WebServer')]",
         "webServerVirtualMachineNetworkInterfaceCardName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-NIC')]",
-        "webServerVirtualMachineOsDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-OS-Disk')]"
+        "webServerVirtualMachineOsDiskName": "[concat(variables('webServerVirtualMachineNamePrefix'), '-OS-Disk')]",
+        "copy": [
+            {
+                "name": "storageAccountAllowedIpRuleArray",
+                "count": "[length(variables('storageAccountAllowedIpAddressArray'))]",
+                "input": {
+                    "action": "Allow",
+                    "value": "[variables('storageAccountAllowedIpAddressArray')[copyIndex('storageAccountAllowedIpRuleArray')]]"
+                }
+            }
+        ]
     },
     "resources": [
         {
@@ -1366,12 +1377,7 @@
                             "action": "Allow"
                         }
                     ],
-                    "ipRules": [
-                        {
-                            "value": "[parameters('corporateGatewayIpAddress')]",
-                            "action": "allow"
-                        }
-                    ],
+                    "ipRules": "[variables('storageAccountAllowedIpRuleArray')]",
                     "defaultAction": "Deny"
                 },
                 "supportsHttpsTrafficOnly": true,
