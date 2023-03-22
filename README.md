@@ -1,5 +1,5 @@
 # moodle-single-node-azure
-Deploys Moodle 3.11.12 on a single node on Azure Cloud.
+Deploys Moodle 3.11.13 on a single node on Azure Cloud.
 
 # Description
 This project deploys the following Azure resources:
