@@ -35,7 +35,6 @@ function main() {
   local private_dns_zone_names
   local public_ip_ids
   local recovery_service_vault_ids
-  local recovery_service_vault_name
   local storage_account_ids
   local subindex
   local virtual_network_ids
