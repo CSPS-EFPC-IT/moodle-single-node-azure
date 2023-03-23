@@ -33,3 +33,4 @@ jobs:
               scriptPath: 'azure/scripts/tear_down_environment.sh'
               arguments: >-
                 --resource-group-name "$(resourceGroupName)"
+              failOnStandardError: true
