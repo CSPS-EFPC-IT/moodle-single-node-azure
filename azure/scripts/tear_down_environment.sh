@@ -72,10 +72,14 @@ function main() {
 
 
   echo "Installing az cli extensions..."
-  az extension add --upgrade -n bastion
+  az extension add \
+    --name bastion \
+    --only-show-errors \
+    --upgrade
 
   echo "Deleting Virtual Machines, if any..."
   vm_ids="$(az vm list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -89,6 +93,7 @@ function main() {
       echo "(${index}) Deleting ${vm_id}..."
       az vm delete \
         --ids "${vm_id}" \
+        --only-show-errors \
         --output none \
         --yes
     done
@@ -96,6 +101,7 @@ function main() {
 
   echo "Deleting Disks, if any..."
   disk_ids="$(az disk list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -109,6 +115,7 @@ function main() {
       echo "(${index}) Deleting ${disk_id}..."
       az disk delete \
         --ids "${disk_id}" \
+        --only-show-errors \
         --output none \
         --yes
     done
@@ -116,6 +123,7 @@ function main() {
 
   echo "Deleting Network Interface Cards, if any..."
   network_interface_card_ids="$(az network nic list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -129,12 +137,14 @@ function main() {
       echo "(${index}) Deleting ${network_interface_card_id}..."
       az network nic delete \
         --ids "${network_interface_card_id}" \
+        --only-show-errors \
         --output none
     done
   fi
 
   echo "Deleting Storage Accounts, if any..."
   storage_account_ids="$(az storage account list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -148,6 +158,7 @@ function main() {
       echo "(${index}) Deleting ${storage_account_id}..."
       az storage account delete \
         --ids "${storage_account_id}" \
+        --only-show-errors \
         --output none \
         --yes
     done
@@ -155,6 +166,7 @@ function main() {
 
   echo "Deleting Postgres Server, if any..."
   postgres_server_ids="$(az postgres flexible-server list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -168,6 +180,7 @@ function main() {
       echo "(${index}) Deleting ${postgres_server_id}..."
       az postgres flexible-server delete \
         --ids "${postgres_server_id}" \
+        --only-show-errors \
         --output none \
         --yes
     done
@@ -175,6 +188,7 @@ function main() {
 
   echo "Deleting Bastion Service, if any..."
   bastion_names="$(az network bastion list \
+      --only-show-errors \
       --output tsv \
       --query "[].name" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -188,6 +202,7 @@ function main() {
       echo "(${index}) Deleting ${bastion_name}..."
       az network bastion delete \
         --name "${bastion_name}" \
+        --only-show-errors \
         --output none \
         --resource-group "${parameters[--resource-group-name]}"
     done
@@ -195,6 +210,7 @@ function main() {
 
   echo "Deleting Application Gateways, if any..."
   application_gateway_ids="$(az network application-gateway list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -208,12 +224,14 @@ function main() {
       echo "(${index}) Deleting ${application_gateway_id}..."
       az network application-gateway delete \
         --ids "${application_gateway_id}" \
+        --only-show-errors \
         --output none
     done
   fi
 
   echo "Deleting Private DNS Zones, if any..."
   private_dns_zone_names="$(az network private-dns zone list \
+      --only-show-errors \
       --output tsv \
       --query "[].name" \
       --resource-group "${parameters[--resource-group-name]}"
@@ -228,6 +246,7 @@ function main() {
 
       echo "(${index}) Deleting Link VNets, if any..."
       link_vnet_names="$(az network private-dns link vnet list \
+          --only-show-errors \
           --output tsv \
           --query "[].name" \
           --resource-group "${parameters[--resource-group-name]}" \
@@ -242,6 +261,7 @@ function main() {
           echo "(${index}.${subindex}) Deleting Link Vnet ${link_vnet_name}..."
           az network private-dns link vnet delete \
             --name "${link_vnet_name}" \
+            --only-show-errors \
             --output none \
             --resource-group "${parameters[--resource-group-name]}" \
             --yes \
@@ -255,6 +275,7 @@ function main() {
       echo "(${index}) Deleting the Private DNS Zone..."
       az network private-dns zone delete \
         --name "${private_dns_zone_name}" \
+        --only-show-errors \
         --output none \
         --resource-group "${parameters[--resource-group-name]}" \
         --yes
@@ -263,6 +284,7 @@ function main() {
 
   echo "Deleting Virtual Networks, if any..."
   virtual_network_ids="$(az network vnet list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -276,12 +298,14 @@ function main() {
       echo "(${index}) Deleting ${virtual_network_id}..."
       az network vnet delete \
         --ids "${virtual_network_id}" \
+        --only-show-errors \
         --output none
     done
   fi
 
   echo "Deleting Network Security Groups, if any..."
   network_security_group_ids="$(az network nsg list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -295,12 +319,14 @@ function main() {
       echo "(${index}) Deleting ${network_security_group_id}..."
       az network nsg delete \
         --ids "${network_security_group_id}" \
+        --only-show-errors \
         --output none
     done
   fi
 
   echo "Deleting Public IPs other then Application Gateway Public IP, if any..."
   public_ip_ids="$(az network public-ip list \
+      --only-show-errors \
       --output tsv \
       --query "[?!contains(name,'-AG-')].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -314,12 +340,14 @@ function main() {
       echo "(${index}) Deleting ${public_ip_id}..."
       az network public-ip delete \
         --ids "${public_ip_id}" \
+        --only-show-errors \
         --output none
     done
   fi
 
   echo "Deleting Recovery Service Vaults, if any..."
   recovery_service_vault_ids="$(az backup vault list \
+      --only-show-errors \
       --output tsv \
       --query "[].id" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -335,11 +363,13 @@ function main() {
       echo "(${index}) Disabling Soft Delete feature..."
       az backup vault backup-properties set \
         --ids "${recovery_service_vault_id}" \
+        --only-show-errors \
         --output none \
         --soft-delete-feature-state Disable
 
       echo "(${index}) Retrieving Backup Items, if any..."
       backup_item_ids="$(az backup item list \
+          --only-show-errors \
           --output tsv \
           --query "[].id" \
           --resource-group "${parameters[--resource-group-name]}" \
@@ -356,6 +386,7 @@ function main() {
           az backup protection disable \
             --delete-backup-data true \
             --ids "${backup_item_id}" \
+            --only-show-errors \
             --output none \
             --yes
         done
@@ -365,6 +396,7 @@ function main() {
       az backup vault delete \
         --force \
         --ids "${recovery_service_vault_id}" \
+        --only-show-errors \
         --output none \
         --yes
     done
@@ -372,6 +404,7 @@ function main() {
 
   echo "Deleting Log Analytics Workspaces, if any..."
   log_analytics_workspace_names="$(az monitor log-analytics workspace list \
+      --only-show-errors \
       --output tsv \
       --query "[].name" \
       --resource-group "${parameters[--resource-group-name]}" \
@@ -385,6 +418,7 @@ function main() {
       echo "(${index}) Deleting ${log_analytics_workspace_name}..."
       az monitor log-analytics workspace delete \
         --force "true" \
+        --only-show-errors \
         --output none \
         --resource-group "${parameters[--resource-group-name]}" \
         --workspace-name "${log_analytics_workspace_name}" \
