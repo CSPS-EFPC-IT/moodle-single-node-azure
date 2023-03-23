@@ -70,6 +70,10 @@ function main() {
     echo "Input parameter value: ${key} = \"${parameters[${key}]}\"."
   done
 
+
+  echo "Installing az cli extensions..."
+  az extension add --upgrade -n bastion
+
   echo "Deleting Virtual Machines, if any..."
   vm_ids="$(az vm list \
       --output tsv \
