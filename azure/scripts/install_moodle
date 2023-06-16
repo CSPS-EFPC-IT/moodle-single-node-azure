@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Install Moodle 3.11.14 without any additional plugins on Ubuntu 20.04 LTS.
+# Install Moodle 3.11.15 without any additional plugins on Ubuntu 20.04 LTS.
 # This script must be run as root (ex.: sudo sh [script_name])
 # Style Guide: https://google.github.io/styleguide/shellguide.html
 
@@ -278,8 +278,8 @@ function main() {
 
   # Ref.: https://download.moodle.org/releases/supported/
   get_moodle_core \
-    "https://download.moodle.org/download.php/direct/stable311/moodle-3.11.14.tgz" \
-    "6a4cb241a8ef7a1c96300133bd065fefa7b4efa60379dc6a4ddb45b2f7562d50" \
+    "https://download.moodle.org/download.php/direct/stable311/moodle-3.11.15.tgz" \
+    "5a299f69cc6e10d9d85b9101409bf497946ef2a65bf39e1f24de8b1bb02482ee" \
     "${MOODLE_DOCUMENT_ROOT_DIR_PATH}"
 
   logger::action "Updating file ownership on ${MOODLE_DOCUMENT_ROOT_DIR_PATH}..."
